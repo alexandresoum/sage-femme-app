@@ -69,6 +69,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .print-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:18px}
 .print-doc h1{font-size:20px}.print-doc h2{font-size:16px;margin-top:22px}.print-doc p{line-height:1.45}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -430,15 +431,42 @@ function addRxLineText(text=''){
 function printRx(){
  const p=active(); if(!p){alert('Sélectionne une patiente.');return}
  const lines=[...$('rxList').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
- $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br>
-<strong>Mme Soum Clarisse</strong><br>
-1 rue du Moulin Rouge<br>
-85000 La Roche-sur-Yon<br>
-Tél. 02 51 36 36 77<br><small>Ordonnance</small></div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
- <h1>${esc(p.nom)} ${esc(p.prenom)}</h1>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}
- <div style="margin-top:35px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
- <br><br><p>Signature :</p>`;
- window.print();
+ $('printDoc').innerHTML=`<div class="print-head">
+   <div>
+     <strong>Cabinet de sage-femme</strong><br>
+     <strong>Mme Soum Clarisse</strong><br>
+     1 rue du Moulin Rouge<br>
+     85000 La Roche-sur-Yon<br>
+     Tél. 02 51 36 36 77
+   </div>
+   <div>${new Date().toLocaleDateString('fr-FR')}</div>
+ </div>
+ <div style="margin:22px 0 26px 0">
+   <div><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong></div>
+   <div style="margin-top:4px">N° RPPS : <strong>10004054820</strong></div>
+   <svg id="rppsBarcode" style="margin-top:6px"></svg>
+ </div>
+ <div style="margin:18px 0">
+   <strong>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</strong>
+   ${p.dob?'<br>Née le '+fmtDate(p.dob):''}
+   ${p.adresse?'<br>'+esc(p.adresse):''}
+ </div>
+ <h1 style="margin-top:30px">Ordonnance</h1>
+ <div style="margin-top:28px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
+ <br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
+ try{
+   if(window.JsBarcode){
+     JsBarcode("#rppsBarcode","10004054820",{
+       format:"CODE128",
+       displayValue:true,
+       fontSize:14,
+       height:42,
+       margin:0,
+       width:1.6
+     });
+   }
+ }catch(e){console.error(e)}
+ setTimeout(()=>window.print(),150);
 }
 function renderHistory(){
  const p=active(), el=$('historyList'); el.innerHTML='';
