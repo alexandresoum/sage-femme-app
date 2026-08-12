@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cabinet Sage-Femme — V1 locale</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --ink:#162033; --muted:#6e7687;
+  --primary:#273a68; --primary2:#556ba7; --accent:#d9c5ef; --accent2:#eadff7;
+  --ok:#dff2e5; --warn:#fff1cc; --line:#e6e9f0; --danger:#ffe0e0;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:235px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#24345f,#182644);color:white;padding:22px 14px;position:sticky;top:0;height:100vh}
+.brand{font-size:21px;font-weight:800;padding:8px 12px 22px}
+.brand small{display:block;font-size:11px;font-weight:500;opacity:.68;margin-top:5px}
+.nav button{width:100%;border:0;background:transparent;color:white;text-align:left;padding:12px 14px;border-radius:12px;margin:3px 0;font-weight:650}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.13)}
+.sidebar .foot{position:absolute;bottom:18px;left:16px;right:16px;font-size:11px;opacity:.7;line-height:1.45}
+main{padding:28px;max-width:1450px;width:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.top h1{margin:0;font-size:28px}
+.badge{padding:7px 10px;border-radius:999px;background:var(--ok);font-size:12px;font-weight:750}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(23,32,51,.04)}
+.card h2{font-size:18px;margin:0 0 14px}
+.card h3{font-size:14px;margin:18px 0 10px;color:var(--primary)}
+.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.quick button{border:1px solid var(--line);background:white;border-radius:16px;padding:18px 12px;font-weight:750;min-height:88px}
+.quick button:hover{border-color:#c8cfea;box-shadow:0 5px 15px rgba(44,58,104,.08)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:11px}
+label{font-size:12px;font-weight:700;color:#586174}
+input,textarea,select{border:1px solid #d9deea;border-radius:11px;padding:10px 11px;background:#fff;color:var(--ink);outline:none}
+input:focus,textarea:focus,select:focus{border-color:#8190c1;box-shadow:0 0 0 3px rgba(85,107,167,.12)}
+.row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.check{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#fbfcfe;font-size:13px}
+.check input{accent-color:var(--primary);width:17px;height:17px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{border:0;border-radius:11px;padding:10px 14px;font-weight:750}
+.primary{background:var(--primary);color:white}.secondary{background:#e9edf7;color:var(--primary)}.soft{background:var(--accent2);color:#523b73}.danger{background:var(--danger);color:#8b3535}
+.kpi{font-size:30px;font-weight:850;color:var(--primary)}
+.kpi small{font-size:13px;color:var(--muted);font-weight:600}
+.timeline{display:flex;flex-direction:column;gap:9px}
+.entry{border-left:4px solid #b8a1d4;background:#faf8fd;padding:10px 12px;border-radius:6px 12px 12px 6px}
+.entry strong{display:block;font-size:13px}.entry small{color:var(--muted)}
+.section{display:none}.section.active{display:block}
+.hint{font-size:12px;color:var(--muted);line-height:1.45}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.rx-list{display:flex;flex-direction:column;gap:8px}
+.rx-item{display:flex;gap:8px}.rx-item input[type=text]{flex:1}
+.notice{background:#fff6dd;border:1px solid #f1dea7;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.4}
+.patient-chip{display:inline-flex;gap:8px;align-items:center;background:#eef1f8;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:750}
+@media(max-width:900px){
+ .app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:12px}.brand{padding-bottom:8px}.nav{display:flex;overflow:auto;gap:6px}.nav button{white-space:nowrap;width:auto}.sidebar .foot{display:none}
+ main{padding:16px}.span-4,.span-6,.span-8,.span-12{grid-column:span 12}.quick{grid-template-columns:1fr 1fr}.checks{grid-template-columns:1fr}.row,.row3{grid-template-columns:1fr}
+}
+@media print{
+ .sidebar,.top,.no-print,.notice{display:none!important}.app{display:block}main{padding:0}.card{box-shadow:none;border:0;padding:0}.section{display:none!important}#printArea{display:block!important}
+}
+#printArea{display:none}
+.print-doc{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:auto;padding:20px}
+.print-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:18px}
+.print-doc h1{font-size:20px}.print-doc h2{font-size:16px;margin-top:22px}.print-doc p{line-height:1.45}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">Cabinet Sage-Femme<small>Prototype V1 — fonctionnement local</small></div>
+    <nav class="nav">
+      <button class="active" data-section="home">⌂ Accueil</button>
+      <button data-section="patient">👤 Patiente</button>
+      <button data-section="pregnancy">🤰 Grossesse</button>
+      <button data-section="consult">🩺 Consultation</button>
+      <button data-section="rx">💊 Ordonnance</button>
+      <button data-section="history">🗂 Historique</button>
+    </nav>
+    <div class="foot">Les données de cette démonstration restent dans le navigateur de cet appareil. Ne pas utiliser avec de vraies données de santé avant sécurisation de production.</div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div>
+        <h1 id="pageTitle">Accueil</h1>
+        <div class="hint" id="patientTop">Aucune patiente sélectionnée</div>
+      </div>
+      <span class="badge">● Hors ligne / local</span>
+    </div>
+
+    <section id="home" class="section active">
+      <div class="grid">
+        <div class="card span-8">
+          <h2>Que veux-tu faire ?</h2>
+          <div class="quick">
+            <button onclick="go('patient')">👤<br>Nouvelle patiente</button>
+            <button onclick="go('consult')">🩺<br>Consultation grossesse</button>
+            <button onclick="go('rx')">💊<br>Ordonnance</button>
+            <button onclick="go('pregnancy')">🎡<br>Terme / Roulette</button>
+            <button onclick="go('history')">🗂<br>Historique</button>
+            <button onclick="exportBackup()">💾<br>Sauvegarde locale</button>
+          </div>
+        </div>
+        <div class="card span-4">
+          <h2>Patiente active</h2>
+          <div id="activePatientCard" class="hint">Crée ou sélectionne une patiente.</div>
+        </div>
+        <div class="card span-12">
+          <h2>Principe de la V1</h2>
+          <div class="row3">
+            <div><div class="kpi">1<small> dossier</small></div><div class="hint">Identité et grossesse saisies une seule fois.</div></div>
+            <div><div class="kpi">✓<small> cases</small></div><div class="hint">Consultation essentiellement au clic.</div></div>
+            <div><div class="kpi">PDF<small> / impression</small></div><div class="hint">Compte rendu et ordonnance générés immédiatement.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="patient" class="section">
+      <div class="grid">
+        <div class="card span-8">
+          <h2>Dossier patiente</h2>
+          <div class="row">
+            <div class="field"><label>Nom</label><input id="nom" placeholder="DUPONT"></div>
+            <div class="field"><label>Prénom</label><input id="prenom" placeholder="Marie"></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label>Date de naissance</label><input id="dob" type="date"></div>
+            <div class="field"><label>Téléphone</label><input id="tel" placeholder="06..."></div>
+            <div class="field"><label>Email</label><input id="email" type="email"></div>
+          </div>
+          <div class="field"><label>Adresse</label><input id="adresse"></div>
+          <h3>Antécédents / informations utiles</h3>
+          <div class="row3">
+            <div class="field"><label>Gestité</label><input id="gestite" type="number" min="0"></div>
+            <div class="field"><label>Parité</label><input id="parite" type="number" min="0"></div>
+            <div class="field"><label>Groupe sanguin</label><input id="groupe" placeholder="A+"></div>
+          </div>
+          <div class="field"><label>Antécédents / allergies / traitements</label><textarea id="antecedents" rows="4"></textarea></div>
+          <div class="actions">
+            <button class="btn primary" onclick="savePatient()">Enregistrer la patiente</button>
+            <button class="btn secondary" onclick="newPatient()">Nouvelle fiche</button>
+          </div>
+        </div>
+        <div class="card span-4">
+          <h2>Patientes enregistrées</h2>
+          <div id="patientList" class="timeline"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pregnancy" class="section">
+      <div class="grid">
+        <div class="card span-6">
+          <h2>Grossesse / Roulette</h2>
+          <div class="field"><label>Date de début de grossesse (DDG)</label><input id="ddg" type="date" onchange="calcTerm()"></div>
+          <div class="field"><label>DPA calculée</label><input id="dpa" readonly></div>
+          <div class="actions"><button class="btn primary" onclick="savePregnancy()">Enregistrer la grossesse</button></div>
+        </div>
+        <div class="card span-6">
+          <h2>Terme aujourd’hui</h2>
+          <div class="kpi" id="termNow">—</div>
+          <p class="hint" id="termDetail">Renseigne la DDG.</p>
+          <hr>
+          <div id="termSuggestion" class="notice">Les propositions selon le terme pourront ici déclencher les examens, ordonnances et rappels configurés.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="consult" class="section">
+      <div class="grid">
+        <div class="card span-8">
+          <h2>Consultation de grossesse</h2>
+          <div class="row3">
+            <div class="field"><label>Date</label><input id="csDate" type="date"></div>
+            <div class="field"><label>Terme</label><input id="csTerm" placeholder="28 SA + 4 j"></div>
+            <div class="field"><label>Motif</label><input id="motif" value="Suivi mensuel de grossesse"></div>
+          </div>
+
+          <h3>Interrogatoire</h3>
+          <div class="checks" id="interChecks">
+            <label class="check"><input type="checkbox" value="Mouvements actifs fœtaux perçus"> Mouvements actifs perçus</label>
+            <label class="check"><input type="checkbox" value="Contractions utérines"> Contractions</label>
+            <label class="check"><input type="checkbox" value="Métrorragies"> Métrorragies</label>
+            <label class="check"><input type="checkbox" value="Pertes liquidiennes"> Pertes liquidiennes</label>
+            <label class="check"><input type="checkbox" value="Signes fonctionnels urinaires"> Signes urinaires</label>
+            <label class="check"><input type="checkbox" value="Céphalées / phosphènes"> Céphalées / phosphènes</label>
+          </div>
+
+          <h3>Examen</h3>
+          <div class="row3">
+            <div class="field"><label>TA</label><input id="ta" placeholder="120/70 mmHg"></div>
+            <div class="field"><label>Poids</label><input id="poids" placeholder="68 kg"></div>
+            <div class="field"><label>HU</label><input id="hu" placeholder="27 cm"></div>
+            <div class="field"><label>BCF</label><input id="bcf" placeholder="145 bpm"></div>
+            <div class="field"><label>Œdèmes</label><select id="oedemes"><option>Non</option><option>Oui</option></select></div>
+            <div class="field"><label>BU</label><input id="bu" placeholder="RAS"></div>
+          </div>
+
+          <h3>Conduite à tenir</h3>
+          <div class="checks" id="catChecks">
+            <label class="check"><input type="checkbox" value="Évolution clinique satisfaisante"> RAS / suivi habituel</label>
+            <label class="check"><input type="checkbox" value="Bilan biologique prescrit"> Bilan biologique</label>
+            <label class="check"><input type="checkbox" value="Échographie prescrite"> Échographie</label>
+            <label class="check"><input type="checkbox" value="Avis spécialisé demandé"> Avis spécialisé</label>
+            <label class="check"><input type="checkbox" value="Ordonnance remise"> Ordonnance</label>
+            <label class="check"><input type="checkbox" value="Conseils et signes d'alerte expliqués"> Conseils / signes d’alerte</label>
+          </div>
+          <div class="field" style="margin-top:12px"><label>Notes libres</label><textarea id="notes" rows="4"></textarea></div>
+          <div class="actions">
+            <button class="btn primary" onclick="saveConsult()">Enregistrer la consultation</button>
+            <button class="btn soft" onclick="printConsult()">Compte rendu / PDF</button>
+            <button class="btn secondary" onclick="go('rx')">Créer une ordonnance</button>
+          </div>
+        </div>
+
+        <div class="card span-4">
+          <h2>Résumé automatique</h2>
+          <div id="consultPreview" class="hint">Le résumé se construit à partir de la consultation.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rx" class="section">
+      <div class="grid">
+        <div class="card span-8">
+          <h2>Ordonnance</h2>
+          <div class="field"><label>Modèle rapide</label>
+            <select id="rxTemplate" onchange="applyTemplate()">
+              <option value="">— Choisir —</option>
+              <option value="debut">Bilan début de grossesse</option>
+              <option value="six">Bilan grossesse — modèle personnalisable</option>
+              <option value="vitd">Vitamine D</option>
+              <option value="fer">Fer — modèle à personnaliser</option>
+            </select>
+          </div>
+          <div class="rx-list" id="rxList"></div>
+          <div class="actions">
+            <button class="btn secondary" onclick="addRxLine()">+ Ajouter une ligne</button>
+            <button class="btn soft" onclick="printRx()">Imprimer / PDF</button>
+          </div>
+          <div class="notice" style="margin-top:14px">Les modèles de prescriptions sont volontairement génériques dans cette V1. Ils devront être validés et personnalisés par la sage-femme avant toute utilisation réelle.</div>
+        </div>
+        <div class="card span-4">
+          <h2>Favoris à terme</h2>
+          <p class="hint">On pourra ajouter ses propres modèles : biologie, contraception, vaccins, traitements, imagerie, arrêt, courrier d’adressage… avec un clic pour les réutiliser.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="history" class="section">
+      <div class="card">
+        <h2>Historique de la patiente active</h2>
+        <div id="historyList" class="timeline"></div>
+        <div class="actions no-print"><button class="btn danger" onclick="clearDemo()">Effacer les données de démonstration</button></div>
+      </div>
+    </section>
+
+    <section id="printArea">
+      <div class="print-doc" id="printDoc"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const KEY='sf_local_v1';
+let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null}');
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
+$('csDate').value=today();
+
+function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
+function active(){ return db.patients.find(p=>p.id===db.activeId) || null; }
+function go(id){
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ $(id).classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
+ const labels={home:'Accueil',patient:'Dossier patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',history:'Historique'};
+ $('pageTitle').textContent=labels[id]||'';
+ if(id==='consult') hydrateConsultTerm();
+ if(id==='history') renderHistory();
+}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.section));
+
+function savePatient(){
+ const id=db.activeId || crypto.randomUUID();
+ let p=active();
+ const base={id,nom:$('nom').value.trim(),prenom:$('prenom').value.trim(),dob:$('dob').value,tel:$('tel').value,email:$('email').value,adresse:$('adresse').value,
+ gestite:$('gestite').value,parite:$('parite').value,groupe:$('groupe').value,antecedents:$('antecedents').value,history:p?.history||[],pregnancy:p?.pregnancy||null};
+ if(!base.nom && !base.prenom){alert('Renseigne au moins un nom ou un prénom.');return}
+ const idx=db.patients.findIndex(x=>x.id===id);
+ if(idx>=0) db.patients[idx]=base; else db.patients.unshift(base);
+ db.activeId=id; persist(); go('home');
+}
+function newPatient(){
+ db.activeId=null;
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents','ddg','dpa'].forEach(id=>$(id).value='');
+ renderAll();
+}
+function selectPatient(id){
+ db.activeId=id; persist(); loadPatient(); go('home');
+}
+function loadPatient(){
+ const p=active(); if(!p)return;
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents'].forEach(id=>$(id).value=p[id]||'');
+ $('ddg').value=p.pregnancy?.ddg||''; calcTerm();
+}
+function renderPatients(){
+ const el=$('patientList'); el.innerHTML='';
+ if(!db.patients.length){el.innerHTML='<div class="hint">Aucune patiente.</div>';return}
+ db.patients.forEach(p=>{
+   const d=document.createElement('div');d.className='entry';
+   d.innerHTML=`<strong>${esc(p.nom)} ${esc(p.prenom)}</strong><small>${p.dob?fmtDate(p.dob):'Date de naissance non renseignée'}</small>`;
+   d.onclick=()=>selectPatient(p.id); el.appendChild(d);
+ });
+}
+function renderActive(){
+ const p=active();
+ $('patientTop').innerHTML=p?`<span class="patient-chip">👤 ${esc(p.nom)} ${esc(p.prenom)}</span>`:'Aucune patiente sélectionnée';
+ $('activePatientCard').innerHTML=p?`<strong>${esc(p.nom)} ${esc(p.prenom)}</strong><br>${p.dob?fmtDate(p.dob):''}<br><br>${p.pregnancy?.ddg?'<b>Grossesse :</b> '+termFrom(p.pregnancy.ddg):'Aucune grossesse enregistrée.'}`:'Crée ou sélectionne une patiente.';
+}
+function calcTerm(){
+ const ddg=$('ddg').value; if(!ddg){$('termNow').textContent='—';$('dpa').value='';return}
+ const d=new Date(ddg+'T12:00:00'); const dpa=new Date(d); dpa.setDate(dpa.getDate()+273);
+ $('dpa').value=dpa.toLocaleDateString('fr-FR');
+ $('termNow').textContent=termFrom(ddg);
+ $('termDetail').textContent='DPA estimée : '+dpa.toLocaleDateString('fr-FR');
+ const weeks=Math.floor((new Date()-d)/(1000*60*60*24*7));
+ $('termSuggestion').textContent=weeks<14?'Début de grossesse : les modèles de bilans et documents de début de suivi pourront être proposés ici.':weeks<28?'Deuxième trimestre : l’application peut proposer les prescriptions et documents adaptés à ce terme.':'Troisième trimestre : suivi, examens et documents peuvent être suggérés automatiquement.';
+}
+function termFrom(ddg,date=new Date()){
+ const d=new Date(ddg+'T12:00:00'); const delta=Math.floor((date-d)/(1000*60*60*24));
+ if(delta<0)return 'DDG future';
+ const w=Math.floor(delta/7),days=delta%7; return `${w} SA + ${days} j`;
+}
+function savePregnancy(){
+ const p=active(); if(!p){alert('Sélectionne ou crée d’abord une patiente.');return}
+ if(!$('ddg').value){alert('Renseigne une DDG.');return}
+ p.pregnancy={ddg:$('ddg').value}; p.history=p.history||[];
+ p.history.unshift({type:'Grossesse',date:today(),summary:'Grossesse enregistrée — DDG '+fmtDate($('ddg').value)});
+ persist();
+}
+function hydrateConsultTerm(){ const p=active(); if(p?.pregnancy?.ddg)$('csTerm').value=termFrom(p.pregnancy.ddg,new Date($('csDate').value+'T12:00:00')); updateConsultPreview(); }
+function checkedText(container){return [...$(container).querySelectorAll('input:checked')].map(x=>x.value)}
+function consultationObject(){
+ return {type:'Consultation grossesse',date:$('csDate').value,term:$('csTerm').value,motif:$('motif').value,
+ inter:checkedText('interChecks'),ta:$('ta').value,poids:$('poids').value,hu:$('hu').value,bcf:$('bcf').value,oedemes:$('oedemes').value,bu:$('bu').value,cat:checkedText('catChecks'),notes:$('notes').value};
+}
+function updateConsultPreview(){
+ const c=consultationObject();
+ $('consultPreview').innerHTML=`<b>${esc(c.motif)}</b><br>${esc(c.term)}<br><br>${c.inter.length?'<b>Interrogatoire :</b> '+c.inter.map(esc).join(', '):'Aucun élément coché'}<br><br><b>TA :</b> ${esc(c.ta||'—')} &nbsp; <b>Poids :</b> ${esc(c.poids||'—')}<br><b>HU :</b> ${esc(c.hu||'—')} &nbsp; <b>BCF :</b> ${esc(c.bcf||'—')}<br><br>${c.cat.length?'<b>CAT :</b> '+c.cat.map(esc).join(', '):''}`;
+}
+document.querySelectorAll('#consult input,#consult textarea,#consult select').forEach(x=>x.addEventListener('input',updateConsultPreview));
+function saveConsult(){
+ const p=active(); if(!p){alert('Sélectionne ou crée d’abord une patiente.');return}
+ const c=consultationObject(); p.history=p.history||[]; p.history.unshift({...c,summary:`${c.motif} — ${c.term}`}); persist(); renderHistory(); alert('Consultation enregistrée localement.');
+}
+function printConsult(){
+ const p=active(); if(!p){alert('Sélectionne une patiente.');return}
+ const c=consultationObject();
+ $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><small>Compte rendu de consultation</small></div><div>${fmtDate(c.date)}</div></div>
+ <h1>${esc(p.nom)} ${esc(p.prenom)}</h1><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${c.term?'<b>Terme :</b> '+esc(c.term):''}</p>
+ <h2>${esc(c.motif)}</h2>
+ <p><b>Interrogatoire :</b> ${c.inter.length?c.inter.map(esc).join(', '):'RAS renseigné'}</p>
+ <p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes)} ; BU ${esc(c.bu||'—')}.</p>
+ <p><b>Conduite à tenir :</b> ${c.cat.length?c.cat.map(esc).join(', '):'—'}</p>
+ ${c.notes?'<p><b>Notes :</b> '+esc(c.notes)+'</p>':''}
+ <br><br><p>Signature :</p>`;
+ window.print();
+}
+const templates={
+ debut:['Hémogramme / NFS','Groupe sanguin, Rhésus, RAI selon situation','Sérologies et examens selon recommandations et dossier clinique','Glycémie / examens complémentaires selon contexte'],
+ six:['Bilan biologique de grossesse — contenu à personnaliser selon pratique et recommandations','Examens complémentaires selon le dossier clinique'],
+ vitd:['Vitamine D — posologie et spécialité à renseigner par la prescriptrice'],
+ fer:['Supplémentation martiale — spécialité, dosage et durée à renseigner par la prescriptrice']
+};
+function applyTemplate(){ const k=$('rxTemplate').value; $('rxList').innerHTML=''; (templates[k]||[]).forEach(addRxLineText); }
+function addRxLine(){addRxLineText('')}
+function addRxLineText(text=''){
+ const div=document.createElement('div');div.className='rx-item';
+ div.innerHTML=`<input type="text" value="${attr(text)}" placeholder="Prescription"><button class="btn danger" onclick="this.parentElement.remove()">×</button>`;
+ $('rxList').appendChild(div);
+}
+function printRx(){
+ const p=active(); if(!p){alert('Sélectionne une patiente.');return}
+ const lines=[...$('rxList').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
+ $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><small>Ordonnance</small></div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
+ <h1>${esc(p.nom)} ${esc(p.prenom)}</h1>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}
+ <div style="margin-top:35px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
+ <br><br><p>Signature :</p>`;
+ window.print();
+}
+function renderHistory(){
+ const p=active(), el=$('historyList'); el.innerHTML='';
+ if(!p){el.innerHTML='<div class="hint">Aucune patiente sélectionnée.</div>';return}
+ if(!p.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}
+ p.history.forEach(h=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;el.appendChild(d)})
+}
+function exportBackup(){
+ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-sage-femme-v1.json';a.click();URL.revokeObjectURL(a.href);
+}
+function clearDemo(){ if(confirm('Effacer toutes les données locales de cette V1 ?')){localStorage.removeItem(KEY);db={patients:[],activeId:null};location.reload();} }
+function renderAll(){renderPatients();renderActive();renderHistory();loadPatient()}
+function fmtDate(s){ if(!s)return''; const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('fr-FR') }
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function attr(s){return esc(s).replace(/`/g,'&#096;')}
+renderAll(); addRxLine();
+</script>
+</body>
+</html>
