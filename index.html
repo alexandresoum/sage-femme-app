@@ -144,7 +144,7 @@ body:not(.has-patient) #patientTop{display:none}
 
     <section id="home" class="section active">
       <div class="grid">
-        <div class="card span-8">
+        <div class="card span-12">
           <h2>Rechercher une patiente</h2>
           <div class="home-search-wrap">
             <div class="field">
@@ -154,11 +154,6 @@ body:not(.has-patient) #patientTop{display:none}
             <button class="btn primary" onclick="startNewPatient()">+ Nouvelle patiente</button>
           </div>
           <div id="homePatientResults" class="search-results"></div>
-        </div>
-        <div class="card span-4">
-          <h2>Cabinet</h2>
-          <p><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>02 51 36 36 77</p>
-          <p class="hint">Sélectionne une patiente pour entrer dans son dossier. Les modules Grossesse, Consultation, Ordonnance et Historique apparaîtront alors.</p>
         </div>
       </div>
     </section>
@@ -198,7 +193,7 @@ body:not(.has-patient) #patientTop{display:none}
 <section id="patientEdit" class="section">
       <div class="grid">
         <div class="card span-8">
-          <h2>Informations patiente</h2>
+          <h2>Créer / modifier une patiente</h2>
           <div class="row">
             <div class="field"><label>Nom</label><input id="nom" placeholder="DUPONT"></div>
             <div class="field"><label>Prénom</label><input id="prenom" placeholder="Marie"></div>
@@ -352,7 +347,7 @@ $('csDate').value=today();
 function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
 function active(){ return db.patients.find(p=>p.id===db.activeId) || null; }
 function go(id){
- const clinical=['dossier','patientEdit','pregnancy','consult','rx','history'];
+ const clinical=['dossier','pregnancy','consult','rx','history'];
  if(clinical.includes(id) && !active()){
    go('home');
    return;
@@ -382,8 +377,12 @@ function savePatient(){
 }
 function startNewPatient(){
  db.activeId=null;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents','ddg','dpa'].forEach(id=>$(id).value='');
- renderAll();
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents','ddg','dpa'].forEach(id=>{
+   const el=$(id); if(el) el.value='';
+ });
+ const status=$('pregnancySaveStatus');
+ if(status){status.style.display='none';status.innerHTML='';}
+ renderActive();
  go('patientEdit');
 }
 function newPatient(){
@@ -392,7 +391,15 @@ function newPatient(){
  renderAll();
 }
 function selectPatient(id){
- db.activeId=id; persist(); loadPatient(); go('dossier');
+ const exists=db.patients.some(p=>p.id===id);
+ if(!exists){ alert('Dossier patiente introuvable.'); return; }
+ db.activeId=id;
+ localStorage.setItem(KEY, JSON.stringify(db));
+ loadPatient();
+ renderActive();
+ renderHistory();
+ renderDossier();
+ go('dossier');
 }
 function loadPatient(){
  const p=active(); if(!p)return;
@@ -434,9 +441,15 @@ function renderHomePatients(){
    const d=document.createElement('div');
    d.className='search-result';
    const term=p.pregnancy?.ddg ? termFrom(p.pregnancy.ddg) : '';
-   d.innerHTML=`<div><div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
-     <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div></div>
-     <button class="btn primary">Ouvrir le dossier</button>`;
+   const info=document.createElement('div');
+   info.innerHTML=`<div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
+     <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+   const btn=document.createElement('button');
+   btn.className='btn primary';
+   btn.textContent='Ouvrir le dossier';
+   btn.onclick=(ev)=>{ ev.stopPropagation(); selectPatient(p.id); };
+   d.appendChild(info);
+   d.appendChild(btn);
    d.onclick=()=>selectPatient(p.id);
    el.appendChild(d);
  });
