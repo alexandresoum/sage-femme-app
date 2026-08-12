@@ -73,7 +73,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">Cabinet Sage-Femme<small>Prototype V1 — fonctionnement local</small></div>
+    <div class="brand">Cabinet de sage-femme<small>Mme Soum Clarisse<br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>02 51 36 36 77</small></div>
     <nav class="nav">
       <button class="active" data-section="home">⌂ Accueil</button>
       <button data-section="patient">👤 Patiente</button>
@@ -162,6 +162,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
           <div class="field"><label>Date de début de grossesse (DDG)</label><input id="ddg" type="date" onchange="calcTerm()"></div>
           <div class="field"><label>DPA calculée</label><input id="dpa" readonly></div>
           <div class="actions"><button class="btn primary" onclick="savePregnancy()">Enregistrer la grossesse</button></div>
+          <div id="pregnancySaveStatus" style="display:none;margin-top:12px;padding:10px 12px;border-radius:11px;background:#dff2e5;color:#245d37;font-size:13px;font-weight:750"></div>
         </div>
         <div class="card span-6">
           <h2>Terme aujourd’hui</h2>
@@ -310,6 +311,16 @@ function loadPatient(){
  const p=active(); if(!p)return;
  ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents'].forEach(id=>$(id).value=p[id]||'');
  $('ddg').value=p.pregnancy?.ddg||''; calcTerm();
+ const status=$('pregnancySaveStatus');
+ if(status){
+   if(p.pregnancy?.ddg){
+     status.style.display='block';
+     status.innerHTML='✓ Grossesse déjà enregistrée — DDG '+fmtDate(p.pregnancy.ddg)+' — '+termFrom(p.pregnancy.ddg);
+   }else{
+     status.style.display='none';
+     status.innerHTML='';
+   }
+ }
 }
 function renderPatients(){
  const el=$('patientList'); el.innerHTML='';
@@ -340,11 +351,36 @@ function termFrom(ddg,date=new Date()){
  const w=Math.floor(delta/7),days=delta%7; return `${w} SA + ${days} j`;
 }
 function savePregnancy(){
- const p=active(); if(!p){alert('Sélectionne ou crée d’abord une patiente.');return}
- if(!$('ddg').value){alert('Renseigne une DDG.');return}
- p.pregnancy={ddg:$('ddg').value}; p.history=p.history||[];
- p.history.unshift({type:'Grossesse',date:today(),summary:'Grossesse enregistrée — DDG '+fmtDate($('ddg').value)});
+ const p=active();
+ if(!p){
+   alert('Sélectionne ou crée d’abord une patiente.');
+   go('patient');
+   return;
+ }
+ if(!$('ddg').value){
+   alert('Renseigne une DDG.');
+   return;
+ }
+ const ddgValue=$('ddg').value;
+ p.pregnancy={ddg:ddgValue};
+ p.history=p.history||[];
+
+ // Evite d'ajouter plusieurs fois la même ligne si on reclique sur Enregistrer.
+ const summary='Grossesse enregistrée — DDG '+fmtDate(ddgValue);
+ const already=p.history.some(h=>h.type==='Grossesse' && h.summary===summary);
+ if(!already){
+   p.history.unshift({type:'Grossesse',date:today(),summary});
+ }
+
  persist();
+ calcTerm();
+
+ const status=$('pregnancySaveStatus');
+ status.style.display='block';
+ status.innerHTML='✓ Grossesse enregistrée pour <strong>'+esc(p.nom)+' '+esc(p.prenom)+'</strong> — DDG '+fmtDate(ddgValue)+' — '+termFrom(ddgValue);
+
+ // La consultation récupère immédiatement le terme enregistré.
+ hydrateConsultTerm();
 }
 function hydrateConsultTerm(){ const p=active(); if(p?.pregnancy?.ddg)$('csTerm').value=termFrom(p.pregnancy.ddg,new Date($('csDate').value+'T12:00:00')); updateConsultPreview(); }
 function checkedText(container){return [...$(container).querySelectorAll('input:checked')].map(x=>x.value)}
@@ -364,7 +400,11 @@ function saveConsult(){
 function printConsult(){
  const p=active(); if(!p){alert('Sélectionne une patiente.');return}
  const c=consultationObject();
- $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><small>Compte rendu de consultation</small></div><div>${fmtDate(c.date)}</div></div>
+ $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br>
+<strong>Mme Soum Clarisse</strong><br>
+1 rue du Moulin Rouge<br>
+85000 La Roche-sur-Yon<br>
+Tél. 02 51 36 36 77<br><small>Compte rendu de consultation</small></div><div>${fmtDate(c.date)}</div></div>
  <h1>${esc(p.nom)} ${esc(p.prenom)}</h1><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${c.term?'<b>Terme :</b> '+esc(c.term):''}</p>
  <h2>${esc(c.motif)}</h2>
  <p><b>Interrogatoire :</b> ${c.inter.length?c.inter.map(esc).join(', '):'RAS renseigné'}</p>
@@ -390,7 +430,11 @@ function addRxLineText(text=''){
 function printRx(){
  const p=active(); if(!p){alert('Sélectionne une patiente.');return}
  const lines=[...$('rxList').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
- $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><small>Ordonnance</small></div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
+ $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br>
+<strong>Mme Soum Clarisse</strong><br>
+1 rue du Moulin Rouge<br>
+85000 La Roche-sur-Yon<br>
+Tél. 02 51 36 36 77<br><small>Ordonnance</small></div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
  <h1>${esc(p.nom)} ${esc(p.prenom)}</h1>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}
  <div style="margin-top:35px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
  <br><br><p>Signature :</p>`;
