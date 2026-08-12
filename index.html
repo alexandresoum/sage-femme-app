@@ -212,7 +212,7 @@ body:not(.has-patient) #patientTop{display:none}
 
 <section id="patientEdit" class="section">
       <div class="grid">
-        <div class="card span-9">
+        <div class="card span-12">
           <h2>Créer / modifier une patiente</h2>
           <div class="row">
             <div class="field"><label>Nom</label><input id="nom" placeholder="DUPONT"></div>
@@ -247,11 +247,62 @@ body:not(.has-patient) #patientTop{display:none}
           </div>
 
           <h3>Antécédents obstétricaux</h3>
-          <div class="row3">
+          <div class="row">
             <div class="field"><label>Gestité (G)</label><input id="gestite" type="number" min="0"></div>
             <div class="field"><label>Parité (P)</label><input id="parite" type="number" min="0"></div>
-            <div class="field"><label>Antécédents obstétricaux / chirurgicaux</label><input id="atcdObst" placeholder="Césarienne, HPP, GEU…"></div>
           </div>
+
+          <div class="echo-card">
+            <div class="section-title-line">
+              <h3 style="margin:0">Grossesses antérieures</h3>
+              <span class="hint">Ajouter une ligne par grossesse</span>
+            </div>
+            <div class="row3">
+              <div class="field">
+                <label>Issue de la grossesse</label>
+                <select id="pregOutcome">
+                  <option value="">— Choisir —</option>
+                  <option>Naissance vivante</option>
+                  <option>FCS</option>
+                  <option>GEU</option>
+                  <option>IVG</option>
+                  <option>IMG</option>
+                  <option>MFIU</option>
+                </select>
+              </div>
+              <div class="field"><label>Date</label><input id="pregDate" type="date"></div>
+              <div class="field"><label>Terme</label><input id="pregTerm" placeholder="39 SA + 2 j"></div>
+            </div>
+            <div class="row3">
+              <div class="field"><label>Poids de naissance (g)</label><input id="pregWeight" type="number" min="0" placeholder="3250"></div>
+              <div class="field">
+                <label>Sexe</label>
+                <select id="pregSex">
+                  <option value="">—</option>
+                  <option>Fille</option>
+                  <option>Garçon</option>
+                  <option>Indéterminé / non applicable</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Voie d’accouchement</label>
+                <select id="pregDelivery">
+                  <option value="">—</option>
+                  <option>Voie basse spontanée</option>
+                  <option>Voie basse instrumentale</option>
+                  <option>Césarienne programmée</option>
+                  <option>Césarienne en urgence</option>
+                  <option>Non applicable</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label>Complication(s) / commentaires</label><textarea id="pregComplication" rows="2" placeholder="HPP, pré-éclampsie, prématurité, RCIU, déchirure…"></textarea></div>
+            <div class="actions"><button class="btn secondary" type="button" onclick="addPregnancyHistory()">+ Ajouter cette grossesse</button></div>
+            <div id="pregnancyHistoryList" style="margin-top:12px"></div>
+          </div>
+
+          <h3>Autres antécédents obstétricaux</h3>
+          <div class="field"><textarea id="atcdObst" rows="2" placeholder="Informations obstétricales complémentaires"></textarea></div>
 
           <h3>Antécédents gynécologiques</h3>
           <div class="field"><textarea id="atcdGyneco" rows="3" placeholder="Contraception, endométriose, fibrome, dysplasie…"></textarea></div>
@@ -263,10 +314,6 @@ body:not(.has-patient) #patientTop{display:none}
             <button class="btn primary" onclick="savePatient()">Enregistrer la patiente</button>
             <button class="btn secondary" onclick="exitPatient()">Annuler / retour accueil</button>
           </div>
-        </div>
-        <div class="card span-3">
-          <h2>Résumé</h2>
-          <p class="hint">Les antécédents sont séparés par catégorie pour être retrouvés rapidement pendant une consultation.</p>
         </div>
       </div>
     </section>
@@ -492,21 +539,28 @@ function go(id){
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.section));
 
 let surgeryDraft=[];
+let pregnancyHistoryDraft=[];
+
 function savePatient(){
- const id=db.activeId || crypto.randomUUID();
+ const id=db.activeId || (crypto.randomUUID?crypto.randomUUID():'pat_'+Date.now()+'_'+Math.random().toString(16).slice(2));
  let p=active();
  const base={
    id, nom:$('nom').value.trim().toUpperCase(), prenom:$('prenom').value.trim(), dob:$('dob').value,
    tel:$('tel').value, email:$('email').value, adresse:$('adresse').value, groupe:$('groupe').value,
    allergies:$('allergies').value, atcdMedicaux:$('atcdMedicaux').value,
    atcdChirurgicaux:[...surgeryDraft], gestite:$('gestite').value, parite:$('parite').value,
+   pregnancyHistory:[...pregnancyHistoryDraft],
    atcdObst:$('atcdObst').value, atcdGyneco:$('atcdGyneco').value, atcdFamiliaux:$('atcdFamiliaux').value,
    history:p?.history||[], pregnancy:p?.pregnancy||null, echos:p?.echos||{}, extraEchos:p?.extraEchos||[]
  };
  if(!base.nom || !base.prenom || !base.dob){alert('Nom, prénom et date de naissance sont nécessaires pour créer le dossier.');return}
  const idx=db.patients.findIndex(x=>x.id===id);
  if(idx>=0) db.patients[idx]=base; else db.patients.unshift(base);
- db.activeId=id; persist(); go('dossier');
+ db.activeId=id;
+ localStorage.setItem(KEY, JSON.stringify(db));
+ renderAll();
+ go('dossier');
+ setTimeout(()=>{ const p=active(); if(p) console.log('Patiente enregistrée :',p.nom,p.prenom); },0);
 }
 function addSurgery(){
  const el=$('atcdChirInput'); const v=el.value.trim(); if(!v)return;
@@ -519,6 +573,48 @@ function renderSurgeryChips(){
  const el=$('surgeryChips'); if(!el)return;
  el.innerHTML=surgeryDraft.map((x,i)=>`<span class="pill">${esc(x)} <button style="border:0;background:none;cursor:pointer" onclick="removeSurgery(${i})">×</button></span>`).join('');
 }
+function addPregnancyHistory(){
+ const outcome=$('pregOutcome').value;
+ if(!outcome){alert('Choisis l’issue de la grossesse.');return}
+ const item={
+   id:(crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now()+'_'+Math.random().toString(16).slice(2)),
+   outcome,
+   date:$('pregDate').value,
+   term:$('pregTerm').value.trim(),
+   weight:$('pregWeight').value,
+   sex:$('pregSex').value,
+   delivery:$('pregDelivery').value,
+   complication:$('pregComplication').value.trim()
+ };
+ pregnancyHistoryDraft.push(item);
+ ['pregOutcome','pregDate','pregTerm','pregWeight','pregSex','pregDelivery','pregComplication'].forEach(id=>$(id).value='');
+ renderPregnancyHistory();
+}
+function removePregnancyHistory(i){
+ pregnancyHistoryDraft.splice(i,1);
+ renderPregnancyHistory();
+}
+function renderPregnancyHistory(){
+ const el=$('pregnancyHistoryList'); if(!el)return;
+ el.innerHTML='';
+ if(!pregnancyHistoryDraft.length){
+   el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>'; return;
+ }
+ pregnancyHistoryDraft.forEach((x,i)=>{
+   const d=document.createElement('div'); d.className='file-row';
+   const details=[
+     x.date?fmtDate(x.date):'',
+     x.term||'',
+     x.weight?x.weight+' g':'',
+     x.sex||'',
+     x.delivery||''
+   ].filter(Boolean).join(' · ');
+   d.innerHTML=`<div><strong>${esc(x.outcome)}</strong><div class="file-meta">${esc(details)}</div>${x.complication?'<div style="margin-top:4px">'+esc(x.complication)+'</div>':''}</div>
+   <button class="btn danger" type="button" onclick="removePregnancyHistory(${i})">Supprimer</button>`;
+   el.appendChild(d);
+ });
+}
+
 function startNewPatientFromSearch(){
  const n=$('searchNom')?.value||'', pr=$('searchPrenom')?.value||'', d=$('searchDob')?.value||'';
  startNewPatient();
@@ -531,6 +627,8 @@ function startNewPatient(){
  ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>{
    const el=$(id); if(el) el.value='';
  });
+ surgeryDraft=[]; pregnancyHistoryDraft=[];
+ renderSurgeryChips(); renderPregnancyHistory();
  const status=$('pregnancySaveStatus');
  if(status){status.style.display='none';status.innerHTML='';}
  renderActive();
@@ -561,6 +659,7 @@ function loadPatient(){
  $('atcdGyneco').value=p.atcdGyneco||'';
  $('atcdFamiliaux').value=p.atcdFamiliaux||'';
  surgeryDraft=[...(p.atcdChirurgicaux||[])]; renderSurgeryChips();
+ pregnancyHistoryDraft=[...(p.pregnancyHistory||[])]; renderPregnancyHistory();
  $('ddg').value=p.pregnancy?.ddg||''; calcTerm();
  const status=$('pregnancySaveStatus');
  if(status){
@@ -649,7 +748,9 @@ function calcDpaText(ddg){
 }
 
 function renderPatients(){
- const el=$('patientList'); el.innerHTML='';
+ const el=$('patientList');
+ if(!el)return;
+ el.innerHTML='';
  if(!db.patients.length){el.innerHTML='<div class="hint">Aucune patiente.</div>';return}
  db.patients.forEach(p=>{
    const d=document.createElement('div');d.className='entry';
