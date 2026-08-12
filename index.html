@@ -19,7 +19,7 @@ button{cursor:pointer}
 .brand{font-size:21px;font-weight:800;padding:8px 12px 22px}
 .brand small{display:block;font-size:11px;font-weight:500;opacity:.68;margin-top:5px}
 .nav button{width:100%;border:0;background:transparent;color:white;text-align:left;padding:12px 14px;border-radius:12px;margin:3px 0;font-weight:650}
-.nav button:hover,.nav button.active{background:rgba(255,255,255,.13)}
+.nav button:hover{background:rgba(255,255,255,.10)}.nav button.active{background:rgba(255,255,255,.20);box-shadow:inset 4px 0 0 #fff;font-weight:850}
 .sidebar .foot{position:absolute;bottom:18px;left:16px;right:16px;font-size:11px;opacity:.7;line-height:1.45}
 main{padding:28px;max-width:1450px;width:100%}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
@@ -68,6 +68,40 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .print-doc{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:auto;padding:20px}
 .print-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:18px}
 .print-doc h1{font-size:20px}.print-doc h2{font-size:16px;margin-top:22px}.print-doc p{line-height:1.45}
+
+.sidebar-patient{margin:0 4px 18px;padding:13px 12px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15)}
+.sidebar-patient-label{font-size:10px;letter-spacing:.08em;font-weight:800;opacity:.72;margin-bottom:6px}
+.sidebar-patient-name{font-size:16px;font-weight:850;line-height:1.2}
+.sidebar-patient-info{font-size:11px;opacity:.78;margin-top:5px;line-height:1.35}
+.patient-banner{display:flex;align-items:center;gap:12px;margin-top:8px;padding:11px 14px;background:#eef1f8;border:1px solid #dfe4ef;border-radius:14px;width:max-content;max-width:100%}
+.patient-banner-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#273a68;color:white;font-size:17px;flex:0 0 auto}
+.patient-banner-main{font-size:17px;font-weight:850;color:#1c2947}
+.patient-banner-sub{font-size:11px;color:#687188;margin-top:2px}
+.context-title{font-size:11px;font-weight:800;letter-spacing:.06em;color:#7a8293;text-transform:uppercase;margin-bottom:2px}
+
+
+/* V1.5 : accueil cabinet -> dossier patiente */
+.nav .patient-only{display:none}
+body.has-patient .nav .patient-only{display:block}
+.home-search-wrap{display:flex;gap:10px;align-items:end}
+.home-search-wrap .field{flex:1;margin:0}
+.search-results{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.search-result{display:flex;justify-content:space-between;align-items:center;gap:14px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:13px 14px}
+.search-result:hover{border-color:#bfc8e2;box-shadow:0 5px 16px rgba(44,58,104,.07)}
+.search-result-name{font-weight:850;font-size:15px}
+.search-result-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.dossier-hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.dossier-name{font-size:28px;font-weight:900;color:var(--primary);margin:2px 0 4px}
+.dossier-meta{color:var(--muted);font-size:13px;line-height:1.5}
+.dossier-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.dossier-actions button{border:1px solid var(--line);background:white;border-radius:16px;padding:20px 14px;font-weight:800;min-height:96px;font-size:15px}
+.dossier-actions button:hover{border-color:#bfc8e2;box-shadow:0 5px 16px rgba(44,58,104,.08)}
+.back-home{background:rgba(255,255,255,.08)!important;font-size:12px!important;margin-bottom:10px!important}
+.patient-sidebar-card{display:none}
+body.has-patient .patient-sidebar-card{display:block}
+body:not(.has-patient) #patientTop{display:none}
+@media(max-width:900px){.dossier-actions{grid-template-columns:1fr 1fr}.home-search-wrap{flex-direction:column;align-items:stretch}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
@@ -75,13 +109,19 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="app">
   <aside class="sidebar">
     <div class="brand">Cabinet de sage-femme<small>Mme Soum Clarisse<br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>02 51 36 36 77</small></div>
+    <div id="sidebarPatientContext" class="sidebar-patient patient-sidebar-card">
+      <div class="sidebar-patient-label">DOSSIER PATIENTE</div>
+      <div id="sidebarPatientName" class="sidebar-patient-name">Aucune patiente</div>
+      <div id="sidebarPatientInfo" class="sidebar-patient-info">Sélectionne ou crée une patiente</div>
+<button class="nav back-home" style="width:100%;border:0;color:white;margin-top:10px;padding:8px 10px;border-radius:10px" onclick="exitPatient()">← Quitter le dossier</button>
+    </div>
     <nav class="nav">
       <button class="active" data-section="home">⌂ Accueil</button>
-      <button data-section="patient">👤 Patiente</button>
-      <button data-section="pregnancy">🤰 Grossesse</button>
-      <button data-section="consult">🩺 Consultation</button>
-      <button data-section="rx">💊 Ordonnance</button>
-      <button data-section="history">🗂 Historique</button>
+      <button class="patient-only" data-section="dossier">👤 Dossier patiente</button>
+      <button class="patient-only" data-section="pregnancy">🤰 Grossesse</button>
+      <button class="patient-only" data-section="consult">🩺 Consultation</button>
+      <button class="patient-only" data-section="rx">💊 Ordonnance</button>
+      <button class="patient-only" data-section="history">🗂 Historique</button>
     </nav>
     <div class="foot">Les données de cette démonstration restent dans le navigateur de cet appareil. Ne pas utiliser avec de vraies données de santé avant sécurisation de production.</div>
   </aside>
@@ -90,7 +130,14 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <div class="top">
       <div>
         <h1 id="pageTitle">Accueil</h1>
-        <div class="hint" id="patientTop">Aucune patiente sélectionnée</div>
+        <div id="patientTop" class="patient-banner">
+          <div class="patient-banner-icon">👤</div>
+          <div>
+            <div class="context-title">Dossier patiente</div>
+            <div class="patient-banner-main">Aucune patiente sélectionnée</div>
+            <div class="patient-banner-sub">Sélectionne ou crée une patiente</div>
+          </div>
+        </div>
       </div>
       <span class="badge">● Hors ligne / local</span>
     </div>
@@ -98,35 +145,60 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <section id="home" class="section active">
       <div class="grid">
         <div class="card span-8">
-          <h2>Que veux-tu faire ?</h2>
-          <div class="quick">
-            <button onclick="go('patient')">👤<br>Nouvelle patiente</button>
-            <button onclick="go('consult')">🩺<br>Consultation grossesse</button>
-            <button onclick="go('rx')">💊<br>Ordonnance</button>
-            <button onclick="go('pregnancy')">🎡<br>Terme / Roulette</button>
-            <button onclick="go('history')">🗂<br>Historique</button>
-            <button onclick="exportBackup()">💾<br>Sauvegarde locale</button>
+          <h2>Rechercher une patiente</h2>
+          <div class="home-search-wrap">
+            <div class="field">
+              <label>Nom ou prénom</label>
+              <input id="patientSearch" placeholder="Ex. DUPONT Marie" oninput="renderHomePatients()">
+            </div>
+            <button class="btn primary" onclick="startNewPatient()">+ Nouvelle patiente</button>
           </div>
+          <div id="homePatientResults" class="search-results"></div>
         </div>
         <div class="card span-4">
-          <h2>Patiente active</h2>
-          <div id="activePatientCard" class="hint">Crée ou sélectionne une patiente.</div>
-        </div>
-        <div class="card span-12">
-          <h2>Principe de la V1</h2>
-          <div class="row3">
-            <div><div class="kpi">1<small> dossier</small></div><div class="hint">Identité et grossesse saisies une seule fois.</div></div>
-            <div><div class="kpi">✓<small> cases</small></div><div class="hint">Consultation essentiellement au clic.</div></div>
-            <div><div class="kpi">PDF<small> / impression</small></div><div class="hint">Compte rendu et ordonnance générés immédiatement.</div></div>
-          </div>
+          <h2>Cabinet</h2>
+          <p><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>02 51 36 36 77</p>
+          <p class="hint">Sélectionne une patiente pour entrer dans son dossier. Les modules Grossesse, Consultation, Ordonnance et Historique apparaîtront alors.</p>
         </div>
       </div>
     </section>
 
-    <section id="patient" class="section">
+    
+    <section id="dossier" class="section">
+      <div class="grid">
+        <div class="card span-12">
+          <div class="dossier-hero">
+            <div>
+              <div class="context-title">Dossier patiente</div>
+              <div id="dossierName" class="dossier-name">—</div>
+              <div id="dossierMeta" class="dossier-meta"></div>
+            </div>
+            <button class="btn secondary" onclick="go('patientEdit')">Modifier les informations</button>
+          </div>
+          <div class="dossier-actions">
+            <button onclick="go('pregnancy')">🤰<br>Grossesse / terme</button>
+            <button onclick="go('consult')">🩺<br>Nouvelle consultation</button>
+            <button onclick="go('rx')">💊<br>Ordonnance</button>
+            <button onclick="go('history')">🗂<br>Historique</button>
+            <button onclick="go('patientEdit')">👤<br>Identité / antécédents</button>
+            <button onclick="exitPatient()">⌂<br>Retour à l’accueil</button>
+          </div>
+        </div>
+        <div class="card span-6">
+          <h2>Grossesse en cours</h2>
+          <div id="dossierPregnancy" class="hint">Aucune grossesse enregistrée.</div>
+        </div>
+        <div class="card span-6">
+          <h2>Derniers éléments</h2>
+          <div id="dossierRecent" class="timeline"></div>
+        </div>
+      </div>
+    </section>
+
+<section id="patientEdit" class="section">
       <div class="grid">
         <div class="card span-8">
-          <h2>Dossier patiente</h2>
+          <h2>Informations patiente</h2>
           <div class="row">
             <div class="field"><label>Nom</label><input id="nom" placeholder="DUPONT"></div>
             <div class="field"><label>Prénom</label><input id="prenom" placeholder="Marie"></div>
@@ -160,7 +232,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
       <div class="grid">
         <div class="card span-6">
           <h2>Grossesse / Roulette</h2>
-          <div class="field"><label>Date de début de grossesse (DDG)</label><input id="ddg" type="date" onchange="calcTerm()"></div>
+          <div class="field"><label>Date de début de grossesse (DDG)</label><input id="ddg" type="date" onchange="calcTerm()" oninput="calcTerm()"></div>
           <div class="field"><label>DPA calculée</label><input id="dpa" readonly></div>
           <div class="actions"><button class="btn primary" onclick="savePregnancy()">Enregistrer la grossesse</button></div>
           <div id="pregnancySaveStatus" style="display:none;margin-top:12px;padding:10px 12px;border-radius:11px;background:#dff2e5;color:#245d37;font-size:13px;font-weight:750"></div>
@@ -280,13 +352,21 @@ $('csDate').value=today();
 function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
 function active(){ return db.patients.find(p=>p.id===db.activeId) || null; }
 function go(id){
+ const clinical=['dossier','patientEdit','pregnancy','consult','rx','history'];
+ if(clinical.includes(id) && !active()){
+   go('home');
+   return;
+ }
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
- $(id).classList.add('active');
+ const target=$(id);
+ if(target) target.classList.add('active');
  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
- const labels={home:'Accueil',patient:'Dossier patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',history:'Historique'};
+ const labels={home:'Accueil',dossier:'Dossier patiente',patientEdit:'Informations patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',history:'Historique'};
  $('pageTitle').textContent=labels[id]||'';
  if(id==='consult') hydrateConsultTerm();
  if(id==='history') renderHistory();
+ if(id==='dossier') renderDossier();
+ if(id==='home') renderHomePatients();
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.section));
 
@@ -298,7 +378,13 @@ function savePatient(){
  if(!base.nom && !base.prenom){alert('Renseigne au moins un nom ou un prénom.');return}
  const idx=db.patients.findIndex(x=>x.id===id);
  if(idx>=0) db.patients[idx]=base; else db.patients.unshift(base);
- db.activeId=id; persist(); go('home');
+ db.activeId=id; persist(); go('dossier');
+}
+function startNewPatient(){
+ db.activeId=null;
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents','ddg','dpa'].forEach(id=>$(id).value='');
+ renderAll();
+ go('patientEdit');
 }
 function newPatient(){
  db.activeId=null;
@@ -306,7 +392,7 @@ function newPatient(){
  renderAll();
 }
 function selectPatient(id){
- db.activeId=id; persist(); loadPatient(); go('home');
+ db.activeId=id; persist(); loadPatient(); go('dossier');
 }
 function loadPatient(){
  const p=active(); if(!p)return;
@@ -323,6 +409,63 @@ function loadPatient(){
    }
  }
 }
+
+function exitPatient(){
+ db.activeId=null;
+ persist();
+ go('home');
+}
+function renderHomePatients(){
+ const el=$('homePatientResults');
+ if(!el)return;
+ const q=($('patientSearch')?.value||'').trim().toLowerCase();
+ const list=db.patients.filter(p=>{
+   const hay=((p.nom||'')+' '+(p.prenom||'')+' '+(p.dob||'')).toLowerCase();
+   return !q || hay.includes(q);
+ });
+ el.innerHTML='';
+ if(!list.length){
+   el.innerHTML='<div class="hint">'+(q?'Aucune patiente trouvée.':'Aucune patiente enregistrée. Clique sur « Nouvelle patiente ».')+'</div>';
+   return;
+ }
+ list.slice(0,30).forEach(p=>{
+   const d=document.createElement('div');
+   d.className='search-result';
+   const term=p.pregnancy?.ddg ? termFrom(p.pregnancy.ddg) : '';
+   d.innerHTML=`<div><div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
+     <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div></div>
+     <button class="btn primary">Ouvrir le dossier</button>`;
+   d.onclick=()=>selectPatient(p.id);
+   el.appendChild(d);
+ });
+}
+function renderDossier(){
+ const p=active();
+ if(!p)return;
+ $('dossierName').textContent=(p.nom||'')+' '+(p.prenom||'');
+ $('dossierMeta').innerHTML=(p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée')
+   +(p.tel?'<br>Tél. '+esc(p.tel):'')
+   +(p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):'');
+ if(p.pregnancy?.ddg){
+   $('dossierPregnancy').innerHTML='<strong>'+termFrom(p.pregnancy.ddg)+'</strong><br>DDG : '+fmtDate(p.pregnancy.ddg)+'<br>DPA estimée : '+calcDpaText(p.pregnancy.ddg);
+ }else{
+   $('dossierPregnancy').innerHTML='Aucune grossesse enregistrée. <button class="btn secondary" style="margin-top:8px" onclick="go(\\'pregnancy\\')">Ajouter une grossesse</button>';
+ }
+ const recent=$('dossierRecent');
+ recent.innerHTML='';
+ const items=(p.history||[]).slice(0,4);
+ if(!items.length){recent.innerHTML='<div class="hint">Aucun élément enregistré.</div>';}
+ else items.forEach(h=>{
+   const d=document.createElement('div');d.className='entry';
+   d.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;
+   recent.appendChild(d);
+ });
+}
+function calcDpaText(ddg){
+ const [y,m,d]=ddg.split('-').map(Number);
+ return new Date(Date.UTC(y,m-1,d+273)).toLocaleDateString('fr-FR',{timeZone:'UTC'});
+}
+
 function renderPatients(){
  const el=$('patientList'); el.innerHTML='';
  if(!db.patients.length){el.innerHTML='<div class="hint">Aucune patiente.</div>';return}
@@ -334,22 +477,59 @@ function renderPatients(){
 }
 function renderActive(){
  const p=active();
- $('patientTop').innerHTML=p?`<span class="patient-chip">👤 ${esc(p.nom)} ${esc(p.prenom)}</span>`:'Aucune patiente sélectionnée';
- $('activePatientCard').innerHTML=p?`<strong>${esc(p.nom)} ${esc(p.prenom)}</strong><br>${p.dob?fmtDate(p.dob):''}<br><br>${p.pregnancy?.ddg?'<b>Grossesse :</b> '+termFrom(p.pregnancy.ddg):'Aucune grossesse enregistrée.'}`:'Crée ou sélectionne une patiente.';
+ document.body.classList.toggle('has-patient',!!p);
+ const top=$('patientTop');
+ const sideName=$('sidebarPatientName');
+ const sideInfo=$('sidebarPatientInfo');
+ if(p){
+   const term=p.pregnancy?.ddg ? termFrom(p.pregnancy.ddg) : '';
+   top.innerHTML=`<div class="patient-banner-icon">👤</div>
+     <div><div class="context-title">Dossier patiente actif</div>
+     <div class="patient-banner-main">${esc(p.nom)} ${esc(p.prenom)}</div>
+     <div class="patient-banner-sub">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`;
+   if(sideName) sideName.innerHTML=esc(p.nom)+' '+esc(p.prenom);
+   if(sideInfo) sideInfo.innerHTML=(p.dob?'Née le '+fmtDate(p.dob):'')+(term?'<br><strong>'+term+'</strong>':'');
+   $('activePatientCard') && ($('activePatientCard').innerHTML=`<strong>${esc(p.nom)} ${esc(p.prenom)}</strong>`);
+ }else{
+   if(sideName) sideName.textContent='Aucune patiente';
+   if(sideInfo) sideInfo.textContent='Sélectionne ou crée une patiente';
+ }
 }
 function calcTerm(){
- const ddg=$('ddg').value; if(!ddg){$('termNow').textContent='—';$('dpa').value='';return}
- const d=new Date(ddg+'T12:00:00'); const dpa=new Date(d); dpa.setDate(dpa.getDate()+273);
- $('dpa').value=dpa.toLocaleDateString('fr-FR');
+ const ddg=$('ddg').value;
+ if(!ddg){
+   $('termNow').textContent='—';
+   $('dpa').value='';
+   $('termDetail').textContent='Renseigne la DDG.';
+   syncConsultTerm();
+   return;
+ }
+ const [y,m,d]=ddg.split('-').map(Number);
+ const dpaUTC=new Date(Date.UTC(y,m-1,d+273));
+ $('dpa').value=dpaUTC.toLocaleDateString('fr-FR',{timeZone:'UTC'});
  $('termNow').textContent=termFrom(ddg);
- $('termDetail').textContent='DPA estimée : '+dpa.toLocaleDateString('fr-FR');
- const weeks=Math.floor((new Date()-d)/(1000*60*60*24*7));
+ $('termDetail').textContent='DPA estimée : '+dpaUTC.toLocaleDateString('fr-FR',{timeZone:'UTC'});
+ const now=new Date();
+ const nowDays=Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-Date.UTC(y,m-1,d))/86400000);
+ const weeks=Math.floor(nowDays/7);
  $('termSuggestion').textContent=weeks<14?'Début de grossesse : les modèles de bilans et documents de début de suivi pourront être proposés ici.':weeks<28?'Deuxième trimestre : l’application peut proposer les prescriptions et documents adaptés à ce terme.':'Troisième trimestre : suivi, examens et documents peuvent être suggérés automatiquement.';
+ syncConsultTerm();
 }
 function termFrom(ddg,date=new Date()){
- const d=new Date(ddg+'T12:00:00'); const delta=Math.floor((date-d)/(1000*60*60*24));
+ if(!ddg)return '—';
+ const [y,m,d]=ddg.split('-').map(Number);
+ const startUTC=Date.UTC(y,m-1,d);
+ let targetUTC;
+ if(typeof date==='string'){
+   const [ty,tm,td]=date.split('-').map(Number);
+   targetUTC=Date.UTC(ty,tm-1,td);
+ }else{
+   targetUTC=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate());
+ }
+ const delta=Math.floor((targetUTC-startUTC)/86400000);
  if(delta<0)return 'DDG future';
- const w=Math.floor(delta/7),days=delta%7; return `${w} SA + ${days} j`;
+ const w=Math.floor(delta/7),days=delta%7;
+ return `${w} SA + ${days} j`;
 }
 function savePregnancy(){
  const p=active();
@@ -382,18 +562,24 @@ function savePregnancy(){
 
  // La consultation récupère immédiatement le terme enregistré.
  hydrateConsultTerm();
+ renderDossier();
 }
-function hydrateConsultTerm(){ const p=active(); if(p?.pregnancy?.ddg)$('csTerm').value=termFrom(p.pregnancy.ddg,new Date($('csDate').value+'T12:00:00')); updateConsultPreview(); }
-function checkedText(container){return [...$(container).querySelectorAll('input:checked')].map(x=>x.value)}
-function consultationObject(){
- return {type:'Consultation grossesse',date:$('csDate').value,term:$('csTerm').value,motif:$('motif').value,
- inter:checkedText('interChecks'),ta:$('ta').value,poids:$('poids').value,hu:$('hu').value,bcf:$('bcf').value,oedemes:$('oedemes').value,bu:$('bu').value,cat:checkedText('catChecks'),notes:$('notes').value};
+function syncConsultTerm(){
+ const p=active();
+ const ddg=(p?.pregnancy?.ddg)||$('ddg').value;
+ const csDate=$('csDate').value||today();
+ if(ddg){ $('csTerm').value=termFrom(ddg,csDate); }
+ else{ $('csTerm').value=''; }
+ updateConsultPreview();
 }
+function hydrateConsultTerm(){ syncConsultTerm(); }
 function updateConsultPreview(){
  const c=consultationObject();
  $('consultPreview').innerHTML=`<b>${esc(c.motif)}</b><br>${esc(c.term)}<br><br>${c.inter.length?'<b>Interrogatoire :</b> '+c.inter.map(esc).join(', '):'Aucun élément coché'}<br><br><b>TA :</b> ${esc(c.ta||'—')} &nbsp; <b>Poids :</b> ${esc(c.poids||'—')}<br><b>HU :</b> ${esc(c.hu||'—')} &nbsp; <b>BCF :</b> ${esc(c.bcf||'—')}<br><br>${c.cat.length?'<b>CAT :</b> '+c.cat.map(esc).join(', '):''}`;
 }
 document.querySelectorAll('#consult input,#consult textarea,#consult select').forEach(x=>x.addEventListener('input',updateConsultPreview));
+$('csDate').addEventListener('change',syncConsultTerm);
+$('csDate').addEventListener('input',syncConsultTerm);
 function saveConsult(){
  const p=active(); if(!p){alert('Sélectionne ou crée d’abord une patiente.');return}
  const c=consultationObject(); p.history=p.history||[]; p.history.unshift({...c,summary:`${c.motif} — ${c.term}`}); persist(); renderHistory(); alert('Consultation enregistrée localement.');
@@ -479,11 +665,11 @@ function exportBackup(){
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-sage-femme-v1.json';a.click();URL.revokeObjectURL(a.href);
 }
 function clearDemo(){ if(confirm('Effacer toutes les données locales de cette V1 ?')){localStorage.removeItem(KEY);db={patients:[],activeId:null};location.reload();} }
-function renderAll(){renderPatients();renderActive();renderHistory();loadPatient()}
+function renderAll(){renderPatients();renderActive();renderHistory();renderHomePatients();loadPatient();if(active())renderDossier()}
 function fmtDate(s){ if(!s)return''; const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('fr-FR') }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function attr(s){return esc(s).replace(/`/g,'&#096;')}
-renderAll(); addRxLine();
+renderAll(); addRxLine(); if(!active())go('home');
 </script>
 </body>
 </html>
