@@ -102,6 +102,22 @@ body.has-patient .patient-sidebar-card{display:block}
 body:not(.has-patient) #patientTop{display:none}
 @media(max-width:900px){.dossier-actions{grid-template-columns:1fr 1fr}.home-search-wrap{flex-direction:column;align-items:stretch}}
 
+
+/* V1.6 dossier enrichi */
+.search-3{display:grid;grid-template-columns:1.2fr 1.2fr .9fr auto;gap:10px;align-items:end}
+.autocomplete-note{font-size:11px;color:var(--muted);margin-top:5px}
+.dossier-actions{grid-template-columns:repeat(4,1fr)}
+.section-title-line{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.form-sep{border-top:1px solid var(--line);margin:18px 0}
+.file-row{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.file-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.echo-card{border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;background:#fbfcfe}
+.echo-card h3{margin-top:0}
+.small-actions{display:flex;gap:7px;flex-wrap:wrap}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef1f8;font-size:11px;font-weight:750;margin-right:5px}
+.lab-window{font-size:18px;font-weight:850;color:var(--primary);margin:6px 0}
+@media(max-width:900px){.search-3{grid-template-columns:1fr}.dossier-actions{grid-template-columns:1fr 1fr}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
@@ -121,6 +137,8 @@ body:not(.has-patient) #patientTop{display:none}
       <button class="patient-only" data-section="pregnancy">🤰 Grossesse</button>
       <button class="patient-only" data-section="consult">🩺 Consultation</button>
       <button class="patient-only" data-section="rx">💊 Ordonnance</button>
+      <button class="patient-only" data-section="echos">🖥 Échos</button>
+      <button class="patient-only" data-section="bilans">📎 Bilans</button>
       <button class="patient-only" data-section="history">🗂 Historique</button>
     </nav>
     <div class="foot">Les données de cette démonstration restent dans le navigateur de cet appareil. Ne pas utiliser avec de vraies données de santé avant sécurisation de production.</div>
@@ -146,13 +164,13 @@ body:not(.has-patient) #patientTop{display:none}
       <div class="grid">
         <div class="card span-12">
           <h2>Rechercher une patiente</h2>
-          <div class="home-search-wrap">
-            <div class="field">
-              <label>Nom ou prénom</label>
-              <input id="patientSearch" placeholder="Ex. DUPONT Marie" oninput="renderHomePatients()">
-            </div>
-            <button class="btn primary" onclick="startNewPatient()">+ Nouvelle patiente</button>
+          <div class="search-3">
+            <div class="field"><label>Nom</label><input id="searchNom" placeholder="DUPONT" oninput="renderHomePatients()"></div>
+            <div class="field"><label>Prénom</label><input id="searchPrenom" placeholder="Marie" oninput="renderHomePatients()"></div>
+            <div class="field"><label>Date de naissance</label><input id="searchDob" type="date" oninput="renderHomePatients()"></div>
+            <button class="btn primary" onclick="startNewPatientFromSearch()">+ Nouvelle patiente</button>
           </div>
+          <div class="autocomplete-note">La recherche fonctionne avec un, deux ou trois critères. Dès 3 lettres du nom ou du prénom, les dossiers proches sont proposés.</div>
           <div id="homePatientResults" class="search-results"></div>
         </div>
       </div>
@@ -174,6 +192,8 @@ body:not(.has-patient) #patientTop{display:none}
             <button onclick="go('pregnancy')">🤰<br>Grossesse / terme</button>
             <button onclick="go('consult')">🩺<br>Nouvelle consultation</button>
             <button onclick="go('rx')">💊<br>Ordonnance</button>
+            <button onclick="go('echos')">🖥<br>Échographies</button>
+            <button onclick="go('bilans')">📎<br>Bilans PDF</button>
             <button onclick="go('history')">🗂<br>Historique</button>
             <button onclick="go('patientEdit')">👤<br>Identité / antécédents</button>
             <button onclick="exitPatient()">⌂<br>Retour à l’accueil</button>
@@ -192,7 +212,7 @@ body:not(.has-patient) #patientTop{display:none}
 
 <section id="patientEdit" class="section">
       <div class="grid">
-        <div class="card span-8">
+        <div class="card span-9">
           <h2>Créer / modifier une patiente</h2>
           <div class="row">
             <div class="field"><label>Nom</label><input id="nom" placeholder="DUPONT"></div>
@@ -204,21 +224,49 @@ body:not(.has-patient) #patientTop{display:none}
             <div class="field"><label>Email</label><input id="email" type="email"></div>
           </div>
           <div class="field"><label>Adresse</label><input id="adresse"></div>
-          <h3>Antécédents / informations utiles</h3>
-          <div class="row3">
-            <div class="field"><label>Gestité</label><input id="gestite" type="number" min="0"></div>
-            <div class="field"><label>Parité</label><input id="parite" type="number" min="0"></div>
-            <div class="field"><label>Groupe sanguin</label><input id="groupe" placeholder="A+"></div>
+          <div class="field"><label>Groupe sanguin</label><input id="groupe" placeholder="A+"></div>
+
+          <div class="form-sep"></div>
+          <h3>Allergies</h3>
+          <div class="field"><textarea id="allergies" rows="2" placeholder="Aucune connue / préciser"></textarea></div>
+
+          <h3>Antécédents médicaux</h3>
+          <div class="field"><textarea id="atcdMedicaux" rows="3" placeholder="HTA, diabète, asthme…"></textarea></div>
+
+          <h3>Antécédents chirurgicaux</h3>
+          <div class="field">
+            <input id="atcdChirInput" list="surgerySuggestions" placeholder="Commencer à taper : app…, cés…, chol…" onkeydown="addSurgeryOnEnter(event)">
+            <datalist id="surgerySuggestions">
+              <option value="Appendicectomie"><option value="Césarienne"><option value="Cholécystectomie">
+              <option value="Adénoïdectomie / végétations"><option value="Extraction des dents de sagesse">
+              <option value="Amygdalectomie"><option value="Hernie inguinale"><option value="Arthroscopie">
+              <option value="Coelioscopie"><option value="Hystéroscopie"><option value="Curetage / aspiration">
+            </datalist>
+            <div class="actions"><button class="btn secondary" onclick="addSurgery()">+ Ajouter</button></div>
+            <div id="surgeryChips" style="margin-top:8px"></div>
           </div>
-          <div class="field"><label>Antécédents / allergies / traitements</label><textarea id="antecedents" rows="4"></textarea></div>
+
+          <h3>Antécédents obstétricaux</h3>
+          <div class="row3">
+            <div class="field"><label>Gestité (G)</label><input id="gestite" type="number" min="0"></div>
+            <div class="field"><label>Parité (P)</label><input id="parite" type="number" min="0"></div>
+            <div class="field"><label>Antécédents obstétricaux / chirurgicaux</label><input id="atcdObst" placeholder="Césarienne, HPP, GEU…"></div>
+          </div>
+
+          <h3>Antécédents gynécologiques</h3>
+          <div class="field"><textarea id="atcdGyneco" rows="3" placeholder="Contraception, endométriose, fibrome, dysplasie…"></textarea></div>
+
+          <h3>Antécédents familiaux</h3>
+          <div class="field"><textarea id="atcdFamiliaux" rows="3" placeholder="Cancer, thrombose, diabète, HTA…"></textarea></div>
+
           <div class="actions">
             <button class="btn primary" onclick="savePatient()">Enregistrer la patiente</button>
-            <button class="btn secondary" onclick="newPatient()">Nouvelle fiche</button>
+            <button class="btn secondary" onclick="exitPatient()">Annuler / retour accueil</button>
           </div>
         </div>
-        <div class="card span-4">
-          <h2>Patientes enregistrées</h2>
-          <div id="patientList" class="timeline"></div>
+        <div class="card span-3">
+          <h2>Résumé</h2>
+          <p class="hint">Les antécédents sont séparés par catégorie pour être retrouvés rapidement pendant une consultation.</p>
         </div>
       </div>
     </section>
@@ -323,7 +371,81 @@ body:not(.has-patient) #patientTop{display:none}
       </div>
     </section>
 
-    <section id="history" class="section">
+    
+    <section id="echos" class="section">
+      <div class="grid">
+        <div class="card span-12">
+          <div class="section-title-line"><h2>Échographies</h2><span class="hint">Données rattachées à la grossesse en cours</span></div>
+        </div>
+
+        <div class="card span-6">
+          <h2>T1 — Échographie du premier trimestre</h2>
+          <div class="row">
+            <div class="field"><label>Date de l’échographie</label><input id="t1Date" type="date"></div>
+            <div class="field"><label>Date de début de grossesse (DDG)</label><input id="t1Ddg" type="date" oninput="updateT1Window()"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Échographiste</label><input id="t1EchoName" list="echoRegistryList" placeholder="Nom Prénom" oninput="fillEchoApprovalFromRegistry()"></div>
+            <div class="field"><label>N° d’agrément</label><input id="t1EchoApproval" placeholder="N° agrément"></div>
+          </div>
+          <datalist id="echoRegistryList"></datalist>
+          <div class="row3">
+            <div class="field"><label>CN (mm)</label><input id="t1Cn" inputmode="decimal"></div>
+            <div class="field"><label>LCC (mm)</label><input id="t1Lcc" inputmode="decimal"></div>
+            <div class="field"><label>Poids patiente (kg)</label><input id="t1Weight" inputmode="decimal"></div>
+          </div>
+          <div id="t1WindowBox" class="notice">Renseigne la DDG pour calculer les dates des marqueurs sériques.</div>
+          <div class="actions">
+            <button class="btn primary" onclick="saveT1()">Enregistrer T1</button>
+            <button class="btn soft" onclick="printT1Markers()">Ordonnance marqueurs sériques</button>
+            <button class="btn soft" onclick="printT1ConsentLab()">Consentement + fiche labo</button>
+          </div>
+        </div>
+
+        <div class="card span-6">
+          <h2>T2 — Échographie du deuxième trimestre</h2>
+          <div class="field"><label>Date</label><input id="t2Date" type="date"></div>
+          <div class="field"><label>Échographie habituelle</label><select id="t2Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
+          <div class="field"><label>Commentaires</label><textarea id="t2Comments" rows="5"></textarea></div>
+          <button class="btn primary" onclick="saveEchoSimple('t2')">Enregistrer T2</button>
+
+          <div class="form-sep"></div>
+          <h2>T3 — Échographie du troisième trimestre</h2>
+          <div class="field"><label>Date</label><input id="t3Date" type="date"></div>
+          <div class="field"><label>Échographie habituelle</label><select id="t3Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
+          <div class="field"><label>Commentaires</label><textarea id="t3Comments" rows="5"></textarea></div>
+          <button class="btn primary" onclick="saveEchoSimple('t3')">Enregistrer T3</button>
+        </div>
+
+        <div class="card span-12">
+          <h2>Échographies supplémentaires</h2>
+          <div class="row3">
+            <div class="field"><label>Date</label><input id="extraEchoDate" type="date"></div>
+            <div class="field"><label>Terme</label><input id="extraEchoTerm" placeholder="Calculé si DDG enregistrée"></div>
+            <div class="field"><label>Motif</label><input id="extraEchoReason"></div>
+          </div>
+          <div class="field"><label>Conclusion</label><textarea id="extraEchoConclusion" rows="3"></textarea></div>
+          <button class="btn primary" onclick="addExtraEcho()">+ Ajouter l’échographie</button>
+          <div id="extraEchoList" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="bilans" class="section">
+      <div class="grid">
+        <div class="card span-12">
+          <h2>Bilans / PDF</h2>
+          <p class="hint">Les PDF sont conservés localement dans le navigateur de cet appareil (IndexedDB), séparément du code GitHub.</p>
+          <div class="actions">
+            <input id="bilanFile" type="file" accept="application/pdf" style="max-width:420px">
+            <button class="btn primary" onclick="storeBilanPdf()">Ajouter le PDF au dossier</button>
+          </div>
+          <div id="bilanList" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </section>
+
+<section id="history" class="section">
       <div class="card">
         <h2>Historique de la patiente active</h2>
         <div id="historyList" class="timeline"></div>
@@ -339,7 +461,9 @@ body:not(.has-patient) #patientTop{display:none}
 
 <script>
 const KEY='sf_local_v1';
-let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null}');
+let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null,"echographists":[]}');
+db.echographists=db.echographists||[];
+db.patients=db.patients||[];
 const $=id=>document.getElementById(id);
 const today=()=>new Date().toISOString().slice(0,10);
 $('csDate').value=today();
@@ -347,7 +471,7 @@ $('csDate').value=today();
 function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
 function active(){ return db.patients.find(p=>p.id===db.activeId) || null; }
 function go(id){
- const clinical=['dossier','pregnancy','consult','rx','history'];
+ const clinical=['dossier','pregnancy','consult','rx','echos','bilans','history'];
  if(clinical.includes(id) && !active()){
    go('home');
    return;
@@ -356,28 +480,55 @@ function go(id){
  const target=$(id);
  if(target) target.classList.add('active');
  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
- const labels={home:'Accueil',dossier:'Dossier patiente',patientEdit:'Informations patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',history:'Historique'};
+ const labels={home:'Accueil',dossier:'Dossier patiente',patientEdit:'Informations patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',echos:'Échographies',bilans:'Bilans / PDF',history:'Historique'};
  $('pageTitle').textContent=labels[id]||'';
  if(id==='consult') hydrateConsultTerm();
  if(id==='history') renderHistory();
+ if(id==='echos') loadEchoForm();
+ if(id==='bilans') renderBilans();
  if(id==='dossier') renderDossier();
  if(id==='home') renderHomePatients();
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.section));
 
+let surgeryDraft=[];
 function savePatient(){
  const id=db.activeId || crypto.randomUUID();
  let p=active();
- const base={id,nom:$('nom').value.trim(),prenom:$('prenom').value.trim(),dob:$('dob').value,tel:$('tel').value,email:$('email').value,adresse:$('adresse').value,
- gestite:$('gestite').value,parite:$('parite').value,groupe:$('groupe').value,antecedents:$('antecedents').value,history:p?.history||[],pregnancy:p?.pregnancy||null};
- if(!base.nom && !base.prenom){alert('Renseigne au moins un nom ou un prénom.');return}
+ const base={
+   id, nom:$('nom').value.trim().toUpperCase(), prenom:$('prenom').value.trim(), dob:$('dob').value,
+   tel:$('tel').value, email:$('email').value, adresse:$('adresse').value, groupe:$('groupe').value,
+   allergies:$('allergies').value, atcdMedicaux:$('atcdMedicaux').value,
+   atcdChirurgicaux:[...surgeryDraft], gestite:$('gestite').value, parite:$('parite').value,
+   atcdObst:$('atcdObst').value, atcdGyneco:$('atcdGyneco').value, atcdFamiliaux:$('atcdFamiliaux').value,
+   history:p?.history||[], pregnancy:p?.pregnancy||null, echos:p?.echos||{}, extraEchos:p?.extraEchos||[]
+ };
+ if(!base.nom || !base.prenom || !base.dob){alert('Nom, prénom et date de naissance sont nécessaires pour créer le dossier.');return}
  const idx=db.patients.findIndex(x=>x.id===id);
  if(idx>=0) db.patients[idx]=base; else db.patients.unshift(base);
  db.activeId=id; persist(); go('dossier');
 }
+function addSurgery(){
+ const el=$('atcdChirInput'); const v=el.value.trim(); if(!v)return;
+ if(!surgeryDraft.some(x=>norm(x)===norm(v))) surgeryDraft.push(v);
+ el.value=''; renderSurgeryChips();
+}
+function addSurgeryOnEnter(e){if(e.key==='Enter'){e.preventDefault();addSurgery()}}
+function removeSurgery(i){surgeryDraft.splice(i,1);renderSurgeryChips()}
+function renderSurgeryChips(){
+ const el=$('surgeryChips'); if(!el)return;
+ el.innerHTML=surgeryDraft.map((x,i)=>`<span class="pill">${esc(x)} <button style="border:0;background:none;cursor:pointer" onclick="removeSurgery(${i})">×</button></span>`).join('');
+}
+function startNewPatientFromSearch(){
+ const n=$('searchNom')?.value||'', pr=$('searchPrenom')?.value||'', d=$('searchDob')?.value||'';
+ startNewPatient();
+ $('nom').value=n.trim().toUpperCase();
+ $('prenom').value=pr.trim();
+ $('dob').value=d;
+}
 function startNewPatient(){
  db.activeId=null;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents','ddg','dpa'].forEach(id=>{
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>{
    const el=$(id); if(el) el.value='';
  });
  const status=$('pregnancySaveStatus');
@@ -387,7 +538,7 @@ function startNewPatient(){
 }
 function newPatient(){
  db.activeId=null;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents','ddg','dpa'].forEach(id=>$(id).value='');
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>$(id).value='');
  renderAll();
 }
 function selectPatient(id){
@@ -403,17 +554,18 @@ function selectPatient(id){
 }
 function loadPatient(){
  const p=active(); if(!p)return;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','antecedents'].forEach(id=>$(id).value=p[id]||'');
+ ['nom','prenom','dob','tel','email','adresse','groupe','gestite','parite'].forEach(id=>{const el=$(id);if(el)el.value=p[id]||''});
+ $('allergies').value=p.allergies||'';
+ $('atcdMedicaux').value=p.atcdMedicaux||p.antecedents||'';
+ $('atcdObst').value=p.atcdObst||'';
+ $('atcdGyneco').value=p.atcdGyneco||'';
+ $('atcdFamiliaux').value=p.atcdFamiliaux||'';
+ surgeryDraft=[...(p.atcdChirurgicaux||[])]; renderSurgeryChips();
  $('ddg').value=p.pregnancy?.ddg||''; calcTerm();
  const status=$('pregnancySaveStatus');
  if(status){
-   if(p.pregnancy?.ddg){
-     status.style.display='block';
-     status.innerHTML='✓ Grossesse déjà enregistrée — DDG '+fmtDate(p.pregnancy.ddg)+' — '+termFrom(p.pregnancy.ddg);
-   }else{
-     status.style.display='none';
-     status.innerHTML='';
-   }
+   if(p.pregnancy?.ddg){status.style.display='block';status.innerHTML='✓ Grossesse déjà enregistrée — DDG '+fmtDate(p.pregnancy.ddg)+' — '+termFrom(p.pregnancy.ddg)}
+   else{status.style.display='none';status.innerHTML=''}
  }
 }
 
@@ -422,36 +574,51 @@ function exitPatient(){
  persist();
  go('home');
 }
+function norm(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function patientMatchScore(p,qn,qp,qd){
+ let score=0, used=0;
+ const n=norm(p.nom), pr=norm(p.prenom);
+ if(qn){
+   used++;
+   if(n===qn) score+=60;
+   else if(n.startsWith(qn)) score+=45;
+   else if(qn.length>=3 && n.startsWith(qn.slice(0,3))) score+=25;
+   else return -1;
+ }
+ if(qp){
+   used++;
+   if(pr===qp) score+=50;
+   else if(pr.startsWith(qp)) score+=35;
+   else if(qp.length>=3 && pr.startsWith(qp.slice(0,3))) score+=20;
+   else return -1;
+ }
+ if(qd){
+   used++;
+   if(p.dob===qd) score+=70; else return -1;
+ }
+ return used?score:1;
+}
 function renderHomePatients(){
- const el=$('homePatientResults');
- if(!el)return;
- const q=($('patientSearch')?.value||'').trim().toLowerCase();
- const list=db.patients.filter(p=>{
-   const hay=((p.nom||'')+' '+(p.prenom||'')+' '+(p.dob||'')).toLowerCase();
-   return !q || hay.includes(q);
- });
+ const el=$('homePatientResults'); if(!el)return;
+ const qn=norm($('searchNom')?.value), qp=norm($('searchPrenom')?.value), qd=$('searchDob')?.value||'';
+ const ranked=db.patients.map(p=>({p,score:patientMatchScore(p,qn,qp,qd)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score);
  el.innerHTML='';
- if(!list.length){
-   el.innerHTML=q
-     ? '<div class="notice">Aucune patiente trouvée pour « '+esc(q)+' ». <button class="btn primary" style="margin-left:10px" onclick="startNewPatient()">Créer une nouvelle patiente</button></div>'
-     : '<div class="hint">Aucune patiente enregistrée. Clique sur « Nouvelle patiente ».</div>';
+ if(!ranked.length){
+   const has=qn||qp||qd;
+   el.innerHTML=has
+     ? '<div class="notice">Aucun dossier correspondant. Les informations saisies seront reprises si tu crées une nouvelle patiente.</div>'
+     : '<div class="hint">Saisis un nom, un prénom ou une date de naissance pour rechercher un dossier.</div>';
    return;
  }
- list.slice(0,30).forEach(p=>{
-   const d=document.createElement('div');
-   d.className='search-result';
+ ranked.slice(0,20).forEach(({p,score})=>{
+   const d=document.createElement('div'); d.className='search-result';
    const term=p.pregnancy?.ddg ? termFrom(p.pregnancy.ddg) : '';
    const info=document.createElement('div');
    info.innerHTML=`<div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
-     <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
-   const btn=document.createElement('button');
-   btn.className='btn primary';
-   btn.textContent='Ouvrir le dossier';
-   btn.onclick=(ev)=>{ ev.stopPropagation(); selectPatient(p.id); };
-   d.appendChild(info);
-   d.appendChild(btn);
-   d.onclick=()=>selectPatient(p.id);
-   el.appendChild(d);
+    <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+   const btn=document.createElement('button'); btn.className='btn primary'; btn.textContent='Ouvrir le dossier';
+   btn.onclick=(ev)=>{ev.stopPropagation();selectPatient(p.id)};
+   d.appendChild(info); d.appendChild(btn); d.onclick=()=>selectPatient(p.id); el.appendChild(d);
  });
 }
 function renderDossier(){
@@ -468,7 +635,7 @@ function renderDossier(){
  }
  const recent=$('dossierRecent');
  recent.innerHTML='';
- const items=(p.history||[]).slice(0,4);
+ const items=(p.history||[]).slice(0,6);
  if(!items.length){recent.innerHTML='<div class="hint">Aucun élément enregistré.</div>';}
  else items.forEach(h=>{
    const d=document.createElement('div');d.className='entry';
@@ -526,24 +693,21 @@ function calcTerm(){
  $('termDetail').textContent='DPA estimée : '+dpaUTC.toLocaleDateString('fr-FR',{timeZone:'UTC'});
  const now=new Date();
  const nowDays=Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-Date.UTC(y,m-1,d))/86400000);
- const weeks=Math.floor(nowDays/7);
+ const weeks=Math.floor((nowDays+14)/7);
  $('termSuggestion').textContent=weeks<14?'Début de grossesse : les modèles de bilans et documents de début de suivi pourront être proposés ici.':weeks<28?'Deuxième trimestre : l’application peut proposer les prescriptions et documents adaptés à ce terme.':'Troisième trimestre : suivi, examens et documents peuvent être suggérés automatiquement.';
  syncConsultTerm();
 }
 function termFrom(ddg,date=new Date()){
  if(!ddg)return '—';
  const [y,m,d]=ddg.split('-').map(Number);
- const startUTC=Date.UTC(y,m-1,d);
+ const conceptionUTC=Date.UTC(y,m-1,d);
  let targetUTC;
  if(typeof date==='string'){
-   const [ty,tm,td]=date.split('-').map(Number);
-   targetUTC=Date.UTC(ty,tm-1,td);
- }else{
-   targetUTC=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate());
- }
- const delta=Math.floor((targetUTC-startUTC)/86400000);
- if(delta<0)return 'DDG future';
- const w=Math.floor(delta/7),days=delta%7;
+   const [ty,tm,td]=date.split('-').map(Number); targetUTC=Date.UTC(ty,tm-1,td);
+ }else targetUTC=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate());
+ const pregnancyDays=Math.floor((targetUTC-conceptionUTC)/86400000)+14;
+ if(pregnancyDays<0)return 'DDG future';
+ const w=Math.floor(pregnancyDays/7),days=pregnancyDays%7;
  return `${w} SA + ${days} j`;
 }
 function savePregnancy(){
@@ -593,6 +757,7 @@ function updateConsultPreview(){
  $('consultPreview').innerHTML=`<b>${esc(c.motif)}</b><br>${esc(c.term)}<br><br>${c.inter.length?'<b>Interrogatoire :</b> '+c.inter.map(esc).join(', '):'Aucun élément coché'}<br><br><b>TA :</b> ${esc(c.ta||'—')} &nbsp; <b>Poids :</b> ${esc(c.poids||'—')}<br><b>HU :</b> ${esc(c.hu||'—')} &nbsp; <b>BCF :</b> ${esc(c.bcf||'—')}<br><br>${c.cat.length?'<b>CAT :</b> '+c.cat.map(esc).join(', '):''}`;
 }
 document.querySelectorAll('#consult input,#consult textarea,#consult select').forEach(x=>x.addEventListener('input',updateConsultPreview));
+document.addEventListener('change',e=>{if(e.target?.id==='extraEchoDate'){const p=active();$('extraEchoTerm').value=p?.pregnancy?.ddg?termFrom(p.pregnancy.ddg,e.target.value):''}});
 $('csDate').addEventListener('change',syncConsultTerm);
 $('csDate').addEventListener('input',syncConsultTerm);
 function saveConsult(){
@@ -669,12 +834,158 @@ function printRx(){
  }catch(e){console.error(e)}
  setTimeout(()=>window.print(),150);
 }
+
+function ensureEchoData(){
+ const p=active(); if(!p)return null;
+ p.echos=p.echos||{}; p.extraEchos=p.extraEchos||[]; return p;
+}
+function renderEchoRegistry(){
+ const dl=$('echoRegistryList'); if(!dl)return; dl.innerHTML='';
+ (db.echographists||[]).forEach(e=>{const o=document.createElement('option');o.value=e.name;o.label=e.approval||'';dl.appendChild(o)});
+}
+function fillEchoApprovalFromRegistry(){
+ const found=(db.echographists||[]).find(e=>norm(e.name)===norm($('t1EchoName').value));
+ if(found)$('t1EchoApproval').value=found.approval||'';
+}
+function registerEcho(name,approval){
+ if(!name)return;
+ const i=(db.echographists||[]).findIndex(e=>norm(e.name)===norm(name));
+ if(i>=0){if(approval)db.echographists[i].approval=approval}
+ else db.echographists.push({name,approval});
+}
+function loadEchoForm(){
+ const p=ensureEchoData(); if(!p)return;
+ renderEchoRegistry();
+ const t1=p.echos.t1||{}, t2=p.echos.t2||{}, t3=p.echos.t3||{};
+ $('t1Date').value=t1.date||''; $('t1Ddg').value=t1.ddg||p.pregnancy?.ddg||'';
+ $('t1EchoName').value=t1.echoName||''; $('t1EchoApproval').value=t1.echoApproval||'';
+ $('t1Cn').value=t1.cn||''; $('t1Lcc').value=t1.lcc||''; $('t1Weight').value=t1.weight||'';
+ $('t2Date').value=t2.date||''; $('t2Normal').value=t2.normal||''; $('t2Comments').value=t2.comments||'';
+ $('t3Date').value=t3.date||''; $('t3Normal').value=t3.normal||''; $('t3Comments').value=t3.comments||'';
+ updateT1Window(); renderExtraEchos();
+ if(!$('extraEchoDate').value)$('extraEchoDate').value=today();
+ $('extraEchoTerm').value=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg,$('extraEchoDate').value):'';
+}
+function markerWindow(ddg){
+ if(!ddg)return null;
+ const [y,m,d]=ddg.split('-').map(Number);
+ // DDG = conception. 11 SA = DDG + 9 weeks; 13 SA + 6 = DDG + 11 weeks + 6 days.
+ const start=new Date(Date.UTC(y,m-1,d+63));
+ const end=new Date(Date.UTC(y,m-1,d+83));
+ return {start:start.toISOString().slice(0,10),end:end.toISOString().slice(0,10)};
+}
+function updateT1Window(){
+ const ddg=$('t1Ddg')?.value||active()?.pregnancy?.ddg||'';
+ const box=$('t1WindowBox'); if(!box)return;
+ const w=markerWindow(ddg);
+ if(!w){box.innerHTML='Renseigne la DDG pour calculer les dates des marqueurs sériques.';return}
+ box.innerHTML=`<strong>Marqueurs sériques du 1er trimestre</strong><div class="lab-window">du ${fmtDate(w.start)} au ${fmtDate(w.end)}</div><span class="hint">Fenêtre 11 SA + 0 à 13 SA + 6.</span>`;
+}
+function saveT1(){
+ const p=ensureEchoData(); if(!p)return;
+ const ddg=$('t1Ddg').value||p.pregnancy?.ddg||'';
+ p.echos.t1={date:$('t1Date').value,ddg,echoName:$('t1EchoName').value.trim(),echoApproval:$('t1EchoApproval').value.trim(),cn:$('t1Cn').value,lcc:$('t1Lcc').value,weight:$('t1Weight').value};
+ if(ddg){p.pregnancy=p.pregnancy||{};p.pregnancy.ddg=ddg}
+ registerEcho(p.echos.t1.echoName,p.echos.t1.echoApproval);
+ p.history=p.history||[]; p.history.unshift({type:'Échographie T1',date:p.echos.t1.date||today(),summary:`CN ${p.echos.t1.cn||'—'} mm · LCC ${p.echos.t1.lcc||'—'} mm`});
+ persist(); renderEchoRegistry(); renderDossier(); alert('Échographie T1 enregistrée.');
+}
+function saveEchoSimple(which){
+ const p=ensureEchoData(); if(!p)return;
+ const prefix=which==='t2'?'t2':'t3';
+ p.echos[prefix]={date:$(prefix+'Date').value,normal:$(prefix+'Normal').value,comments:$(prefix+'Comments').value};
+ p.history=p.history||[]; p.history.unshift({type:'Échographie '+prefix.toUpperCase(),date:p.echos[prefix].date||today(),summary:'Habituelle : '+(p.echos[prefix].normal||'—')});
+ persist(); renderDossier(); alert('Échographie '+prefix.toUpperCase()+' enregistrée.');
+}
+function addExtraEcho(){
+ const p=ensureEchoData(); if(!p)return;
+ const date=$('extraEchoDate').value||today();
+ const item={id:crypto.randomUUID(),date,term:$('extraEchoTerm').value||(p.pregnancy?.ddg?termFrom(p.pregnancy.ddg,date):''),reason:$('extraEchoReason').value,conclusion:$('extraEchoConclusion').value};
+ p.extraEchos.unshift(item); p.history=p.history||[]; p.history.unshift({type:'Échographie supplémentaire',date,summary:(item.term?item.term+' · ':'')+(item.reason||'')});
+ persist(); $('extraEchoReason').value='';$('extraEchoConclusion').value='';renderExtraEchos();
+}
+function renderExtraEchos(){
+ const p=active(),el=$('extraEchoList');if(!el||!p)return;el.innerHTML='';
+ (p.extraEchos||[]).forEach(x=>{const d=document.createElement('div');d.className='echo-card';d.innerHTML=`<strong>${fmtDate(x.date)} — ${esc(x.term||'')}</strong><br><span class="hint">${esc(x.reason||'')}</span><p>${esc(x.conclusion||'')}</p>`;el.appendChild(d)});
+ if(!(p.extraEchos||[]).length)el.innerHTML='<div class="hint">Aucune échographie supplémentaire.</div>';
+}
+function printT1Markers(){
+ const p=active(); if(!p)return;
+ const t1=p.echos?.t1||{}; const ddg=t1.ddg||p.pregnancy?.ddg; if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
+ const w=markerWindow(ddg);
+ $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>Tél. 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
+ <div><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong><br>N° RPPS : <strong>10004054820</strong></div>
+ <h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse):''}</p>
+ <p>Date de début de grossesse : <strong>${fmtDate(ddg)}</strong><br>DPA : <strong>${calcDpaText(ddg)}</strong></p>
+ <h2>Prescription — marqueurs sériques maternels de la trisomie 21</h2>
+ <p>Faire pratiquer un prélèvement sanguin pour le dosage des marqueurs sériques du premier trimestre (PAPP-A et sous-unité β libre de l’hCG), entre le <strong>${fmtDate(w.start)}</strong> et le <strong>${fmtDate(w.end)}</strong>.</p>
+ <p style="text-align:right;margin-top:60px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
+ window.print();
+}
+function printT1ConsentLab(){
+ const p=active(); if(!p)return;
+ const t1=p.echos?.t1||{}; const ddg=t1.ddg||p.pregnancy?.ddg; if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
+ const w=markerWindow(ddg);
+ $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme — Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge — 85000 La Roche-sur-Yon — 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
+ <h1>Évaluation du risque de trisomie 21 fœtale — fiche laboratoire</h1>
+ <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} · ${p.dob?'née le '+fmtDate(p.dob):''}<br><b>Adresse :</b> ${esc(p.adresse||'—')}</p>
+ <p><b>Échographiste :</b> ${esc(t1.echoName||'—')} &nbsp; <b>N° agrément :</b> ${esc(t1.echoApproval||'—')}<br>
+ <b>Date T1 :</b> ${t1.date?fmtDate(t1.date):'—'} &nbsp; <b>DDG :</b> ${fmtDate(ddg)}<br>
+ <b>CN :</b> ${esc(t1.cn||'—')} mm &nbsp; <b>LCC :</b> ${esc(t1.lcc||'—')} mm &nbsp; <b>Poids :</b> ${esc(t1.weight||'—')} kg</p>
+ <p><b>Fenêtre de prélèvement 1er trimestre :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}.</p>
+ <hr><h2>Information, demande et consentement</h2>
+ <p>Je soussignée ${esc(p.prenom)} ${esc(p.nom)} atteste avoir reçu une information sur le dépistage prénatal de la trisomie 21, sur le caractère probabiliste du résultat, sur les examens pouvant être proposés selon le niveau de risque et sur la possibilité de ne pas réaliser ce dépistage.</p>
+ <p>Je demande la réalisation du dosage des marqueurs sériques maternels et consens au prélèvement sanguin nécessaire à cette analyse.</p>
+ <div style="display:flex;justify-content:space-between;margin-top:55px"><div>Signature de la patiente</div><div>Signature et tampon du prescripteur</div></div>
+ <p style="font-size:10px;margin-top:55px">Prototype : formulaire à confronter au formulaire réglementaire en vigueur avant utilisation clinique.</p>`;
+ window.print();
+}
+
 function renderHistory(){
  const p=active(), el=$('historyList'); el.innerHTML='';
  if(!p){el.innerHTML='<div class="hint">Aucune patiente sélectionnée.</div>';return}
  if(!p.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}
  p.history.forEach(h=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;el.appendChild(d)})
 }
+
+const BILAN_DB='sf_bilans_v1', BILAN_STORE='pdfs';
+function openBilanDb(){
+ return new Promise((resolve,reject)=>{
+   const req=indexedDB.open(BILAN_DB,1);
+   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(BILAN_STORE))req.result.createObjectStore(BILAN_STORE,{keyPath:'id'})};
+   req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+ });
+}
+async function storeBilanPdf(){
+ const p=active(), f=$('bilanFile')?.files?.[0]; if(!p){alert('Ouvre un dossier patiente.');return} if(!f){alert('Choisis un PDF.');return}
+ if(f.type!=='application/pdf'){alert('Le fichier doit être un PDF.');return}
+ const id=crypto.randomUUID(),dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');
+ tx.objectStore(BILAN_STORE).put({id,patientId:p.id,name:f.name,date:new Date().toISOString(),blob:f});
+ await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
+ $('bilanFile').value='';renderBilans();
+}
+async function getPatientBilans(){
+ const p=active();if(!p)return[];
+ const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readonly'),req=tx.objectStore(BILAN_STORE).getAll();
+ const all=await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error)});
+ return all.filter(x=>x.patientId===p.id).sort((a,b)=>b.date.localeCompare(a.date));
+}
+async function renderBilans(){
+ const el=$('bilanList');if(!el)return;el.innerHTML='<div class="hint">Chargement…</div>';
+ const list=await getPatientBilans();el.innerHTML='';
+ if(!list.length){el.innerHTML='<div class="hint">Aucun PDF dans ce dossier.</div>';return}
+ list.forEach(x=>{
+   const d=document.createElement('div');d.className='file-row';
+   d.innerHTML=`<div><strong>📄 ${esc(x.name)}</strong><div class="file-meta">${new Date(x.date).toLocaleString('fr-FR')}</div></div>
+   <div class="small-actions"><button class="btn secondary" onclick="openBilan('${x.id}')">Ouvrir</button><button class="btn secondary" onclick="downloadBilan('${x.id}')">Extraire</button><button class="btn danger" onclick="deleteBilan('${x.id}')">Supprimer</button></div>`;
+   el.appendChild(d);
+ });
+}
+async function getBilan(id){const dbi=await openBilanDb(),req=dbi.transaction(BILAN_STORE,'readonly').objectStore(BILAN_STORE).get(id);return await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error)})}
+async function openBilan(id){const x=await getBilan(id);if(!x)return;window.open(URL.createObjectURL(x.blob),'_blank')}
+async function downloadBilan(id){const x=await getBilan(id);if(!x)return;const a=document.createElement('a');a.href=URL.createObjectURL(x.blob);a.download=x.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+async function deleteBilan(id){if(!confirm('Supprimer ce PDF du dossier local ?'))return;const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);tx.oncomplete=renderBilans}
+
 function exportBackup(){
  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-sage-femme-v1.json';a.click();URL.revokeObjectURL(a.href);
