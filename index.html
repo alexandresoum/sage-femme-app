@@ -425,7 +425,9 @@ function renderHomePatients(){
  });
  el.innerHTML='';
  if(!list.length){
-   el.innerHTML='<div class="hint">'+(q?'Aucune patiente trouvée.':'Aucune patiente enregistrée. Clique sur « Nouvelle patiente ».')+'</div>';
+   el.innerHTML=q
+     ? '<div class="notice">Aucune patiente trouvée pour « '+esc(q)+' ». <button class="btn primary" style="margin-left:10px" onclick="startNewPatient()">Créer une nouvelle patiente</button></div>'
+     : '<div class="hint">Aucune patiente enregistrée. Clique sur « Nouvelle patiente ».</div>';
    return;
  }
  list.slice(0,30).forEach(p=>{
@@ -449,7 +451,7 @@ function renderDossier(){
  if(p.pregnancy?.ddg){
    $('dossierPregnancy').innerHTML='<strong>'+termFrom(p.pregnancy.ddg)+'</strong><br>DDG : '+fmtDate(p.pregnancy.ddg)+'<br>DPA estimée : '+calcDpaText(p.pregnancy.ddg);
  }else{
-   $('dossierPregnancy').innerHTML='Aucune grossesse enregistrée. <button class="btn secondary" style="margin-top:8px" onclick="go(\\'pregnancy\\')">Ajouter une grossesse</button>';
+   $('dossierPregnancy').innerHTML=`Aucune grossesse enregistrée. <button class="btn secondary" style="margin-top:8px" onclick="go('pregnancy')">Ajouter une grossesse</button>`;
  }
  const recent=$('dossierRecent');
  recent.innerHTML='';
