@@ -563,6 +563,7 @@ const KEY='sf_local_v1';
 let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null,"echographists":[]}');
 db.echographists=db.echographists||[];
 db.patients=db.patients||[];
+let activePatientRef=null;
 
 function migratePatients(){
  let changed=false;
@@ -719,36 +720,47 @@ function normalizeLegacyPatientRecord(p,index){
 function selectPatientAt(index){
  const list=Array.isArray(db.patients)?db.patients:[];
  const i=Number(index);
- if(!Number.isInteger(i) || i<0 || i>=list.length){showToast('Dossier introuvable');return}
+ if(!Number.isInteger(i)||i<0||i>=list.length){showToast('Dossier introuvable');return}
+
  const p=normalizeLegacyPatientRecord(list[i],i);
  db.patients[i]=p;
+
+ activePatientRef=p;
  db.activeIndex=i;
  db.activeId=p.id;
  localStorage.setItem(KEY,JSON.stringify(db));
 
+ renderActive();
+
  try{loadPatient()}catch(e){console.error('loadPatient',e)}
- try{renderActive()}catch(e){console.error('renderActive',e)}
  try{renderDossier()}catch(e){console.error('renderDossier',e)}
  try{renderHistory()}catch(e){console.error('renderHistory',e)}
  try{loadEchoForm()}catch(e){console.error('loadEchoForm',e)}
 
  go('dossier');
+ renderActive();
+
  showToast('Dossier de '+((p.nom||'')+' '+(p.prenom||'')).trim()+' ouvert');
  setTimeout(()=>{try{maybeShowPostit()}catch(e){}},180);
 }
 
 function active(){
+ if(activePatientRef && typeof activePatientRef==='object'){
+   return activePatientRef;
+ }
+
  const list=Array.isArray(db.patients)?db.patients:[];
  const id=db.activeId;
 
  if(id!==null && id!==undefined && id!==''){
    const byId=list.find(p=>String(p?.id)===String(id));
-   if(byId)return byId;
+   if(byId){activePatientRef=byId;return byId;}
  }
 
  const i=Number(db.activeIndex);
  if(Number.isInteger(i) && i>=0 && i<list.length){
-   return normalizeLegacyPatientRecord(list[i],i);
+   activePatientRef=normalizeLegacyPatientRecord(list[i],i);
+   return activePatientRef;
  }
  return null;
 }
@@ -1066,15 +1078,29 @@ function printFullHistory(){
 function clearDemo(){ if(confirm('Effacer toutes les données locales de cette V1 ?')){localStorage.removeItem(KEY);db={patients:[],activeId:null};location.reload();} }
 function go(id){
  const clinical=['dossier','pregnancy','consult','rx','echos','bilans','history'];
+
  if(clinical.includes(id) && !active()){
    showToast('Sélectionne d’abord une patiente');
    id='home';
  }
+
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
  const target=$(id);
  if(target)target.classList.add('active');
+
  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
- const labels={home:'Accueil',dossier:'Dossier patiente',patientEdit:'Informations patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',echos:'Échographies',bilans:'Bilans / PDF',history:'Historique'};
+
+ const labels={
+   home:'Accueil',
+   dossier:'Dossier patiente',
+   patientEdit:'Informations patiente',
+   pregnancy:'Grossesse / Roulette',
+   consult:'Consultation grossesse',
+   rx:'Ordonnance',
+   echos:'Échographies',
+   bilans:'Bilans / PDF',
+   history:'Historique'
+ };
  if($('pageTitle'))$('pageTitle').textContent=labels[id]||'';
 
  if(id==='consult'){try{hydrateConsultTerm();updateConsultMode()}catch(e){console.error(e)}}
@@ -1086,6 +1112,7 @@ function go(id){
 
  const back=$('returnConsultBtn');
  if(back)back.style.display=(id==='rx'&&activeConsultDraft)?'inline-block':'none';
+
  renderActive();
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{
@@ -1142,6 +1169,8 @@ function savePatient(){
  if(idx>=0) db.patients[idx]=base;
  else db.patients.unshift(base);
 
+ activePatientRef=base;
+ db.activeIndex=(db.patients||[]).findIndex(x=>String(x?.id)===String(id));
  db.activeId=id;
  localStorage.setItem(KEY,JSON.stringify(db));
  renderActive();
@@ -1232,6 +1261,7 @@ function startNewPatientFromSearch(){
  $('dob').value=d;
 }
 function startNewPatient(){
+ activePatientRef=null;
  db.activeId=null;db.activeIndex=null;
  ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','alertNote','ddr','theoreticalDdg','ddg','dpa'].forEach(id=>{
    const el=$(id);if(el)el.value='';
@@ -1246,6 +1276,7 @@ function startNewPatient(){
  go('patientEdit');
 }
 function newPatient(){
+ activePatientRef=null;
  db.activeId=null;db.activeIndex=null;
  ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>$(id).value='');
  renderAll();
@@ -1291,6 +1322,7 @@ function loadPatient(){
 }
 
 function exitPatient(){
+ activePatientRef=null;
  db.activeId=null;db.activeIndex=null;
  localStorage.setItem(KEY,JSON.stringify(db));
  ['searchNom','searchPrenom','searchDob'].forEach(id=>{const el=$(id);if(el)el.value='';});
@@ -1542,29 +1574,35 @@ function renderPatients(){
  });
 }
 function renderActive(){
- let p=active();
- if(p){
-   const idx=(db.patients||[]).indexOf(p);
-   p=normalizeLegacyPatientRecord(p,idx>=0?idx:0);
- }
+ const p=active();
  document.body.classList.toggle('has-patient',!!p);
 
- const top=$('patientTop'),sideName=$('sidebarPatientName'),sideInfo=$('sidebarPatientInfo');
+ const top=$('patientTop');
+ const sideName=$('sidebarPatientName');
+ const sideInfo=$('sidebarPatientInfo');
 
  if(p){
-   const term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
-   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div><div>
-     <div class="context-title">Dossier patiente actif</div>
-     <div class="patient-banner-main">${esc(p.nom||'')} ${esc(p.prenom||'')}</div>
-     <div class="patient-banner-sub">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`;
-   if(sideName)sideName.textContent=((p.nom||'')+' '+(p.prenom||'')).trim();
+   let term='';
+   try{term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):''}catch(e){term=''}
+
+   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div>
+     <div>
+       <div class="context-title">Dossier patiente actif</div>
+       <div class="patient-banner-main">${esc(p.nom||'')} ${esc(p.prenom||'')}</div>
+       <div class="patient-banner-sub">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div>
+     </div>`;
+
+   if(sideName)sideName.textContent=((p.nom||'')+' '+(p.prenom||'')).trim()||'Patiente';
    if(sideInfo)sideInfo.innerHTML=(p.dob?'Née le '+fmtDate(p.dob):'')+(term?'<br><strong>'+term+'</strong>':'');
-   if($('activePatientCard'))$('activePatientCard').innerHTML=`<strong>${esc(p.nom||'')} ${esc(p.prenom||'')}</strong>`;
  }else{
-   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div><div><div class="context-title">Dossier patiente</div><div class="patient-banner-main">Aucune patiente sélectionnée</div><div class="patient-banner-sub">Sélectionne ou crée une patiente</div></div>`;
+   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div>
+     <div>
+       <div class="context-title">Dossier patiente</div>
+       <div class="patient-banner-main">Aucune patiente sélectionnée</div>
+       <div class="patient-banner-sub">Sélectionne ou crée une patiente</div>
+     </div>`;
    if(sideName)sideName.textContent='Aucune patiente';
    if(sideInfo)sideInfo.textContent='Sélectionne ou crée une patiente';
-   if($('activePatientCard'))$('activePatientCard').innerHTML='<strong>Aucune patiente sélectionnée</strong>';
  }
 }
 function calcTerm(){
@@ -1865,6 +1903,15 @@ async function importPatientDatabase(event){
  event.target.value='';
 }
 
+try{
+ const savedList=Array.isArray(db.patients)?db.patients:[];
+ const savedIndex=Number(db.activeIndex);
+ if(Number.isInteger(savedIndex)&&savedIndex>=0&&savedIndex<savedList.length){
+   activePatientRef=savedList[savedIndex];
+ }else if(db.activeId!==null&&db.activeId!==undefined){
+   activePatientRef=savedList.find(p=>String(p?.id)===String(db.activeId))||null;
+ }
+}catch(e){console.error('restore active patient',e)}
 try{renderAll()}catch(e){console.error('renderAll startup',e)}
 try{if($('rxList')&&!$('rxList').children.length)addRxLine()}catch(e){console.error(e)}
 try{updateLocalPatientCount()}catch(e){console.error(e)}
