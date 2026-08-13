@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.8 locale</title>
+<title>Cabinet Sage-Femme — V2.10 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -290,7 +290,38 @@ textarea{resize:vertical}
             <div class="field"><label>DDG retenue / corrigée</label><input id="ddg" type="date" oninput="calcTerm()"></div>
             <div class="field"><label>DPA calculée</label><input id="dpa" readonly></div>
           </div>
-          <div class="field"><label>Datation retenue par</label><select id="datingMethod"><option>DDR</option><option>Échographie T1</option><option>Échographie précoce</option><option>Autre</option></select></div>
+          <div class="field"><label>Datation retenue par</label><select id="datingMethod" onchange="toggleFivFields()"><option>DDR</option><option>Échographie T1</option><option>Échographie précoce</option><option>FIV</option><option>Autre</option></select></div>
+
+<div class="row" style="margin-top:12px">
+  <div class="field">
+    <label>Nombre de fœtus</label>
+    <select id="fetusCount" onchange="toggleChorionicity()">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
+  </div>
+  <div class="field" id="chorionicityField" style="display:none">
+    <label>Chorionicité / amniocité</label>
+    <select id="chorionicity">
+      <option value="">— Sélectionner —</option>
+      <option value="BCBA">BCBA — Bichoriale biamniotique</option>
+      <option value="MCBA">MCBA — Monochoriale biamniotique</option>
+      <option value="MCMA">MCMA — Monochoriale monoamniotique</option>
+      <option value="TCTA">TCTA — Trichoriale triamniotique</option>
+      <option value="Autre">Autre / situation particulière</option>
+    </select>
+  </div>
+</div>
+
+<div id="fivFields" style="display:none;margin-top:12px">
+  <div class="row">
+    <div class="field"><label>Nombre d’embryons transférés</label><input id="embryoCount" type="number" min="1"></div>
+    <div class="field"><label>Âge de la donneuse (si don d’ovocytes)</label><input id="donorAge" type="number" min="18" max="60"></div>
+  </div>
+  <div class="hint">Ces informations sont reprises automatiquement dans le consentement T21.</div>
+</div>
           <div class="actions">
             <button class="btn primary" type="button" onclick="savePregnancy()">Enregistrer la grossesse</button>
             <button class="btn secondary" type="button" onclick="closePregnancy()">Clôturer cette grossesse</button>
@@ -601,10 +632,7 @@ localStorage.setItem(KEY,JSON.stringify(db));
 function persist(){localStorage.setItem(KEY,JSON.stringify(db))}
 function active(){return db.patients.find(p=>String(p.id)===String(db.activeId))||null}
 function activePregnancy(p=active()){return p?.pregnancies?.find(x=>x.status==='active')||null}
-function syncLegacyPregnancy(p=active()){
- if(!p)return;const a=activePregnancy(p);
- p.pregnancy=a?{ddr:a.ddr||'',theoreticalDdg:a.theoreticalDdg||'',ddg:a.ddg||'',datingMethod:a.datingMethod||''}:null;
-}
+function syncLegacyPregnancy(p=active()){if(!p)return;const a=activePregnancy(p);p.pregnancy=a?{ddr:a.ddr||'',theoreticalDdg:a.theoreticalDdg||'',ddg:a.ddg||'',datingMethod:a.datingMethod||'',embryoCount:a.embryoCount||'',donorAge:a.donorAge||'',fetusCount:a.fetusCount||1,chorionicity:a.chorionicity||''}:null;}
 
 function showToast(msg){
  const t=$('toast');t.textContent='✓ '+msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400)
@@ -891,20 +919,50 @@ function renderDossier(){
  countBilans().then(n=>$('dossierBilanCount').textContent=n).catch(()=>{})
 }
 
+function toggleFivFields(){const f=$('datingMethod')?.value==='FIV';if($('fivFields'))$('fivFields').style.display=f?'block':'none';}
+function toggleChorionicity(){
+ const n=Number($('fetusCount')?.value||1);
+ if($('chorionicityField'))$('chorionicityField').style.display=n>1?'block':'none';
+ if(n<=1 && $('chorionicity'))$('chorionicity').value='';
+}
 function loadPregnancyForm(){
- const p=active(),a=activePregnancy(p);$('ddr').value=a?.ddr||'';$('theoreticalDdg').value=a?.theoreticalDdg||'';$('ddg').value=a?.ddg||'';$('datingMethod').value=a?.datingMethod||'DDR';calcTerm();renderPregnancyEpisodes()
+ const p=active(),a=activePregnancy(p);
+ $('ddr').value=a?.ddr||'';
+ $('theoreticalDdg').value=a?.theoreticalDdg||'';
+ $('ddg').value=a?.ddg||'';
+ $('datingMethod').value=a?.datingMethod||'DDR';
+ $('embryoCount').value=a?.embryoCount||'';
+ $('donorAge').value=a?.donorAge||'';
+ $('fetusCount').value=String(a?.fetusCount||1);
+ $('chorionicity').value=a?.chorionicity||'';
+ toggleFivFields();
+ toggleChorionicity();
+ calcTerm();
+ renderPregnancyEpisodes()
 }
 function calcFromDdr(){const ddr=$('ddr').value;if(!ddr)return;$('theoreticalDdg').value=addDays(ddr,14);if(!$('ddg').value)$('ddg').value=addDays(ddr,14);calcTerm()}
 function calcTerm(){const ddg=$('ddg').value;$('dpa').value=ddg?fmtDate(calcDpa(ddg)):'';$('termToday').textContent=ddg?termFrom(ddg):'—';$('termHint').textContent=ddg?`DPA estimée : ${fmtDate(calcDpa(ddg))}`:''}
 function savePregnancy(){
  const p=active(),ddg=parseDateAny($('ddg').value);if(!p)return;if(!ddg){showToast('Renseigne une DDR ou une DDG');return}
  let a=activePregnancy(p);if(!a){a={id:uid('preg'),status:'active',startedAt:new Date().toISOString()};p.pregnancies.push(a)}
- Object.assign(a,{ddr:parseDateAny($('ddr').value),theoreticalDdg:parseDateAny($('theoreticalDdg').value),ddg,datingMethod:$('datingMethod').value});syncLegacyPregnancy(p);
+ const isFiv=$('datingMethod').value==='FIV';
+ const fetusCount=Number($('fetusCount').value||1);
+ Object.assign(a,{
+   ddr:parseDateAny($('ddr').value),
+   theoreticalDdg:parseDateAny($('theoreticalDdg').value),
+   ddg,
+   datingMethod:$('datingMethod').value,
+   embryoCount:isFiv?$('embryoCount').value:'',
+   donorAge:isFiv?$('donorAge').value:'',
+   fetusCount,
+   chorionicity:fetusCount>1?$('chorionicity').value:''
+ });
+ syncLegacyPregnancy(p);
  p.history.unshift({id:uid('hist'),recordType:'pregnancy',type:'Grossesse',date:today(),summary:`DDG ${fmtDate(ddg)} · ${termFrom(ddg)}`});persist();$('pregnancyStatus').innerHTML=`<div class="success">✓ Grossesse enregistrée — ${termFrom(ddg)}</div>`;renderPregnancyEpisodes();renderDossier();loadEchoForm();renderActive();showToast('Grossesse enregistrée')
 }
 function closePregnancy(){const p=active(),a=activePregnancy(p);if(!a){showToast('Aucune grossesse en cours');return}a.status='closed';a.closedAt=new Date().toISOString();syncLegacyPregnancy(p);persist();renderPregnancyEpisodes();renderDossier();renderActive();showToast('Grossesse clôturée')}
-function newPregnancy(){const p=active();if(activePregnancy(p)){showToast('Clôture d’abord la grossesse en cours');return}p.pregnancies.push({id:uid('preg'),status:'active',startedAt:new Date().toISOString(),ddr:'',theoreticalDdg:'',ddg:'',datingMethod:'DDR'});syncLegacyPregnancy(p);persist();loadPregnancyForm();showToast('Nouvelle grossesse créée')}
-function renderPregnancyEpisodes(){const p=active(),el=$('pregnancyEpisodes');el.innerHTML='';[...(p?.pregnancies||[])].reverse().forEach((x,i)=>{const d=document.createElement('div');d.className='preg-row '+(x.status==='active'?'active':'');d.innerHTML=`<strong>Grossesse</strong> <span class="badge ${x.status==='active'?'':'closed'}">${x.status==='active'?'En cours':'Clôturée'}</span><div class="hint">${x.ddr?'DDR '+fmtDate(x.ddr)+' · ':''}${x.ddg?'DDG '+fmtDate(x.ddg)+' · '+termFrom(x.ddg):''}${x.closedAt?' · clôturée le '+new Date(x.closedAt).toLocaleDateString('fr-FR'):''}</div>`;el.appendChild(d)})}
+function newPregnancy(){const p=active();if(activePregnancy(p)){showToast('Clôture d’abord la grossesse en cours');return}p.pregnancies.push({id:uid('preg'),status:'active',startedAt:new Date().toISOString(),ddr:'',theoreticalDdg:'',ddg:'',datingMethod:'DDR',embryoCount:'',donorAge:'',fetusCount:1,chorionicity:''});syncLegacyPregnancy(p);persist();loadPregnancyForm();showToast('Nouvelle grossesse créée')}
+function renderPregnancyEpisodes(){const p=active(),el=$('pregnancyEpisodes');el.innerHTML='';[...(p?.pregnancies||[])].reverse().forEach((x,i)=>{const d=document.createElement('div');d.className='preg-row '+(x.status==='active'?'active':'');d.innerHTML=`<strong>Grossesse</strong> <span class="badge ${x.status==='active'?'':'closed'}">${x.status==='active'?'En cours':'Clôturée'}</span><div class="hint">${x.ddr?'DDR '+fmtDate(x.ddr)+' · ':''}${x.ddg?'DDG '+fmtDate(x.ddg)+' · '+termFrom(x.ddg):''}${x.fetusCount?' · '+x.fetusCount+' fœtus':''}${x.chorionicity?' · '+esc(x.chorionicity):''}${x.closedAt?' · clôturée le '+new Date(x.closedAt).toLocaleDateString('fr-FR'):''}</div>`;el.appendChild(d)})}
 
 function checked(container){return [...$(container).querySelectorAll('input:checked')].map(x=>x.value)}
 function consultObject(){
@@ -1146,6 +1204,11 @@ function printT1Consent(){
  const w=markerWindow(t.ddg),p=active();
  const term=termFrom(t.ddg,t.date);
  const address=patientAddressText(p)||'—';
+ const preg=activePregnancy(p)||{};
+ const isFiv=preg.datingMethod==='FIV';
+ const fetusCount=Number(preg.fetusCount||1);
+ const fetalDetails=`<div><b>Nombre de fœtus</b><br><strong>${esc(fetusCount)}</strong></div>${fetusCount>1?`<div><b>Chorionicité / amniocité</b><br><strong>${esc(preg.chorionicity||'—')}</strong></div>`:''}`;
+ const fivDetails=isFiv?`<div><b>Mode de conception</b><br><strong>FIV</strong></div><div><b>Nombre d’embryons transférés</b><br><strong>${esc(preg.embryoCount||'—')}</strong></div><div><b>Âge de la donneuse</b><br><strong>${preg.donorAge?esc(preg.donorAge)+' ans':'—'}</strong></div>`:'';
 
  const title=`<h2>ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2>
  <div class="subtitle"><b>Information, demande et consentement</b><br>Exemplaire patiente</div>`;
@@ -1173,6 +1236,8 @@ function printT1Consent(){
      <div><b>Clarté nucale (CN)</b><br><strong>${esc(t.cn||'—')} mm</strong></div>
      <div><b>Poids maternel</b><br><strong>${esc(t.weight||'—')} kg</strong></div>
      <div><b>Période de prélèvement</b><br><strong>${fmtDate(w.start)} au ${fmtDate(w.end)}</strong></div>
+     ${fetalDetails}
+     ${fivDetails}
    </div>
  </div>`;
 
@@ -1195,7 +1260,7 @@ function printT1Consent(){
  <b>DDG :</b> ${fmtDate(t.ddg)} — <b>Date T1 :</b> ${fmtDate(t.date)} — <b>Terme à la T1 :</b> ${esc(term)}<br>
  <b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>Agrément :</b> ${esc(t.echoApproval||'—')}<br>
  <b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg<br>
- <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p>
+ <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}<br><b>Nombre de fœtus :</b> ${esc(fetusCount)}${fetusCount>1?` — <b>Chorionicité :</b> ${esc(preg.chorionicity||'—')}`:''}${isFiv?`<br><b>FIV :</b> oui — <b>Nombre d’embryons transférés :</b> ${esc(preg.embryoCount||'—')} — <b>Âge de la donneuse :</b> ${preg.donorAge?esc(preg.donorAge)+' ans':'—'}`:''}</p>
  </div>`;
 
  const page1=`${title}${professionals}${patient}${echoBlock}${info}${signatures}${lab}`;
@@ -1212,7 +1277,7 @@ function printT1Consent(){
  <p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br>
  <b>Date T1 :</b> ${fmtDate(t.date)} &nbsp; <b>Terme :</b> ${esc(term)}<br>
  <b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br>
- <b>Prélèvement :</b> ${fmtDate(w.start)} au ${fmtDate(w.end)}</p>`;
+ <b>Prélèvement :</b> ${fmtDate(w.start)} au ${fmtDate(w.end)}<br><b>Fœtus :</b> ${esc(fetusCount)}${fetusCount>1?` — <b>Chorionicité :</b> ${esc(preg.chorionicity||'—')}`:''}${isFiv?`<br><b>FIV :</b> oui — <b>Embryons transférés :</b> ${esc(preg.embryoCount||'—')} — <b>Âge donneuse :</b> ${preg.donorAge?esc(preg.donorAge)+' ans':'—'}`:''}</p>`;
  const compactInfo=`<h3>INFORMATION ET CONSENTEMENT</h3>
  <p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
  <p>Cette information a porté sur la trisomie 21, la différence entre dépistage et diagnostic, la clarté nucale et les marqueurs sériques maternels permettant d’estimer un risque.</p>
@@ -1258,7 +1323,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.8',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.10',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
