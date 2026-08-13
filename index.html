@@ -216,7 +216,8 @@ body:not(.has-patient) #patientTop{display:none}
         </div>
         <div class="card span-6">
           <h2>Derniers éléments</h2>
-          <div id="dossierRecent" class="timeline"></div>
+          <div id="dossierRecent" class="timeline"></div></div>
+        <div class="card span-12"><h2>Consultations enregistrées</h2><div id="dossierConsultations" class="timeline"></div>
         </div>
       </div>
     </section>
@@ -529,7 +530,13 @@ $('csDate').value=today();
 
 
 let toastTimer=null,openedRecordHtml='',openedRecordTitle='';
-function showToast(message){const t=$('toast');if(!t)return;t.textContent='✓ '+message;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200)}
+function showToast(message){
+ const t=$('toast'); if(!t)return;
+ t.textContent='✓ '+message;
+ t.classList.add('show');
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
 function closeRecordModal(){$('recordModal')?.classList.remove('show')}
 function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=body;$('recordModalTitle').textContent=title;$('recordModalBody').innerHTML=body;$('recordModal').classList.add('show')}
 function documentHeader(title){return `<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>Tél. 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div><h1>${esc(title)}</h1>`}
@@ -583,6 +590,8 @@ function savePatient(){
  renderAll();
  go('dossier');
  setTimeout(()=>{ const p=active(); if(p) console.log('Patiente enregistrée :',p.nom,p.prenom); },0);
+
+ showToast('Dossier patiente enregistré');
 }
 function addSurgery(){
  const el=$('atcdChirInput'); const v=el.value.trim(); if(!v)return;
@@ -662,15 +671,16 @@ function newPatient(){
  renderAll();
 }
 function selectPatient(id){
- const exists=db.patients.some(p=>p.id===id);
- if(!exists){ alert('Dossier patiente introuvable.'); return; }
+ const p=db.patients.find(x=>x.id===id);
+ if(!p){showToast('Dossier introuvable');return}
  db.activeId=id;
- localStorage.setItem(KEY, JSON.stringify(db));
+ localStorage.setItem(KEY,JSON.stringify(db));
  loadPatient();
  renderActive();
  renderHistory();
  renderDossier();
  go('dossier');
+ showToast('Dossier patiente ouvert');
 }
 function loadPatient(){
  const p=active(); if(!p)return;
@@ -723,48 +733,67 @@ function patientMatchScore(p,qn,qp,qd){
 function renderHomePatients(){
  const el=$('homePatientResults'); if(!el)return;
  const qn=norm($('searchNom')?.value), qp=norm($('searchPrenom')?.value), qd=$('searchDob')?.value||'';
- if(!qn&&!qp&&!qd){el.innerHTML='<div class="hint">Saisis au moins un critère pour rechercher une patiente.</div>';return;}
- const ranked=db.patients.map(p=>({p,score:patientMatchScore(p,qn,qp,qd)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score);
- el.innerHTML='';
- if(!ranked.length){
-   const has=qn||qp||qd;
-   el.innerHTML=has
-     ? '<div class="notice">Aucun dossier correspondant. Les informations saisies seront reprises si tu crées une nouvelle patiente.</div>'
-     : '<div class="hint">Saisis un nom, un prénom ou une date de naissance pour rechercher un dossier.</div>';
+ if(!qn&&!qp&&!qd){
+   el.innerHTML='<div class="hint">Saisis au moins un critère pour rechercher une patiente.</div>';
    return;
  }
- ranked.slice(0,20).forEach(({p,score})=>{
-   const d=document.createElement('div'); d.className='search-result';
-   const term=p.pregnancy?.ddg ? termFrom(p.pregnancy.ddg) : '';
+ const ranked=db.patients.map(p=>({p,score:patientMatchScore(p,qn,qp,qd)}))
+   .filter(x=>x.score>=0).sort((a,b)=>b.score-a.score);
+ el.innerHTML='';
+ if(!ranked.length){
+   el.innerHTML='<div class="notice">Aucun dossier correspondant. Les informations saisies seront reprises si tu crées une nouvelle patiente.</div>';
+   return;
+ }
+ ranked.slice(0,20).forEach(({p})=>{
+   const row=document.createElement('div'); row.className='search-result';
+   const term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
    const info=document.createElement('div');
    info.innerHTML=`<div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
-    <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
-   const btn=document.createElement('button'); btn.className='btn primary'; btn.textContent='Ouvrir le dossier';
-   btn.onclick=(ev)=>{ev.stopPropagation();selectPatient(p.id)};
-   d.appendChild(info); d.appendChild(btn); d.onclick=()=>selectPatient(p.id); el.appendChild(d);
+     <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+   const btn=document.createElement('button');
+   btn.type='button'; btn.className='btn primary'; btn.textContent='Ouvrir le dossier';
+   btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatient(p.id)};
+   row.appendChild(info); row.appendChild(btn);
+   el.appendChild(row);
  });
 }
 function renderDossier(){
- const p=active();
- if(!p)return;
- $('dossierName').textContent=(p.nom||'')+' '+(p.prenom||'');
- $('dossierMeta').innerHTML=(p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée')
-   +(p.tel?'<br>Tél. '+esc(p.tel):'')
-   +(p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):'');
- if(p.pregnancy?.ddg){
-   $('dossierPregnancy').innerHTML='<strong>'+termFrom(p.pregnancy.ddg)+'</strong><br>DDG : '+fmtDate(p.pregnancy.ddg)+'<br>DPA estimée : '+calcDpaText(p.pregnancy.ddg);
- }else{
-   $('dossierPregnancy').innerHTML=`Aucune grossesse enregistrée. <button class="btn secondary" style="margin-top:8px" onclick="go('pregnancy')">Ajouter une grossesse</button>`;
+ const p=active();if(!p)return;
+ if($('dossierName'))$('dossierName').textContent=(p.nom||'')+' '+(p.prenom||'');
+ if($('dossierMeta'))$('dossierMeta').innerHTML=(p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée')+(p.tel?'<br>Tél. '+esc(p.tel):'')+(p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):'');
+
+ if($('dossierPregnancy')){
+   $('dossierPregnancy').innerHTML=p.pregnancy?.ddg
+     ? '<strong>'+termFrom(p.pregnancy.ddg)+'</strong><br>DDG : '+fmtDate(p.pregnancy.ddg)+'<br>DPA estimée : '+calcDpaText(p.pregnancy.ddg)
+     : `Aucune grossesse enregistrée. <button class="btn secondary" type="button" style="margin-top:8px" onclick="go('pregnancy')">Ajouter une grossesse</button>`;
  }
+
  const recent=$('dossierRecent');
- recent.innerHTML='';
- const items=(p.history||[]).slice(0,6);
- if(!items.length){recent.innerHTML='<div class="hint">Aucun élément enregistré.</div>';}
- else items.forEach(h=>{
-   const d=document.createElement('div');d.className='entry';
-   d.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;
-   recent.appendChild(d);
- });
+ if(recent){
+   recent.innerHTML='';
+   const items=(p.history||[]).slice(0,6);
+   if(!items.length)recent.innerHTML='<div class="hint">Aucun élément enregistré.</div>';
+   else items.forEach((h,i)=>{
+     const row=document.createElement('div');row.className='entry history-click';
+     row.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;
+     row.onclick=()=>openHistoryRecord(i);
+     recent.appendChild(row);
+   });
+ }
+
+ const csEl=$('dossierConsultations');
+ if(csEl){
+   csEl.innerHTML='';
+   const list=(p.consultations||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+   if(!list.length)csEl.innerHTML='<div class="hint">Aucune consultation enregistrée.</div>';
+   else list.forEach(c=>{
+     const row=document.createElement('div');row.className='entry history-click';
+     const label=c.consultType==='obstetrique'?'Obstétrique':c.consultType==='gynecologie'?'Gynécologie':'Autre';
+     row.innerHTML=`<strong>${fmtDate(c.date)} — ${label}</strong><small>${esc(c.motif||'')}${c.term?' · '+esc(c.term):''}</small>`;
+     row.onclick=()=>openRecordModal('Consultation du '+fmtDate(c.date),consultationHtml(c,p));
+     csEl.appendChild(row);
+   });
+ }
 }
 function calcDpaText(ddg){
  const [y,m,d]=ddg.split('-').map(Number);
@@ -877,6 +906,46 @@ function syncConsultTerm(){
  updateConsultPreview();
 }
 function hydrateConsultTerm(){ syncConsultTerm(); }
+
+function checkedText(container){
+ const el=$(container); if(!el)return [];
+ return [...el.querySelectorAll('input:checked')].map(x=>x.value);
+}
+function updateConsultMode(){
+ const mode=$('consultType')?.value||'obstetrique';
+ document.querySelectorAll('.obst-only').forEach(el=>el.style.display=mode==='obstetrique'?'':'none');
+ if(mode==='obstetrique'){
+   syncConsultTerm();
+   if(!$('motif').value || $('motif').value==='Consultation gynécologique')$('motif').value='Suivi de grossesse';
+ }else if(mode==='gynecologie'){
+   $('csTerm').value='';
+   if(!$('motif').value || $('motif').value==='Suivi mensuel de grossesse' || $('motif').value==='Suivi de grossesse')$('motif').value='Consultation gynécologique';
+ }else{
+   $('csTerm').value='';
+   if($('motif').value==='Suivi mensuel de grossesse' || $('motif').value==='Suivi de grossesse' || $('motif').value==='Consultation gynécologique')$('motif').value='';
+ }
+ updateConsultPreview();
+}
+function consultationObject(){
+ const mode=$('consultType')?.value||'obstetrique';
+ return {
+   type:'Consultation',
+   consultType:mode,
+   date:$('csDate')?.value||today(),
+   term:mode==='obstetrique'?($('csTerm')?.value||''):'',
+   motif:$('motif')?.value||'',
+   inter:mode==='obstetrique'?checkedText('interChecks'):[],
+   ta:mode==='obstetrique'?($('ta')?.value||''):'',
+   poids:mode==='obstetrique'?($('poids')?.value||''):'',
+   hu:mode==='obstetrique'?($('hu')?.value||''):'',
+   bcf:mode==='obstetrique'?($('bcf')?.value||''):'',
+   oedemes:mode==='obstetrique'?($('oedemes')?.value||''):'',
+   bu:mode==='obstetrique'?($('bu')?.value||''):'',
+   cat:mode==='obstetrique'?checkedText('catChecks'):[],
+   notes:$('notes')?.value||''
+ };
+}
+
 function updateConsultPreview(){
  const c=consultationObject();
  $('consultPreview').innerHTML=`<b>${esc(c.motif)}</b><br>${esc(c.term)}<br><br>${c.inter.length?'<b>Interrogatoire :</b> '+c.inter.map(esc).join(', '):'Aucun élément coché'}<br><br><b>TA :</b> ${esc(c.ta||'—')} &nbsp; <b>Poids :</b> ${esc(c.poids||'—')}<br><b>HU :</b> ${esc(c.hu||'—')} &nbsp; <b>BCF :</b> ${esc(c.bcf||'—')}<br><br>${c.cat.length?'<b>CAT :</b> '+c.cat.map(esc).join(', '):''}`;
@@ -886,22 +955,62 @@ document.addEventListener('change',e=>{if(e.target?.id==='extraEchoDate'){const 
 $('csDate').addEventListener('change',syncConsultTerm);
 $('csDate').addEventListener('input',syncConsultTerm);
 function saveConsult(){
- const p=active(); if(!p){alert('Sélectionne ou crée d’abord une patiente.');return}
- const c=consultationObject(); p.consultations=p.consultations||[];
- const dup=p.consultations.some(x=>x.date===c.date&&x.consultType===c.consultType&&x.motif===c.motif&&x.notes===c.notes);
- if(dup){showToast('Cette consultation est déjà enregistrée');return}
- c.id=crypto.randomUUID?crypto.randomUUID():'cs_'+Date.now(); c.savedAt=new Date().toISOString();
- p.consultations.unshift(c); p.history=p.history||[];
- p.history.unshift({id:c.id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' — '+c.term:''}`});
- localStorage.setItem(KEY,JSON.stringify(db));renderHistory();renderDossier();showToast('Consultation enregistrée');
+ const p=active();
+ if(!p){showToast('Aucun dossier patiente ouvert');return}
+ const c=consultationObject();
+ if(!c.motif.trim()){showToast('Renseigne le motif de consultation');return}
+ p.consultations=p.consultations||[];
+ p.history=p.history||[];
+
+ const signature=JSON.stringify({
+   date:c.date,consultType:c.consultType,term:c.term,motif:c.motif,
+   inter:c.inter,ta:c.ta,poids:c.poids,hu:c.hu,bcf:c.bcf,
+   oedemes:c.oedemes,bu:c.bu,cat:c.cat,notes:c.notes
+ });
+ if(p.consultations.some(x=>x.signature===signature)){
+   showToast('Cette consultation est déjà enregistrée');
+   return;
+ }
+
+ const id=crypto.randomUUID?crypto.randomUUID():'cs_'+Date.now()+'_'+Math.random().toString(16).slice(2);
+ const saved={...c,id,savedAt:new Date().toISOString(),signature};
+ p.consultations.unshift(saved);
+
+ p.history.unshift({
+   id,
+   recordType:'consultation',
+   type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',
+   date:c.date,
+   summary:`${c.motif}${c.term?' — '+c.term:''}`,
+   snapshot:JSON.parse(JSON.stringify(saved))
+ });
+
+ localStorage.setItem(KEY,JSON.stringify(db));
+ renderHistory();
+ renderDossier();
+ showToast('Consultation enregistrée');
 }
 function consultationHtml(c,p){
  const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
- return `<h2>${esc(label)}</h2><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p>
- <p><b>Date :</b> ${fmtDate(c.date)}${c.term&&c.consultType==='obstetrique'?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>
- ${c.consultType==='obstetrique'?`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p><p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p><p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`:''}${c.notes?'<p><b>Notes :</b> '+esc(c.notes)+'</p>':''}`;
+ let out=`<h2>${esc(label)}</h2>
+ <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p>
+ <p><b>Date :</b> ${c.date?fmtDate(c.date):'—'}${c.term&&c.consultType==='obstetrique'?' — <b>Terme :</b> '+esc(c.term):''}<br>
+ <b>Motif :</b> ${esc(c.motif||'—')}</p>`;
+ if(c.consultType==='obstetrique'){
+   out+=`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p>
+   <p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p>
+   <p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`;
+ }
+ if(c.notes)out+=`<p><b>Notes :</b> ${esc(c.notes)}</p>`;
+ return out;
 }
-function printConsult(){const p=active();if(!p){alert('Sélectionne une patiente.');return}const c=consultationObject();printHtmlDocument('Compte rendu de consultation',consultationHtml(c,p)+'<br><p>Signature :</p>')}
+function printConsult(){
+ const p=active();
+ if(!p){showToast('Aucun dossier patiente ouvert');return}
+ const c=consultationObject();
+ const body=consultationHtml(c,p)+`<p style="text-align:right;margin-top:50px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
+ printHtmlDocument('Compte rendu de consultation',body);
+}
 
 const templates={
  debut:['Hémogramme / NFS','Groupe sanguin, Rhésus, RAI selon situation','Sérologies et examens selon recommandations et dossier clinique','Glycémie / examens complémentaires selon contexte'],
@@ -991,6 +1100,8 @@ function addExtraEcho(){
  const item={id:crypto.randomUUID(),date,term:$('extraEchoTerm').value||(p.pregnancy?.ddg?termFrom(p.pregnancy.ddg,date):''),reason:$('extraEchoReason').value,conclusion:$('extraEchoConclusion').value};
  p.extraEchos.unshift(item); p.history=p.history||[]; p.history.unshift({type:'Échographie supplémentaire',date,summary:(item.term?item.term+' · ':'')+(item.reason||'')});
  persist(); $('extraEchoReason').value='';$('extraEchoConclusion').value='';renderExtraEchos();
+
+ showToast('Échographie supplémentaire enregistrée');
 }
 function renderExtraEchos(){
  const p=active(),el=$('extraEchoList');if(!el||!p)return;el.innerHTML='';
@@ -1073,8 +1184,15 @@ function printT1ConsentLab(){
 }
 
 function openHistoryRecord(index){
- const p=active();if(!p)return;const h=(p.history||[])[index];if(!h)return;
- if(h.recordType==='consultation'){const c=(p.consultations||[]).find(x=>x.id===h.id);if(c){openRecordModal(h.type,consultationHtml(c,p));return}}
+ const p=active();if(!p)return;
+ const h=(p.history||[])[index];if(!h)return;
+ if(h.recordType==='consultation'){
+   const c=h.snapshot || (p.consultations||[]).find(x=>x.id===h.id);
+   if(c){
+     openRecordModal(h.type||'Consultation',consultationHtml(c,p));
+     return;
+   }
+ }
  openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`);
 }
 function renderHistory(){
@@ -1099,6 +1217,8 @@ async function storeBilanPdf(){
  tx.objectStore(BILAN_STORE).put({id,patientId:p.id,name:f.name,date:new Date().toISOString(),blob:f});
  await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
  $('bilanFile').value='';renderBilans();
+
+ showToast('PDF ajouté au dossier');
 }
 async function getPatientBilans(){
  const p=active();if(!p)return[];
@@ -1140,7 +1260,7 @@ function renderAll(){renderPatients();renderActive();renderHistory();renderHomeP
 function fmtDate(s){ if(!s)return''; const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('fr-FR') }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function attr(s){return esc(s).replace(/`/g,'&#096;')}
-renderAll(); addRxLine(); updateConsultMode(); if(!active())go('home');
+renderAll(); addRxLine(); if($('consultType'))updateConsultMode(); if(!active())go('home');
 </script>
 
 <div id="toast" class="toast"></div>
