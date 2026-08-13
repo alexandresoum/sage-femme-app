@@ -190,6 +190,19 @@ body:not(.has-patient) #patientTop{display:none}
           </div>
           <div class="autocomplete-note">La recherche fonctionne avec un, deux ou trois critères. Dès 3 lettres du nom ou du prénom, les dossiers proches sont proposés.</div>
           <div id="homePatientResults" class="search-results"></div>
+          <div class="form-sep"></div>
+          <div class="section-title-line">
+            <div>
+              <strong>Base locale de ce navigateur</strong>
+              <div id="localPatientCount" class="hint"></div>
+            </div>
+            <div class="actions">
+              <button class="btn secondary" type="button" onclick="exportPatientDatabase()">Exporter les dossiers</button>
+              <label class="btn secondary" style="cursor:pointer">Importer les dossiers
+                <input id="patientDbImport" type="file" accept="application/json" style="display:none" onchange="importPatientDatabase(event)">
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1172,7 +1185,56 @@ function savePregnancy(){
  showToast('Grossesse enregistrée');
 }
 function attr(s){return esc(s).replace(/`/g,'&#096;')}
-renderAll(); addRxLine(); if($('consultType'))updateConsultMode(); if(!active())go('home');
+
+function updateLocalPatientCount(){
+ const el=$('localPatientCount'); if(!el)return;
+ const n=(db.patients||[]).length;
+ el.textContent=n+' dossier'+(n>1?'s':'')+' patiente'+(n>1?'s':'')+' enregistré'+(n>1?'s':'')+' dans ce navigateur.';
+}
+function exportPatientDatabase(){
+ const payload={app:'sage-femme-app',version:'1.8.3',exportedAt:new Date().toISOString(),db};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='sauvegarde-patientes-'+today()+'.json';
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ showToast((db.patients||[]).length+' dossier(s) exporté(s)');
+}
+async function importPatientDatabase(event){
+ const file=event.target.files?.[0];
+ if(!file)return;
+ try{
+   const parsed=JSON.parse(await file.text());
+   const incoming=parsed.db||parsed;
+   if(!incoming || !Array.isArray(incoming.patients))throw new Error('Format invalide');
+
+   db.patients=db.patients||[];
+   const byId=new Map(db.patients.map(p=>[String(p.id),p]));
+   incoming.patients.forEach(p=>{
+     const key=String(p.id||'');
+     if(key && byId.has(key)) Object.assign(byId.get(key),p);
+     else db.patients.push(p);
+   });
+
+   db.echographists=db.echographists||[];
+   (incoming.echographists||[]).forEach(e=>{
+     if(!db.echographists.some(x=>norm(x.name)===norm(e.name)))db.echographists.push(e);
+   });
+
+   localStorage.setItem(KEY,JSON.stringify(db));
+   migratePatients();
+   renderHomePatients();
+   updateLocalPatientCount();
+   showToast((incoming.patients||[]).length+' dossier(s) importé(s)');
+ }catch(err){
+   console.error(err);
+   showToast('Fichier de sauvegarde non reconnu');
+ }
+ event.target.value='';
+}
+
+renderAll(); updateLocalPatientCount(); addRxLine(); if($('consultType'))updateConsultMode(); if(!active())go('home');
 </script>
 
 <div id="toast" class="toast"></div>
