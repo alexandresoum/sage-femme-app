@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.2 locale</title>
+<title>Cabinet Sage-Femme — V2.3 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -79,12 +79,12 @@ textarea{resize:vertical}
 @media print{
   body *{visibility:hidden!important}
   #printDoc,#printDoc *{visibility:visible!important}
-  #printDoc{display:block!important;position:absolute;left:0;top:0;width:100%;padding:12mm 14mm;background:#fff;color:#000}
-  @page{size:A4;margin:0}
+  #printDoc{display:block!important;position:absolute;left:0;top:0;width:100%;padding:0;background:#fff;color:#000}
+  @page{size:A4;margin:8mm}
   .no-print{display:none!important}
   .page-break{break-before:page;page-break-before:always}
   .avoid-break{break-inside:avoid;page-break-inside:avoid}
-  .two-consents{display:grid;grid-template-rows:1fr 1fr;height:270mm;gap:3mm}
+  .two-consents{display:grid;grid-template-rows:1fr 1fr;gap:2mm;min-height:0;height:auto;break-inside:avoid;page-break-inside:avoid}
   .consent-compact{font-size:9px;line-height:1.16;overflow:hidden}
   .consent-compact h2{font-size:14px;margin:2px 0}.consent-compact h3{font-size:10px;margin:4px 0 2px}.consent-compact p{margin:2px 0}
 }
@@ -101,7 +101,7 @@ textarea{resize:vertical}
       <div class="eyebrow">Dossier patiente</div>
       <div id="sidebarPatientName" class="name">Aucune patiente</div>
       <div id="sidebarPatientInfo" class="meta">Sélectionne ou crée une patiente</div>
-      <div class="actions"><button class="btn secondary" type="button" onclick="quitPatient()">← Quitter le dossier</button></div>
+      <div class="actions"><button id="quitPatientBtn" class="btn secondary" type="button" onclick="quitPatient()">← Quitter le dossier</button></div>
     </div>
     <nav class="nav">
       <button data-section="home" class="active">⌂ Accueil</button>
@@ -450,6 +450,7 @@ const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 
 let toastTimer=null;
 let activeConsultDraft=null;
+let editingConsultId=null;
 let openedRecordHtml='',openedRecordTitle='';
 let surgeryDraft=[],pregHistoryDraft=[];
 
@@ -587,10 +588,18 @@ function renderActive(){
  const p=active(),term=p?.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
  $('sidebarPatientName').textContent=p?`${p.nom} ${p.prenom}`.trim():'Aucune patiente';
  $('sidebarPatientInfo').innerHTML=p?`${p.dob?'Née le '+fmtDate(p.dob):''}${term?'<br><strong>'+term+'</strong>':''}`:'Sélectionne ou crée une patiente';
+
  $('patientTop').innerHTML=p
    ? `<div class="icon">👤</div><div style="flex:1"><div class="eyebrow">Dossier patiente actif</div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="mainline">${esc(p.nom)} ${esc(p.prenom)}</div><button class="btn secondary" type="button" onclick="editActivePatient()">Fiche patiente</button></div><div class="subline">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`
    : `<div class="icon">👤</div><div><div class="eyebrow">Dossier patiente</div><div class="mainline">Aucune patiente sélectionnée</div><div class="subline">Sélectionne ou crée une patiente</div></div>`;
+
  document.querySelectorAll('.clinical').forEach(b=>b.disabled=!p);
+
+ const quit=$('quitPatientBtn');
+ if(quit){
+   const homeActive=$('home')?.classList.contains('active');
+   quit.style.display=(p && !homeActive)?'inline-block':'none';
+ }
 }
 function go(id){
  if(['dossier','pregnancy','consult','rx','echos','bilans','history'].includes(id)&&!active()){showToast('Sélectionne d’abord une patiente');id='home'}
@@ -638,7 +647,7 @@ function selectPatient(id){
  const p=db.patients.find(x=>String(x.id)===String(id));if(!p){showToast('Dossier introuvable');return}
  db.activeId=p.id;persist();renderActive();renderDossier();go('dossier');showToast(`Dossier de ${p.nom} ${p.prenom} ouvert`);setTimeout(maybeShowPostit,150)
 }
-function quitPatient(){db.activeId=null;persist();activeConsultDraft=null;renderActive();go('home')}
+function quitPatient(){db.activeId=null;persist();activeConsultDraft=null;editingConsultId=null;go('home');renderActive()}
 function startNewPatientFromSearch(){
  const seed={nom:$('searchNom').value,prenom:$('searchPrenom').value,dob:$('searchDob').value};
  db.activeId=null;renderActive();
@@ -767,6 +776,10 @@ function renderDossier(){
    const d=document.createElement('div');d.className='entry';
    d.innerHTML=`<strong>${fmtDate(c.date)} — ${c.consultType==='gynecologie'?'Gynécologie':c.consultType==='obstetrique'?'Obstétrique':'Autre'}</strong><small>${esc(c.motif||'')}${c.term?' · '+esc(c.term):''}</small>`;
    d.onclick=()=>openRecordModal('Consultation du '+fmtDate(c.date),consultationHtml(c,p));
+   const acts=document.createElement('div');acts.className='actions';
+   const edit=document.createElement('button');edit.type='button';edit.className='btn secondary';edit.textContent='Modifier';
+   edit.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();editConsultation(c.id)};
+   acts.appendChild(edit);d.appendChild(acts);
    $('dossierConsultations').appendChild(d)
  });
  if(!(p.consultations||[]).length)$('dossierConsultations').innerHTML='<div class="hint">Aucune consultation enregistrée.</div>';
@@ -810,7 +823,7 @@ function consultObject(){
    cat:mode==='obstetrique'?checked('catChecks'):[],notes:$('notes').value.trim()
  };
 }
-function startNewConsultation(){resetConsult();go('consult')}
+function startNewConsultation(){editingConsultId=null;resetConsult();go('consult');updateConsultEditUi()}
 function resetConsult(){$('consultType').value='obstetrique';$('csDate').value=today();$('motif').value='Suivi de grossesse';['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value='');$('oedemes').value='Non';document.querySelectorAll('#interChecks input,#catChecks input').forEach(x=>x.checked=false);syncConsultTerm();updateConsultMode();updateWeightGain()}
 function syncConsultTerm(){const ddg=active()?.pregnancy?.ddg;$('csTerm').value=ddg?termFrom(ddg,$('csDate').value||today()):'';updateConsultPreview()}
 function updateConsultMode(){const obst=$('consultType').value==='obstetrique';document.querySelectorAll('.obst-only').forEach(x=>x.style.display=obst?'':'none');if(obst&&(!$('motif').value||$('motif').value==='Consultation gynécologique'))$('motif').value='Suivi de grossesse';if($('consultType').value==='gynecologie'&&(!$('motif').value||$('motif').value==='Suivi de grossesse'))$('motif').value='Consultation gynécologique';syncConsultTerm();updateConsultPreview()}
@@ -819,8 +832,87 @@ function updateConsultPreview(){
  const weight=(c.consultType==='obstetrique'&&c.poids)?`<br><b>Poids :</b> ${esc(c.poids)} kg${c.prisePoids!==null?` — <b>prise de poids :</b> ${c.prisePoids>0?'+':''}${esc(c.prisePoids)} kg`:''}`:'';
  $('consultPreview').innerHTML=`<b>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation'}</b><br>${c.term?'<b>Terme :</b> '+esc(c.term)+'<br>':''}<b>Motif :</b> ${esc(c.motif||'—')}${weight}`;
 }
+
+function updateConsultEditUi(){
+ const saveBtn=[...document.querySelectorAll('#consult .actions .btn.primary')].find(b=>/Enregistrer/.test(b.textContent));
+ if(saveBtn)saveBtn.textContent=editingConsultId?'Enregistrer les modifications':'Enregistrer la consultation';
+ const title=document.querySelector('#consult h2');
+ if(title)title.textContent=editingConsultId?'Modifier la consultation':'Consultation';
+}
+function editConsultation(id){
+ const p=active();
+ const c=p?.consultations?.find(x=>String(x.id)===String(id));
+ if(!c){showToast('Consultation introuvable');return}
+
+ editingConsultId=c.id;
+ activeConsultDraft=null;
+
+ $('consultType').value=c.consultType||'obstetrique';
+ $('csDate').value=c.date||today();
+ $('csTerm').value=c.term||'';
+ $('motif').value=c.motif||'';
+ ['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value=c[id]||'');
+ $('oedemes').value=c.oedemes||'Non';
+
+ document.querySelectorAll('#interChecks input').forEach(x=>x.checked=(c.inter||[]).includes(x.value));
+ document.querySelectorAll('#catChecks input').forEach(x=>x.checked=(c.cat||[]).includes(x.value));
+
+ go('consult');
+ updateConsultMode();
+ updateWeightGain();
+ updateConsultEditUi();
+ showToast('Consultation ouverte en modification');
+}
+
 function saveConsult(){
- const p=active(),c=consultObject();if(!c.motif){showToast('Renseigne le motif');return}const saved={...c,id:uid('cs'),savedAt:new Date().toISOString()};p.consultations.unshift(saved);p.history.unshift({id:saved.id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' · '+c.term:''}`,snapshot:JSON.parse(JSON.stringify(saved))});persist();activeConsultDraft=null;renderDossier();renderHistory();showToast('Consultation enregistrée');setTimeout(resetConsult,100)
+ const p=active(),c=consultObject();
+ if(!c.motif){showToast('Renseigne le motif');return}
+
+ if(editingConsultId){
+   const idx=(p.consultations||[]).findIndex(x=>String(x.id)===String(editingConsultId));
+   if(idx<0){showToast('Consultation à modifier introuvable');editingConsultId=null;return}
+
+   const previous=p.consultations[idx];
+   const updated={...previous,...c,id:previous.id,savedAt:previous.savedAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+   p.consultations[idx]=updated;
+
+   const h=(p.history||[]).find(x=>String(x.id)===String(previous.id)&&x.recordType==='consultation');
+   if(h){
+     h.type=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
+     h.date=c.date;
+     h.summary=`${c.motif}${c.term?' · '+c.term:''}`;
+     h.snapshot=JSON.parse(JSON.stringify(updated));
+   }
+
+   persist();
+   editingConsultId=null;
+   activeConsultDraft=null;
+   renderDossier();
+   renderHistory();
+   resetConsult();
+   updateConsultEditUi();
+   go('dossier');
+   showToast('Consultation modifiée');
+   return;
+ }
+
+ const saved={...c,id:uid('cs'),savedAt:new Date().toISOString()};
+ p.consultations.unshift(saved);
+ p.history.unshift({
+   id:saved.id,
+   recordType:'consultation',
+   type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',
+   date:c.date,
+   summary:`${c.motif}${c.term?' · '+c.term:''}`,
+   snapshot:JSON.parse(JSON.stringify(saved))
+ });
+
+ persist();
+ activeConsultDraft=null;
+ renderDossier();
+ renderHistory();
+ showToast('Consultation enregistrée');
+ setTimeout(()=>{resetConsult();updateConsultEditUi()},100);
 }
 function consultationHtml(c,p){
  let out=`<h2>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Consultation'}</h2><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p><p><b>Date :</b> ${fmtDate(c.date)}${c.term?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>`;
@@ -871,12 +963,18 @@ function consentCopy(label,t,compact=false){
  const p=active(),w=markerWindow(t.ddg),term=t.date?termFrom(t.ddg,t.date):'—';
  return `<div class="${compact?'consent-compact':''} avoid-break"><h2 style="text-align:center">ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b><br>${esc(label)}</p><h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d'agrément :</b> ${esc(t.echoApproval||'—')}</p><h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp; <b>Adresse :</b> ${esc(p.adresse||'—')}</p><h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3><p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br><b>Date de l'échographie T1 :</b> ${t.date?fmtDate(t.date):'—'} &nbsp; <b>Terme à l'échographie T1 :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p><h3>INFORMATION ET CONSENTEMENT</h3><p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p><p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d'estimer un risque mais ne permet pas à lui seul d'établir un diagnostic.</p><p>J'ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p><p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p><div style="display:flex;justify-content:space-between;margin-top:22px"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>${CABINET.profession}<br><br>Signature / tampon</div></div></div>`
 }
+
+function printConsentDocument(body){
+ $('printDoc').innerHTML=body;
+ setTimeout(()=>window.print(),180);
+}
+
 function printT1Consent(){
  const t=currentT1();if(!t.ddg||!t.date){showToast('Renseigne la DDG et la date T1');return}
  const w=markerWindow(t.ddg),p=active();
  const lab=`<div style="border-top:1px solid #888;margin-top:6mm;padding-top:4mm"><h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br><b>DDG :</b> ${fmtDate(t.ddg)} — <b>Date T1 :</b> ${fmtDate(t.date)} — <b>Terme à la T1 :</b> ${termFrom(t.ddg,t.date)}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>Agrément :</b> ${esc(t.echoApproval||'—')}<br><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></div>`;
  const body=`<div style="font-size:11.5px;line-height:1.28">${consentCopy('Exemplaire patiente',t,false)}${lab}</div><div class="page-break two-consents">${consentCopy('Exemplaire prescripteur',t,true)}${consentCopy('Exemplaire laboratoire',t,true)}</div>`;
- printHtmlDocument('Consentement — dépistage de la trisomie 21',body)
+ printConsentDocument(body)
 }
 
 function openBilanDb(){return new Promise((res,rej)=>{const q=indexedDB.open(BILAN_DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(BILAN_STORE))q.result.createObjectStore(BILAN_STORE,{keyPath:'id'})};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
@@ -887,7 +985,7 @@ async function renderBilans(){const el=$('bilanList');el.innerHTML='';const all=
 async function deleteBilan(id){const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);await new Promise(r=>tx.oncomplete=r);renderBilans();renderDossier();showToast('PDF supprimé')}
 
 function renderHistory(){const p=active(),el=$('historyList');el.innerHTML='';if(!p?.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}(p.history||[]).forEach((h,i)=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);el.appendChild(d)})}
-function openHistoryRecord(i){const p=active(),h=p.history[i];if(!h)return;if(h.recordType==='consultation'){const c=h.snapshot||p.consultations.find(x=>x.id===h.id);openRecordModal(h.type,consultationHtml(c,p)+signatureBlock());return}if(h.recordType==='prescription'){const r=h.snapshot||p.prescriptions.find(x=>x.id===h.id);openRecordModal(r.title,prescriptionHtml(r,p));return}if(h.recordType==='echo_t1'){const t=p.echos.t1||{};openRecordModal('Échographie T1',`<h2>Échographie du premier trimestre</h2><p><b>Date :</b> ${fmtDate(t.date)} — <b>Terme :</b> ${termFrom(t.ddg,t.date)}</p><p><b>Échographiste :</b> ${esc(t.echoName||'—')} — Agrément ${esc(t.echoApproval||'—')}</p><p><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg</p>`);return}openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`)}
+function openHistoryRecord(i){const p=active(),h=p.history[i];if(!h)return;if(h.recordType==='consultation'){const c=p.consultations.find(x=>String(x.id)===String(h.id))||h.snapshot;openRecordModal(h.type,consultationHtml(c,p)+signatureBlock()+`<div class="actions no-print"><button class="btn secondary" type="button" onclick="closeRecordModal();editConsultation('${esc(c.id)}')">Modifier cette consultation</button></div>`);return}if(h.recordType==='prescription'){const r=h.snapshot||p.prescriptions.find(x=>x.id===h.id);openRecordModal(r.title,prescriptionHtml(r,p));return}if(h.recordType==='echo_t1'){const t=p.echos.t1||{};openRecordModal('Échographie T1',`<h2>Échographie du premier trimestre</h2><p><b>Date :</b> ${fmtDate(t.date)} — <b>Terme :</b> ${termFrom(t.ddg,t.date)}</p><p><b>Échographiste :</b> ${esc(t.echoName||'—')} — Agrément ${esc(t.echoApproval||'—')}</p><p><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg</p>`);return}openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`)}
 function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=body;$('recordTitle').textContent=title;$('recordBody').innerHTML=body;renderBarcodes($('recordBody'));$('recordModal').classList.add('show')}
 function closeRecordModal(){$('recordModal').classList.remove('show')}
 function printOpenedRecord(){closeRecordModal();setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80)}
@@ -910,7 +1008,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.2',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.3',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
