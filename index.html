@@ -620,6 +620,18 @@ function printOpenedRecord(){
  closeRecordModal();
  setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80);
 }
+
+function renderAll(){
+ try{renderActive()}catch(e){console.error('renderActive',e)}
+ try{renderHomePatients()}catch(e){console.error('renderHomePatients',e)}
+ try{updateLocalPatientCount()}catch(e){console.error('updateLocalPatientCount',e)}
+ if(active()){
+   try{loadPatient()}catch(e){console.error('loadPatient',e)}
+   try{renderHistory()}catch(e){console.error('renderHistory',e)}
+   try{renderDossier()}catch(e){console.error('renderDossier',e)}
+ }
+}
+
 function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
 
 function ensurePregnancyEpisodes(p=active()){
@@ -1009,54 +1021,126 @@ function patientMatchScore(p,qn,qp,qd){
  return used?score:0;
 }
 function renderHomePatients(){
- const el=$('homePatientResults');if(!el)return;
- let qn=norm($('searchNom')?.value),qp=norm($('searchPrenom')?.value),qd=$('searchDob')?.value||'';
+ const el=$('homePatientResults');
+ if(!el)return;
 
- if(!qn&&!qp&&!qd){
+ let qn=norm($('searchNom')?.value||'');
+ let qp=norm($('searchPrenom')?.value||'');
+ const qd=$('searchDob')?.value||'';
+
+ if(!qn && !qp && !qd){
    el.innerHTML='<div class="hint">Saisis un nom, un prénom ou une date de naissance pour rechercher une patiente.</div>';
    return;
  }
 
- let ranked=(db.patients||[])
-   .map(p=>({p,score:patientMatchScore(p,qn,qp,qd)}))
-   .filter(x=>x.score>=0);
+ const results=[];
 
- // Si rien n'est trouvé et qu'un seul champ contient plusieurs mots,
- // on tente automatiquement une recherche globale "nom + prénom".
- if(!ranked.length && qn && !qp){
+ (db.patients||[]).forEach((p,index)=>{
+   try{
+     const nom=norm(p?.nom||p?.lastName||p?.lastname||p?.name||p?.nomPatiente||'');
+     const prenom=norm(p?.prenom||p?.firstName||p?.firstname||p?.givenName||p?.prenomPatiente||'');
+     const dob=String(p?.dob||p?.birthDate||p?.dateNaissance||p?.ddn||'');
+
+     let score=0;
+
+     if(qn){
+       if(nom===qn) score+=100;
+       else if(nom.startsWith(qn)) score+=80;
+       else if(nom.includes(qn)) score+=60;
+       else if(qn.length>=3 && nom.startsWith(qn.slice(0,3))) score+=40;
+       else return;
+     }
+
+     if(qp){
+       if(prenom===qp) score+=90;
+       else if(prenom.startsWith(qp)) score+=70;
+       else if(prenom.includes(qp)) score+=50;
+       else if(qp.length>=3 && prenom.startsWith(qp.slice(0,3))) score+=35;
+       else return;
+     }
+
+     if(qd){
+       if(dob===qd) score+=120;
+       else return;
+     }
+
+     results.push({p,index,score});
+   }catch(err){
+     console.warn('Dossier ancien ignoré pendant la recherche',index,err);
+   }
+ });
+
+ // Recherche "DUPONT Mélanie" saisie dans le champ Nom.
+ if(!results.length && qn && !qp && qn.includes(' ')){
    const tokens=qn.split(/\s+/).filter(Boolean);
-   if(tokens.length>1){
-     ranked=(db.patients||[]).map(p=>{
-       const hay=norm(`${p.nom||''} ${p.prenom||''} ${p.name||''}`);
+   (db.patients||[]).forEach((p,index)=>{
+     try{
+       const hay=norm([
+         p?.nom,p?.prenom,p?.name,p?.lastName,p?.firstName
+       ].filter(Boolean).join(' '));
+
        let score=0;
        for(const token of tokens){
-         if(hay.includes(token)) score+=30;
-         else if(token.length>=3 && hay.includes(token.slice(0,3))) score+=15;
-         else return {p,score:-1};
+         if(hay.includes(token))score+=50;
+         else if(token.length>=3 && hay.includes(token.slice(0,3)))score+=25;
+         else return;
        }
-       return {p,score};
-     }).filter(x=>x.score>=0);
-   }
+       results.push({p,index,score});
+     }catch(err){}
+   });
  }
 
- ranked.sort((a,b)=>b.score-a.score);
+ results.sort((a,b)=>b.score-a.score);
  el.innerHTML='';
 
- if(!ranked.length){
-   el.innerHTML='<div class="notice">Aucun dossier correspondant. Essaie avec les 3 premières lettres du nom ou seulement la date de naissance.</div>';
+ if(!results.length){
+   el.innerHTML=`<div class="notice">
+     Aucun dossier trouvé avec ces critères.<br>
+     <span class="hint">${(db.patients||[]).length} dossier(s) sont pourtant présents dans la base locale.</span>
+   </div>`;
    return;
  }
 
- ranked.slice(0,30).forEach(({p})=>{
-   const row=document.createElement('div');row.className='search-result';
-   const term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
+ results.slice(0,30).forEach(({p,index})=>{
+   const row=document.createElement('div');
+   row.className='search-result';
+
+   const nom=String(p?.nom||p?.lastName||p?.name||'').trim();
+   const prenom=String(p?.prenom||p?.firstName||p?.givenName||'').trim();
+   const dob=String(p?.dob||p?.birthDate||p?.dateNaissance||p?.ddn||'');
+
+   let term='';
+   try{
+     const ddg=p?.pregnancy?.ddg;
+     if(typeof ddg==='string' && /^\d{4}-\d{2}-\d{2}$/.test(ddg)){
+       term=termFrom(ddg);
+     }
+   }catch(err){}
+
    const info=document.createElement('div');
-   info.innerHTML=`<div class="search-result-name">${esc(p.nom||'')} ${esc(p.prenom||'')}</div>
-     <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+   info.innerHTML=`<div class="search-result-name">${esc(nom)} ${esc(prenom)}</div>
+     <div class="search-result-meta">${dob?'Née le '+fmtDate(dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+
    const btn=document.createElement('button');
-   btn.type='button';btn.className='btn primary';btn.textContent='Ouvrir le dossier';
-   btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatient(p.id)};
-   row.appendChild(info);row.appendChild(btn);el.appendChild(row);
+   btn.type='button';
+   btn.className='btn primary';
+   btn.textContent='Ouvrir le dossier';
+
+   // Use actual patient id; if an old record has none, assign one now.
+   if(!p.id){
+     p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
+     localStorage.setItem(KEY,JSON.stringify(db));
+   }
+
+   btn.onclick=(ev)=>{
+     ev.preventDefault();
+     ev.stopPropagation();
+     selectPatient(p.id);
+   };
+
+   row.appendChild(info);
+   row.appendChild(btn);
+   el.appendChild(row);
  });
 }
 function renderDossier(){
@@ -1187,9 +1271,10 @@ function savePregnancy(){
 function attr(s){return esc(s).replace(/`/g,'&#096;')}
 
 function updateLocalPatientCount(){
- const el=$('localPatientCount'); if(!el)return;
- const n=(db.patients||[]).length;
- el.textContent=n+' dossier'+(n>1?'s':'')+' patiente'+(n>1?'s':'')+' enregistré'+(n>1?'s':'')+' dans ce navigateur.';
+ const el=$('localPatientCount');
+ if(!el)return;
+ const n=Array.isArray(db.patients)?db.patients.length:0;
+ el.innerHTML=`<strong>${n} dossier${n>1?'s':''} patiente${n>1?'s':''}</strong> enregistré${n>1?'s':''} dans ce navigateur.`;
 }
 function exportPatientDatabase(){
  const payload={app:'sage-femme-app',version:'1.8.3',exportedAt:new Date().toISOString(),db};
@@ -1234,7 +1319,11 @@ async function importPatientDatabase(event){
  event.target.value='';
 }
 
-renderAll(); updateLocalPatientCount(); addRxLine(); if($('consultType'))updateConsultMode(); if(!active())go('home');
+try{renderAll()}catch(e){console.error('renderAll startup',e)}
+try{updateLocalPatientCount()}catch(e){console.error(e)}
+try{addRxLine()}catch(e){console.error(e)}
+try{if($('consultType'))updateConsultMode()}catch(e){console.error(e)}
+if(!active())go('home');
 </script>
 
 <div id="toast" class="toast"></div>
