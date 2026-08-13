@@ -292,7 +292,7 @@ body:not(.has-patient) #patientTop{display:none}
                   <option>MFIU</option>
                 </select>
               </div>
-              <div class="field"><label>Date</label><input id="pregDate" type="date"></div><div class="field"><label>DDR de cette grossesse</label><input id="pregDdr" type="date"></div>
+              <div class="field"><label>Date</label><input id="pregDate" type="date"></div>
               <div class="field"><label>Terme</label><input id="pregTerm" placeholder="39 SA + 2 j"></div>
             </div>
             <div class="row3">
@@ -678,40 +678,92 @@ let surgeryDraft=[];
 let pregnancyHistoryDraft=[];
 
 function savePatient(){
- const id=db.activeId || (crypto.randomUUID?crypto.randomUUID():'pat_'+Date.now()+'_'+Math.random().toString(16).slice(2));
+ const nom=$('nom')?.value.trim().toUpperCase()||'';
+ const prenom=$('prenom')?.value.trim()||'';
+ const dob=$('dob')?.value||'';
+
+ if(!nom || !prenom || !dob){
+   showToast('Nom, prénom et date de naissance sont nécessaires');
+   return;
+ }
+
  let p=active();
+ const id=p?.id || (crypto.randomUUID?crypto.randomUUID():'pat_'+Date.now()+'_'+Math.random().toString(16).slice(2));
+
  const base={
-   id, nom:$('nom').value.trim().toUpperCase(), prenom:$('prenom').value.trim(), dob:$('dob').value,
-   tel:$('tel').value, email:$('email').value, adresse:$('adresse').value, groupe:$('groupe').value,
-   allergies:$('allergies').value, atcdMedicaux:$('atcdMedicaux').value,
-   atcdChirurgicaux:[...surgeryDraft], gestite:$('gestite').value, parite:$('parite').value,
+   id,
+   nom,
+   prenom,
+   dob,
+   tel:$('tel')?.value||'',
+   email:$('email')?.value||'',
+   adresse:$('adresse')?.value||'',
+   groupe:$('groupe')?.value||'',
+   allergies:$('allergies')?.value||'',
+   atcdMedicaux:$('atcdMedicaux')?.value||'',
+   atcdChirurgicaux:[...surgeryDraft],
+   gestite:$('gestite')?.value||'',
+   parite:$('parite')?.value||'',
    pregnancyHistory:[...pregnancyHistoryDraft],
-   atcdObst:$('atcdObst').value, atcdGyneco:$('atcdGyneco').value, atcdFamiliaux:$('atcdFamiliaux').value,
+   atcdObst:$('atcdObst')?.value||'',
+   atcdGyneco:$('atcdGyneco')?.value||'',
+   atcdFamiliaux:$('atcdFamiliaux')?.value||'',
    alertNote:{text:$('alertNote')?.value.trim()||'',enabled:!!$('alertEnabled')?.checked},
    pregnancies:p?.pregnancies||[],
-   history:p?.history||[], pregnancy:p?.pregnancy||null, echos:p?.echos||{}, extraEchos:p?.extraEchos||[]
+   history:p?.history||[],
+   consultations:p?.consultations||[],
+   prescriptions:p?.prescriptions||[],
+   pregnancy:p?.pregnancy||null,
+   echos:p?.echos||{},
+   extraEchos:p?.extraEchos||[]
  };
- if(!base.nom || !base.prenom || !base.dob){alert('Nom, prénom et date de naissance sont nécessaires pour créer le dossier.');return}
- const idx=db.patients.findIndex(x=>x.id===id);
- if(idx>=0) db.patients[idx]=base; else db.patients.unshift(base);
- db.activeId=id;
- localStorage.setItem(KEY, JSON.stringify(db));
- renderAll();
- go('dossier');
- setTimeout(()=>{ const p=active(); if(p) console.log('Patiente enregistrée :',p.nom,p.prenom); },0);
 
+ const idx=(db.patients||[]).findIndex(x=>x.id===id);
+ if(idx>=0) db.patients[idx]=base;
+ else db.patients.unshift(base);
+
+ db.activeId=id;
+ localStorage.setItem(KEY,JSON.stringify(db));
+ renderActive();
+ loadPatient();
+ renderDossier();
+ renderHistory();
+ go('dossier');
  showToast('Dossier patiente enregistré');
 }
 function addSurgery(){
- const el=$('atcdChirInput'); const v=el.value.trim(); if(!v)return;
+ const el=$('atcdChirInput');
+ const v=el?.value.trim()||'';
+ if(!v)return;
  if(!surgeryDraft.some(x=>norm(x)===norm(v))) surgeryDraft.push(v);
- el.value=''; renderSurgeryChips();
+ el.value='';
+ renderSurgeryChips();
+ showToast('Antécédent chirurgical ajouté');
 }
 function addSurgeryOnEnter(e){if(e.key==='Enter'){e.preventDefault();addSurgery()}}
-function removeSurgery(i){surgeryDraft.splice(i,1);renderSurgeryChips()}
+function removeSurgery(i){
+ surgeryDraft.splice(i,1);
+ renderSurgeryChips();
+ showToast('Antécédent chirurgical supprimé');
+}
 function renderSurgeryChips(){
  const el=$('surgeryChips'); if(!el)return;
- el.innerHTML=surgeryDraft.map((x,i)=>`<span class="pill">${esc(x)} <button style="border:0;background:none;cursor:pointer" onclick="removeSurgery(${i})">×</button></span>`).join('');
+ el.innerHTML='';
+ if(!surgeryDraft.length){
+   el.innerHTML='<div class="hint">Aucun antécédent chirurgical renseigné.</div>';
+   return;
+ }
+ surgeryDraft.forEach((x,i)=>{
+   const row=document.createElement('div');
+   row.className='file-row';
+   row.innerHTML=`<input value="${attr(x)}" style="flex:1" onchange="editSurgery(${i},this.value)">
+     <button class="btn danger" type="button" onclick="removeSurgery(${i})">Supprimer</button>`;
+   el.appendChild(row);
+ });
+}
+function editSurgery(i,value){
+ surgeryDraft[i]=(value||'').trim();
+ renderSurgeryChips();
 }
 function addPregnancyHistory(){
  const outcome=$('pregOutcome').value;
@@ -720,7 +772,6 @@ function addPregnancyHistory(){
    id:(crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now()+'_'+Math.random().toString(16).slice(2)),
    outcome,
    date:$('pregDate').value,
-   ddr:$('pregDdr')?.value||'',
    term:$('pregTerm').value.trim(),
    weight:$('pregWeight').value,
    sex:$('pregSex').value,
@@ -730,34 +781,73 @@ function addPregnancyHistory(){
    complication:$('pregComplication').value.trim()
  };
  pregnancyHistoryDraft.push(item);
- ['pregOutcome','pregDate','pregDdr','pregTerm','pregWeight','pregSex','pregDelivery','pregHealthy','pregChildComment','pregComplication'].forEach(id=>$(id).value='');
+ ['pregOutcome','pregDate','pregTerm','pregWeight','pregSex','pregDelivery','pregHealthy','pregChildComment','pregComplication'].forEach(id=>$(id).value='');
  renderPregnancyHistory();
+
+ showToast('Grossesse antérieure ajoutée');
 }
 function removePregnancyHistory(i){
  pregnancyHistoryDraft.splice(i,1);
  renderPregnancyHistory();
+ showToast('Grossesse antérieure supprimée');
 }
 function renderPregnancyHistory(){
  const el=$('pregnancyHistoryList'); if(!el)return;
  el.innerHTML='';
  if(!pregnancyHistoryDraft.length){
-   el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>'; return;
+   el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>';
+   return;
  }
+
  pregnancyHistoryDraft.forEach((x,i)=>{
-   const d=document.createElement('div'); d.className='file-row';
-   const details=[
-     x.date?fmtDate(x.date):'',
-     x.ddr?'DDR '+fmtDate(x.ddr):'',
-     x.term||'',
-     x.weight?x.weight+' g':'',
-     x.sex||'',
-     x.delivery||'',
-     x.healthy?'Enfant en bonne santé : '+x.healthy:''
-   ].filter(Boolean).join(' · ');
-   d.innerHTML=`<div><strong>${esc(x.outcome)}</strong><div class="file-meta">${esc(details)}</div>${x.childComment?'<div style="margin-top:4px"><b>Enfant :</b> '+esc(x.childComment)+'</div>':''}${x.complication?'<div style="margin-top:4px">'+esc(x.complication)+'</div>':''}</div>
-   <button class="btn danger" type="button" onclick="removePregnancyHistory(${i})">Supprimer</button>`;
-   el.appendChild(d);
+   const row=document.createElement('div');
+   row.className='echo-card';
+
+   row.innerHTML=`
+   <div class="row3">
+     <div class="field"><label>Issue</label>
+       <select onchange="editPregnancyHistory(${i},'outcome',this.value)">
+         ${['Naissance vivante','FCS','GEU','IVG','IMG','MFIU'].map(v=>`<option ${x.outcome===v?'selected':''}>${v}</option>`).join('')}
+       </select>
+     </div>
+     <div class="field"><label>Date</label><input type="date" value="${attr(x.date||'')}" onchange="editPregnancyHistory(${i},'date',this.value)"></div>
+     <div class="field"><label>Terme</label><input value="${attr(x.term||'')}" onchange="editPregnancyHistory(${i},'term',this.value)"></div>
+   </div>
+
+   <div class="row3">
+     <div class="field"><label>Poids (g)</label><input type="number" value="${attr(x.weight||'')}" onchange="editPregnancyHistory(${i},'weight',this.value)"></div>
+     <div class="field"><label>Sexe</label>
+       <select onchange="editPregnancyHistory(${i},'sex',this.value)">
+         ${['','Fille','Garçon','Indéterminé / non applicable'].map(v=>`<option value="${attr(v)}" ${x.sex===v?'selected':''}>${v||'—'}</option>`).join('')}
+       </select>
+     </div>
+     <div class="field"><label>Voie d’accouchement</label>
+       <select onchange="editPregnancyHistory(${i},'delivery',this.value)">
+         ${['','Voie basse spontanée','Voie basse instrumentale','Césarienne programmée','Césarienne en urgence','Non applicable'].map(v=>`<option value="${attr(v)}" ${x.delivery===v?'selected':''}>${v||'—'}</option>`).join('')}
+       </select>
+     </div>
+   </div>
+
+   <div class="row">
+     <div class="field"><label>Enfant en bonne santé</label>
+       <select onchange="editPregnancyHistory(${i},'healthy',this.value)">
+         ${['','Oui','Non','Non applicable'].map(v=>`<option value="${attr(v)}" ${x.healthy===v?'selected':''}>${v||'—'}</option>`).join('')}
+       </select>
+     </div>
+     <div class="field"><label>Commentaire sur l’enfant</label><input value="${attr(x.childComment||'')}" onchange="editPregnancyHistory(${i},'childComment',this.value)"></div>
+   </div>
+
+   <div class="field"><label>Complications / commentaires grossesse</label>
+     <textarea rows="2" onchange="editPregnancyHistory(${i},'complication',this.value)">${esc(x.complication||'')}</textarea>
+   </div>
+
+   <div class="actions"><button class="btn danger" type="button" onclick="removePregnancyHistory(${i})">Supprimer cette grossesse</button></div>`;
+   el.appendChild(row);
  });
+}
+function editPregnancyHistory(i,key,value){
+ if(!pregnancyHistoryDraft[i])return;
+ pregnancyHistoryDraft[i][key]=value;
 }
 
 function startNewPatientFromSearch(){
@@ -769,13 +859,15 @@ function startNewPatientFromSearch(){
 }
 function startNewPatient(){
  db.activeId=null;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>{
-   const el=$(id); if(el) el.value='';
+ ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','alertNote','ddr','theoreticalDdg','ddg','dpa'].forEach(id=>{
+   const el=$(id);if(el)el.value='';
  });
- surgeryDraft=[]; pregnancyHistoryDraft=[];
- renderSurgeryChips(); renderPregnancyHistory();
- const status=$('pregnancySaveStatus');
- if(status){status.style.display='none';status.innerHTML='';}
+ if($('alertEnabled'))$('alertEnabled').checked=false;
+ surgeryDraft=[];
+ pregnancyHistoryDraft=[];
+ renderSurgeryChips();
+ renderPregnancyHistory();
+ const status=$('pregnancySaveStatus');if(status){status.style.display='none';status.innerHTML='';}
  renderActive();
  go('patientEdit');
 }
@@ -863,27 +955,40 @@ function patientMatchScore(p,qn,qp,qd){
 function renderHomePatients(){
  const el=$('homePatientResults'); if(!el)return;
  const qn=norm($('searchNom')?.value), qp=norm($('searchPrenom')?.value), qd=$('searchDob')?.value||'';
+
  if(!qn&&!qp&&!qd){
-   el.innerHTML='<div class="hint">Saisis au moins un critère pour rechercher une patiente.</div>';
+   el.innerHTML='<div class="hint">Saisis un nom, un prénom ou une date de naissance pour rechercher une patiente.</div>';
    return;
  }
- const ranked=db.patients.map(p=>({p,score:patientMatchScore(p,qn,qp,qd)}))
-   .filter(x=>x.score>=0).sort((a,b)=>b.score-a.score);
+
+ const ranked=(db.patients||[])
+   .map(p=>({p,score:patientMatchScore(p,qn,qp,qd)}))
+   .filter(x=>x.score>=0)
+   .sort((a,b)=>b.score-a.score);
+
  el.innerHTML='';
  if(!ranked.length){
    el.innerHTML='<div class="notice">Aucun dossier correspondant. Les informations saisies seront reprises si tu crées une nouvelle patiente.</div>';
    return;
  }
- ranked.slice(0,20).forEach(({p})=>{
-   const row=document.createElement('div'); row.className='search-result';
+
+ ranked.slice(0,30).forEach(({p})=>{
+   const row=document.createElement('div');
+   row.className='search-result';
+
    const term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
    const info=document.createElement('div');
    info.innerHTML=`<div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
      <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+
    const btn=document.createElement('button');
-   btn.type='button'; btn.className='btn primary'; btn.textContent='Ouvrir le dossier';
+   btn.type='button';
+   btn.className='btn primary';
+   btn.textContent='Ouvrir le dossier';
    btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatient(p.id)};
-   row.appendChild(info); row.appendChild(btn);
+
+   row.appendChild(info);
+   row.appendChild(btn);
    el.appendChild(row);
  });
 }
