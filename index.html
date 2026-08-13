@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.13 locale</title>
+<title>Cabinet Sage-Femme — V2.14 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -412,14 +412,15 @@ textarea{resize:vertical}
       <div class="grid">
         <div class="card span-8">
           <h2>Ordonnance</h2>
-          <div class="field"><label>Modèle</label><select id="rxTemplate" onchange="applyRxTemplate()"><option value="">— Modèle libre —</option><option value="debut">Bilan début de grossesse complet</option><option value="hgpo">HGPO 75 g (selon indication)</option><option value="dpni">DPNI / ADN libre circulant (selon indication)</option><option value="six">Bilan 6e mois</option><option value="vitd">Vitamine D</option><option value="fer">Fer</option></select></div>
+          <div class="field"><label>Modèle</label><select id="rxTemplate" onchange="applyRxTemplate()"></select></div>
           <div id="rxLines"></div>
           <div class="actions">
             <button class="btn secondary" type="button" onclick="addRxLine()">+ Ajouter une ligne</button>
+            <button class="btn secondary" type="button" onclick="saveCurrentRxAsTemplate()">☆ Enregistrer comme modèle</button>
             <button class="btn primary" type="button" onclick="printRx()">Imprimer / PDF</button>
             <button id="returnConsultBtn" class="btn secondary" type="button" style="display:none" onclick="returnToConsult()">← Retour à la consultation active</button>
           </div>
-          <div class="hint">Les modèles sont modifiables ligne par ligne avant impression.</div>
+          <div class="hint">Les modèles enregistrés sont disponibles pour toutes les patientes de ce navigateur et restent modifiables avant impression.</div>
         </div>
       </div>
     </section>
@@ -648,6 +649,7 @@ function loadDb(){
  try{raw=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
  raw.patients=Array.isArray(raw.patients)?raw.patients.map(migratePatient):[];
  raw.echographists=Array.isArray(raw.echographists)?raw.echographists:[];
+ raw.rxTemplates=Array.isArray(raw.rxTemplates)?raw.rxTemplates:[];
  if(!raw.echographists.some(e=>norm(e.name)==='soum alexandre'))raw.echographists.push({name:'soum alexandre',approval:'8501072354301'});
  localStorage.setItem(KEY,JSON.stringify(raw));
  return raw;
@@ -719,7 +721,7 @@ function go(id){
  if(id==='dossier')renderDossier();
  if(id==='pregnancy')loadPregnancyForm();
  if(id==='consult'){restoreConsultDraftIfAny();updateConsultMode()}
- if(id==='rx')$('returnConsultBtn').style.display=activeConsultDraft?'inline-block':'none';
+ if(id==='rx'){renderRxTemplates($('rxTemplate')?.value||'');$('returnConsultBtn').style.display=activeConsultDraft?'inline-block':'none';if(!$('rxLines').children.length)addRxLine()}
  if(id==='echos')loadEchoForm();
  if(id==='bilans')renderBilans();
  if(id==='history')renderHistory();
@@ -1125,10 +1127,83 @@ const RX_TEMPLATES={
  fer:['Supplémentation martiale — spécialité, dosage et durée à renseigner']
 };
 function addRxLine(text=''){const row=document.createElement('div');row.className='file-row';const i=document.createElement('input');i.value=text;const b=document.createElement('button');b.type='button';b.className='btn danger';b.textContent='×';b.onclick=()=>row.remove();row.append(i,b);$('rxLines').appendChild(row)}
-function applyRxTemplate(){$('rxLines').innerHTML='';(RX_TEMPLATES[$('rxTemplate').value]||[]).forEach(addRxLine);if(!$('rxLines').children.length)addRxLine()}
+const RX_TEMPLATE_LABELS={
+ debut:'Bilan début de grossesse complet',
+ hgpo:'HGPO 75 g (selon indication)',
+ dpni:'DPNI / ADN libre circulant (selon indication)',
+ six:'Bilan 6e mois',
+ vitd:'Vitamine D',
+ fer:'Fer'
+};
+function renderRxTemplates(selected=''){
+ const s=$('rxTemplate');if(!s)return;
+ s.innerHTML='<option value="">— Modèle libre —</option>';
+ const built=document.createElement('optgroup');built.label='Modèles intégrés';
+ Object.keys(RX_TEMPLATES).forEach(key=>{
+   const o=document.createElement('option');o.value='builtin:'+key;o.textContent=RX_TEMPLATE_LABELS[key]||key;built.appendChild(o)
+ });
+ s.appendChild(built);
+ if(db.rxTemplates?.length){
+   const custom=document.createElement('optgroup');custom.label='Mes modèles';
+   db.rxTemplates.slice().sort((a,b)=>(a.title||'').localeCompare(b.title||'','fr')).forEach(t=>{
+     const o=document.createElement('option');o.value='custom:'+t.id;o.textContent=t.title;custom.appendChild(o)
+   });
+   s.appendChild(custom)
+ }
+ if(selected)s.value=selected;
+}
+function getCurrentRxLines(){
+ return [...$('rxLines').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean)
+}
+function applyRxTemplate(){
+ $('rxLines').innerHTML='';
+ const value=$('rxTemplate').value||'';
+ let lines=[];
+ if(value.startsWith('builtin:'))lines=RX_TEMPLATES[value.slice(8)]||[];
+ else if(value.startsWith('custom:')){
+   const t=db.rxTemplates.find(x=>String(x.id)===String(value.slice(7)));
+   lines=t?.lines||[]
+ }
+ lines.forEach(addRxLine);
+ if(!$('rxLines').children.length)addRxLine()
+}
+function saveCurrentRxAsTemplate(){
+ const lines=getCurrentRxLines();
+ if(!lines.length){showToast('L’ordonnance est vide');return}
+ const title=(window.prompt('Titre du modèle d’ordonnance :')||'').trim();
+ if(!title)return;
+ const existing=db.rxTemplates.find(t=>norm(t.title)===norm(title));
+ if(existing){
+   const replace=window.confirm(`Un modèle « ${title} » existe déjà. Le remplacer ?`);
+   if(!replace)return;
+   existing.lines=[...lines];
+   existing.updatedAt=new Date().toISOString();
+   persist();
+   renderRxTemplates('custom:'+existing.id);
+   showToast('Modèle d’ordonnance mis à jour');
+   return
+ }
+ const rec={id:uid('rxtpl'),title,lines:[...lines],createdAt:new Date().toISOString()};
+ db.rxTemplates.push(rec);
+ persist();
+ renderRxTemplates('custom:'+rec.id);
+ showToast('Modèle d’ordonnance enregistré')
+}
 function prescriptionHtml(rec,p){return `<div class="barcode-wrap"><b>PRESCRIPTEUR : ${CABINET.name}</b><br>N° RPPS : <b>${CABINET.rpps}</b><br><svg class="rppsBarcode"></svg></div><h3>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h3>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${patientAddressText(p)?'<p>'+esc(patientAddressText(p)).replace(/\n/g,'<br>')+'</p>':''}<div style="margin-top:28px">${rec.lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>${signatureBlock()}`}
 function savePrescription(title,lines,extra={}){const p=active(),rec={id:uid('rx'),recordType:'prescription',title,date:today(),lines:[...lines],createdAt:new Date().toISOString(),...extra};p.prescriptions.unshift(rec);p.history.unshift({id:rec.id,recordType:'prescription',type:title,date:rec.date,summary:rec.lines.join(' ; '),snapshot:JSON.parse(JSON.stringify(rec))});persist();renderHistory();renderDossier();showToast('Ordonnance enregistrée au dossier');return rec}
-function printRx(){const lines=[...$('rxLines').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);if(!lines.length){showToast('Ordonnance vide');return}const rec=savePrescription('Ordonnance',lines);printHtmlDocument('Ordonnance',prescriptionHtml(rec,active()))}
+function currentRxTitle(){
+ const v=$('rxTemplate')?.value||'';
+ if(v.startsWith('builtin:'))return RX_TEMPLATE_LABELS[v.slice(8)]||'Ordonnance';
+ if(v.startsWith('custom:'))return db.rxTemplates.find(x=>String(x.id)===String(v.slice(7)))?.title||'Ordonnance';
+ return 'Ordonnance'
+}
+function printRx(){
+ const lines=getCurrentRxLines();
+ if(!lines.length){showToast('Ordonnance vide');return}
+ const title=currentRxTitle();
+ const rec=savePrescription(title,lines);
+ printHtmlDocument(title,prescriptionHtml(rec,active()))
+}
 
 function ensureEchos(p=active()){p.echos=p.echos||{};p.extraEchos=p.extraEchos||[];return p}
 function renderEchoRegistry(){$('echoRegistry').innerHTML='';db.echographists.forEach(e=>{const o=document.createElement('option');o.value=e.name;$('echoRegistry').appendChild(o)})}
@@ -1484,7 +1559,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.13',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.14',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
