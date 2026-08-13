@@ -705,10 +705,52 @@ function closeCurrentPregnancy(){
  renderPregnancyEpisodes();renderDossier();showToast('Grossesse clôturée');
 }
 
+
+function normalizeLegacyPatientRecord(p,index){
+ if(!p || typeof p!=='object')return p;
+ let ident;
+ try{ident=displayPatientIdentity(p,index)}catch(e){ident={nom:p.nom||'',prenom:p.prenom||'',dob:p.dob||''}}
+ if(!p.nom && ident.nom && !/^Dossier$/i.test(ident.nom))p.nom=ident.nom;
+ if(!p.prenom && ident.prenom && !/^\d+$/.test(ident.prenom))p.prenom=ident.prenom;
+ if(!p.dob && ident.dob)p.dob=ident.dob;
+ if(!p.id)p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
+ return p;
+}
+function selectPatientAt(index){
+ const list=Array.isArray(db.patients)?db.patients:[];
+ const i=Number(index);
+ if(!Number.isInteger(i) || i<0 || i>=list.length){showToast('Dossier introuvable');return}
+ const p=normalizeLegacyPatientRecord(list[i],i);
+ db.patients[i]=p;
+ db.activeIndex=i;
+ db.activeId=p.id;
+ localStorage.setItem(KEY,JSON.stringify(db));
+
+ try{loadPatient()}catch(e){console.error('loadPatient',e)}
+ try{renderActive()}catch(e){console.error('renderActive',e)}
+ try{renderDossier()}catch(e){console.error('renderDossier',e)}
+ try{renderHistory()}catch(e){console.error('renderHistory',e)}
+ try{loadEchoForm()}catch(e){console.error('loadEchoForm',e)}
+
+ go('dossier');
+ showToast('Dossier de '+((p.nom||'')+' '+(p.prenom||'')).trim()+' ouvert');
+ setTimeout(()=>{try{maybeShowPostit()}catch(e){}},180);
+}
+
 function active(){
+ const list=Array.isArray(db.patients)?db.patients:[];
  const id=db.activeId;
- if(id===null || id===undefined || id==='')return null;
- return (db.patients||[]).find(p=>String(p?.id)===String(id)) || null;
+
+ if(id!==null && id!==undefined && id!==''){
+   const byId=list.find(p=>String(p?.id)===String(id));
+   if(byId)return byId;
+ }
+
+ const i=Number(db.activeIndex);
+ if(Number.isInteger(i) && i>=0 && i<list.length){
+   return normalizeLegacyPatientRecord(list[i],i);
+ }
+ return null;
 }
 function markerWindow(ddg){
  if(!ddg)return null;
@@ -1190,7 +1232,7 @@ function startNewPatientFromSearch(){
  $('dob').value=d;
 }
 function startNewPatient(){
- db.activeId=null;
+ db.activeId=null;db.activeIndex=null;
  ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','alertNote','ddr','theoreticalDdg','ddg','dpa'].forEach(id=>{
    const el=$(id);if(el)el.value='';
  });
@@ -1204,7 +1246,7 @@ function startNewPatient(){
  go('patientEdit');
 }
 function newPatient(){
- db.activeId=null;
+ db.activeId=null;db.activeIndex=null;
  ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>$(id).value='');
  renderAll();
 }
@@ -1220,20 +1262,10 @@ function disablePostit(){
 }
 
 function selectPatient(id){
- const p=(db.patients||[]).find(x=>String(x?.id)===String(id));
- if(!p){showToast('Dossier introuvable');return}
- if(!p.id)p.id='legacy_'+Date.now()+'_'+Math.random().toString(16).slice(2);
- db.activeId=p.id;
- localStorage.setItem(KEY,JSON.stringify(db));
-
- try{loadPatient()}catch(e){console.error('loadPatient',e)}
- try{renderActive()}catch(e){console.error('renderActive',e)}
- try{renderDossier()}catch(e){console.error('renderDossier',e)}
- try{renderHistory()}catch(e){console.error('renderHistory',e)}
- try{loadEchoForm()}catch(e){console.error('loadEchoForm',e)}
- go('dossier');
- showToast('Dossier patiente ouvert');
- setTimeout(()=>{try{maybeShowPostit()}catch(e){}},180);
+ const list=Array.isArray(db.patients)?db.patients:[];
+ const index=list.findIndex(x=>String(x?.id)===String(id));
+ if(index>=0){selectPatientAt(index);return}
+ showToast('Dossier introuvable');
 }
 function loadPatient(){
  const p=active();if(!p)return;
@@ -1259,7 +1291,7 @@ function loadPatient(){
 }
 
 function exitPatient(){
- db.activeId=null;
+ db.activeId=null;db.activeIndex=null;
  localStorage.setItem(KEY,JSON.stringify(db));
  ['searchNom','searchPrenom','searchDob'].forEach(id=>{const el=$(id);if(el)el.value='';});
  renderActive();renderHomePatients();go('home');
@@ -1363,90 +1395,52 @@ function displayPatientIdentity(p,index){
  }
 }
 function renderPatientSearchResults(records){
- const el=$('homePatientResults');
- if(!el)return;
-
+ const el=$('homePatientResults');if(!el)return;
  el.innerHTML='';
 
- if(!Array.isArray(records) || !records.length){
+ if(!Array.isArray(records)||!records.length){
    el.innerHTML='<div class="notice">Aucun dossier à afficher.</div>';
    return;
  }
 
- let rendered=0;
-
  records.forEach((item,position)=>{
    try{
-     const p=item?.p ?? item;
+     const p=item?.p??item;
      const index=Number.isInteger(item?.index)?item.index:position;
+     normalizeLegacyPatientRecord(p,index);
      const ident=displayPatientIdentity(p,index);
 
      const row=document.createElement('div');
      row.className='search-result';
+     row.style.cursor='pointer';
 
      const info=document.createElement('div');
      const title=document.createElement('div');
      title.className='search-result-name';
-     title.textContent=(ident.nom+' '+ident.prenom).trim() || ('Dossier '+(index+1));
+     title.textContent=((ident.nom||p.nom||'')+' '+(ident.prenom||p.prenom||'')).trim()||('Dossier '+(index+1));
 
      const meta=document.createElement('div');
      meta.className='search-result-meta';
-     meta.textContent=ident.dob ? 'Née le '+safeDisplayDate(ident.dob) : 'Ancien dossier — date de naissance non identifiée';
+     meta.textContent=(ident.dob||p.dob)?'Née le '+safeDisplayDate(ident.dob||p.dob):'Date de naissance non renseignée';
 
-     info.appendChild(title);
-     info.appendChild(meta);
-
-     if(!p.id){
-       p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
-       try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){console.warn(e)}
-     }
+     info.appendChild(title);info.appendChild(meta);
 
      const btn=document.createElement('button');
-     btn.type='button';
-     btn.className='btn primary';
-     btn.textContent='Ouvrir le dossier';
-     btn.addEventListener('click',ev=>{
-       ev.preventDefault();
-       ev.stopPropagation();
-       selectPatient(p.id);
-     });
+     btn.type='button';btn.className='btn primary';btn.textContent='Ouvrir le dossier';
+     btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatientAt(index)};
+     row.onclick=()=>selectPatientAt(index);
 
-     row.appendChild(info);
-     row.appendChild(btn);
-     el.appendChild(row);
-     rendered++;
+     row.appendChild(info);row.appendChild(btn);el.appendChild(row);
    }catch(err){
-     console.error('Impossible d’afficher un ancien dossier',position,err);
-
-     const row=document.createElement('div');
-     row.className='search-result';
-     row.innerHTML=`<div><div class="search-result-name">Dossier ${position+1}</div>
-       <div class="search-result-meta">Dossier ancien présent mais format non reconnu</div></div>`;
-     el.appendChild(row);
-     rendered++;
+     console.error('Affichage ancien dossier',position,err);
    }
  });
-
- if(!rendered){
-   el.innerHTML='<div class="notice">Les dossiers sont présents mais aucun n’a pu être affiché. Utilise « Exporter les dossiers » pour les récupérer.</div>';
- }
 }
 function showAllLocalPatients(){
  const list=Array.isArray(db.patients)?db.patients:[];
- const el=$('homePatientResults');
- if(!el)return;
-
- if(!list.length){
-   el.innerHTML='<div class="notice">La base locale ne contient aucun dossier.</div>';
-   showToast('0 dossier dans la base');
-   return;
- }
-
- const records=list.map((p,index)=>({p,index}));
- renderPatientSearchResults(records);
-
- const visible=el.querySelectorAll('.search-result').length;
- showToast(`${visible} dossier(s) affiché(s) sur ${list.length}`);
+ if(!list.length){$('homePatientResults').innerHTML='<div class="notice">La base locale ne contient aucun dossier.</div>';return}
+ renderPatientSearchResults(list.map((p,index)=>({p,index})));
+ showToast(list.length+' dossier(s) affiché(s)');
 }
 
 function renderHomePatients(){
@@ -1454,35 +1448,39 @@ function renderHomePatients(){
 
  const qNom=normalizeSearchValue($('searchNom')?.value||'');
  const qPrenom=normalizeSearchValue($('searchPrenom')?.value||'');
- const qDob=normalizeSearchValue($('searchDob')?.value||'');
- const queries=[qNom,qPrenom,qDob].filter(Boolean);
+ const qDob=String($('searchDob')?.value||'').trim();
 
- if(!queries.length){
+ if(!qNom && !qPrenom && !qDob){
    el.innerHTML='<div class="hint">Saisis un critère ou clique sur « Afficher les dossiers ».</div>';
    return;
  }
 
- const results=[];
  const list=Array.isArray(db.patients)?db.patients:[];
+ const results=[];
 
- list.forEach((p,index)=>{
+ list.forEach((raw,index)=>{
    try{
-     const blob=patientSearchBlob(p);
-     let ok=true;
-     for(const q of queries){
-       if(blob.includes(q))continue;
-       if(q.length>=3 && blob.includes(q.slice(0,3)))continue;
-       ok=false;break;
-     }
-     if(ok)results.push({p,index});
+     const p=normalizeLegacyPatientRecord(raw,index);
+     const ident=displayPatientIdentity(p,index);
+     const nom=normalizeSearchValue(ident.nom||p.nom||'');
+     const prenom=normalizeSearchValue(ident.prenom||p.prenom||'');
+     const dob=String(ident.dob||p.dob||'');
+
+     // Les critères saisis sont cumulatifs.
+     // Nom et prénom : uniquement début du champ (3 premières lettres acceptées).
+     if(qNom && !nom.startsWith(qNom))return;
+     if(qPrenom && !prenom.startsWith(qPrenom))return;
+     if(qDob && dob!==qDob)return;
+
+     results.push({p,index});
    }catch(err){
-     console.warn('Recherche impossible sur dossier',index,err);
+     console.warn('Ancien dossier non filtrable',index,err);
    }
  });
 
  if(!results.length){
    el.innerHTML=`<div class="notice">Aucun dossier correspondant.<br>
-     <span class="hint">${list.length} dossier(s) sont présents dans la base. Clique sur « Afficher les dossiers » pour les voir.</span></div>`;
+   <span class="hint">${list.length} dossier(s) sont présents dans la base locale.</span></div>`;
    return;
  }
 
@@ -1544,19 +1542,22 @@ function renderPatients(){
  });
 }
 function renderActive(){
- const p=active();
+ let p=active();
+ if(p){
+   const idx=(db.patients||[]).indexOf(p);
+   p=normalizeLegacyPatientRecord(p,idx>=0?idx:0);
+ }
  document.body.classList.toggle('has-patient',!!p);
- const top=$('patientTop');
- const sideName=$('sidebarPatientName');
- const sideInfo=$('sidebarPatientInfo');
+
+ const top=$('patientTop'),sideName=$('sidebarPatientName'),sideInfo=$('sidebarPatientInfo');
 
  if(p){
-   const term=p.pregnancy?.ddg ? termFrom(p.pregnancy.ddg) : '';
-   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div>
-     <div><div class="context-title">Dossier patiente actif</div>
+   const term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
+   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div><div>
+     <div class="context-title">Dossier patiente actif</div>
      <div class="patient-banner-main">${esc(p.nom||'')} ${esc(p.prenom||'')}</div>
      <div class="patient-banner-sub">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`;
-   if(sideName)sideName.textContent=((p.nom||'')+' '+(p.prenom||'')).trim()||'Patiente';
+   if(sideName)sideName.textContent=((p.nom||'')+' '+(p.prenom||'')).trim();
    if(sideInfo)sideInfo.innerHTML=(p.dob?'Née le '+fmtDate(p.dob):'')+(term?'<br><strong>'+term+'</strong>':'');
    if($('activePatientCard'))$('activePatientCard').innerHTML=`<strong>${esc(p.nom||'')} ${esc(p.prenom||'')}</strong>`;
  }else{
