@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.17 locale</title>
+<title>Cabinet Sage-Femme — V2.18 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -1328,19 +1328,35 @@ function saveConsultRxEditor(){
  const lines=($('consultRxLines').value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
  if(!title){showToast('Renseigne un titre');return}
  if(!lines.length){showToast('L’ordonnance est vide');return}
+
+ db.rxTemplates=db.rxTemplates||[];
+ let model=db.rxTemplates.find(t=>norm(t.title)===norm(title));
+ if(model){
+   model.lines=[...lines];
+   model.updatedAt=new Date().toISOString()
+ }else{
+   model={id:uid('rxtpl'),title,lines:[...lines],createdAt:new Date().toISOString()};
+   db.rxTemplates.push(model)
+ }
+ persist();
+
  const rec={
-   ref:$('consultRxEditor').dataset.ref||('free:'+uid('rxfree')),
+   ref:'custom:'+model.id,
    title,
-   lines
+   lines:[...lines]
  };
  if(consultRxEditIndex!==null && consultRxDraft[consultRxEditIndex]){
    consultRxDraft[consultRxEditIndex]=rec;
-   showToast('Ordonnance modifiée')
+   showToast('Ordonnance modifiée et modèle mis à jour')
  }else{
-   consultRxDraft.push(rec);
-   showToast('Ordonnance ajoutée')
+   const same=consultRxDraft.findIndex(x=>norm(x.title)===norm(title));
+   if(same>=0)consultRxDraft[same]=rec;
+   else consultRxDraft.push(rec);
+   showToast('Ordonnance ajoutée et modèle enregistré')
  }
  consultRxEditIndex=null;
+ renderRxTemplates();
+ renderConsultRxMenu();
  cancelConsultRxEditor();
  renderConsultRxModalList();
  renderConsultRxTitles()
@@ -1410,20 +1426,50 @@ function printConsultPrescriptions(){
  if(!p){showToast('Aucune patiente sélectionnée');return}
  if(!consultRxDraft.length){showToast('Aucune ordonnance à imprimer');return}
 
- const docs=consultRxDraft.map(sel=>{
-   const rec={
-     id:uid('preview'),
-     title:sel.title||'Ordonnance',
-     date:$('csDate')?.value||today(),
-     lines:[...(sel.lines||[])]
-   };
-   return `<div class="rx-print-page">${prescriptionHtml(rec,p)}</div>`
+ const w=window.open('','_blank','width=950,height=1150');
+ if(!w){showToast('Autorise les fenêtres contextuelles pour imprimer les ordonnances');return}
+
+ const date=$('csDate')?.value||today();
+ const pages=consultRxDraft.map((sel,i)=>{
+   const rec={id:uid('preview'),title:sel.title||'Ordonnance',date,lines:[...(sel.lines||[])]};
+   return `<section class="rx-page">
+     ${documentHeader(rec.title)}
+     ${prescriptionHtml(rec,p)}
+   </section>`;
  }).join('');
 
- printHtmlDocument('Ordonnances',`<style>
-   .rx-print-page{page-break-after:always;break-after:page}
-   .rx-print-page:last-child{page-break-after:auto;break-after:auto}
- </style>${docs}`)
+ const doc=`<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ordonnances</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+<style>
+ @page{size:A4;margin:10mm}
+ *{box-sizing:border-box}
+ html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}
+ .rx-page{width:190mm;min-height:277mm;margin:0 auto;padding:0;break-after:page;page-break-after:always;overflow:hidden}
+ .rx-page:last-child{break-after:auto;page-break-after:auto}
+ .barcode-wrap{margin:18px 0}
+ p{line-height:1.35}
+</style>
+</head>
+<body>${pages}
+<script>
+ window.onload=function(){
+   try{
+     document.querySelectorAll('.rppsBarcode').forEach(function(svg){
+       JsBarcode(svg,'${CABINET.rpps}',{format:'CODE128',displayValue:true,fontSize:13,height:40,margin:0,width:1.5})
+     });
+   }catch(e){}
+   setTimeout(function(){window.print()},250)
+ }
+<\/script>
+</body>
+</html>`;
+ w.document.open();
+ w.document.write(doc);
+ w.document.close()
 }
 
 function consultObject(){
@@ -2015,7 +2061,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.17',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.18',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
