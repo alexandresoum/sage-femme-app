@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2 locale</title>
+<title>Cabinet Sage-Femme — V2.2 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -158,6 +158,14 @@ textarea{resize:vertical}
           <div class="field"><label>Adresse</label><textarea id="adresse" rows="2"></textarea></div>
           <div class="field"><label>Groupe sanguin</label><input id="groupe"></div>
 
+          <h3>Données anthropométriques</h3>
+          <div class="row3">
+            <div class="field"><label>Taille (cm)</label><input id="taille" type="number" step="0.1" min="100" max="220" oninput="updatePatientBmi()"></div>
+            <div class="field"><label>Poids de référence (kg)</label><input id="poidsReference" type="number" step="0.1" min="25" max="250" oninput="updatePatientBmi()"></div>
+            <div class="field"><label>IMC</label><input id="imc" readonly></div>
+          </div>
+          <div class="hint">Le poids de référence sert au calcul automatique de la prise de poids lors des consultations.</div>
+
           <h3>Allergies</h3>
           <div class="field"><textarea id="allergies" rows="2" placeholder="Aucune connue / préciser"></textarea></div>
 
@@ -229,6 +237,17 @@ textarea{resize:vertical}
         <div class="card span-6"><h3>Bilans PDF</h3><div id="dossierBilanCount" class="term-big">0</div></div>
         <div class="card span-6"><h3>Grossesse en cours</h3><div id="dossierCurrentPregnancy"></div></div>
         <div class="card span-12"><h3>Consultations enregistrées</h3><div id="dossierConsultations"></div></div>
+        <div class="card span-12">
+          <div class="actions" style="justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Coordonnées et informations</h3>
+            <button class="btn secondary" type="button" onclick="editActivePatient()">Modifier la fiche patiente</button>
+          </div>
+          <div id="dossierContact" style="margin-top:12px"></div>
+        </div>
+        <div class="card span-12">
+          <h3>Antécédents</h3>
+          <div id="dossierAntecedents"></div>
+        </div>
         <div class="card span-12"><h3>Éléments récents</h3><div id="dossierRecent"></div></div>
       </div>
     </section>
@@ -285,7 +304,7 @@ textarea{resize:vertical}
             <h3>Examen</h3>
             <div class="row3">
               <div class="field"><label>TA</label><input id="ta"></div>
-              <div class="field"><label>Poids</label><input id="poids"></div>
+              <div class="field"><label>Poids (kg)</label><input id="poids" type="number" step="0.1" oninput="updateWeightGain()"><div id="weightGainInfo" class="hint" style="margin-top:5px"></div></div>
               <div class="field"><label>HU</label><input id="hu"></div>
               <div class="field"><label>BCF</label><input id="bcf"></div>
               <div class="field"><label>Œdèmes</label><select id="oedemes"><option>Non</option><option>Oui</option></select></div>
@@ -489,12 +508,30 @@ function migratePatient(raw,index){
  p.nom=id.nom||p.nom||'';
  p.prenom=id.prenom||p.prenom||'';
  p.dob=id.dob||p.dob||'';
- p.tel=p.tel||'';p.email=p.email||'';p.adresse=p.adresse||'';p.groupe=p.groupe||'';
- p.allergies=p.allergies||'';p.atcdMedicaux=p.atcdMedicaux||p.antecedents||'';
- p.atcdChirurgicaux=Array.isArray(p.atcdChirurgicaux)?p.atcdChirurgicaux:[];
- p.gestite=p.gestite||'';p.parite=p.parite||'';
- p.pregnancyHistory=Array.isArray(p.pregnancyHistory)?p.pregnancyHistory:[];
- p.atcdObst=p.atcdObst||'';p.atcdGyneco=p.atcdGyneco||'';p.atcdFamiliaux=p.atcdFamiliaux||'';
+ p.tel=p.tel||deepFind(p,['telephone','téléphone','phone','mobile','portable','numeroTelephone','numTel'])||'';
+ p.email=p.email||deepFind(p,['mail','courriel','emailAddress'])||'';
+ p.adresse=p.adresse||deepFind(p,['address','adressePostale','streetAddress','domicile'])||'';
+ p.groupe=p.groupe||deepFind(p,['groupeSanguin','bloodGroup','bloodgroup'])||'';
+ p.taille=p.taille||deepFind(p,['taille','height','heightCm','tailleCm'])||'';
+ p.poidsReference=p.poidsReference||deepFind(p,['poidsReference','poidsHabituel','poidsInitial','prePregnancyWeight','weight','poids'])||'';
+
+ p.allergies=p.allergies||deepFind(p,['allergie','allergy','allergiesConnues'])||'';
+ p.atcdMedicaux=p.atcdMedicaux||p.antecedents||deepFind(p,['antecedentsMedicaux','atcdMédicaux','medicalHistory','medicalAntecedents'])||'';
+
+ const legacySurg=p.atcdChirurgicaux||p.antecedentsChirurgicaux||p.chirurgies||p.surgeries;
+ if(Array.isArray(legacySurg)) p.atcdChirurgicaux=legacySurg.map(String);
+ else if(typeof legacySurg==='string' && legacySurg.trim()) p.atcdChirurgicaux=legacySurg.split(/[;,\n]/).map(x=>x.trim()).filter(Boolean);
+ else p.atcdChirurgicaux=[];
+
+ p.gestite=p.gestite||p.gestity||deepFind(p,['G','gestité','gravidity'])||'';
+ p.parite=p.parite||p.parity||deepFind(p,['P','parité'])||'';
+
+ const legacyPregHist=p.pregnancyHistory||p.grossessesAnterieures||p.obstetricHistory;
+ p.pregnancyHistory=Array.isArray(legacyPregHist)?legacyPregHist:[];
+
+ p.atcdObst=p.atcdObst||deepFind(p,['antecedentsObstetricaux','atcdObstetricaux','obstetricAntecedents'])||'';
+ p.atcdGyneco=p.atcdGyneco||deepFind(p,['antecedentsGynecologiques','atcdGynecologiques','gynecologicHistory'])||'';
+ p.atcdFamiliaux=p.atcdFamiliaux||deepFind(p,['antecedentsFamiliaux','familyHistory','familialAntecedents'])||'';
  p.alertNote=(p.alertNote&&typeof p.alertNote==='object')?p.alertNote:{text:'',enabled:false};
  p.consultations=Array.isArray(p.consultations)?p.consultations:[];
  p.prescriptions=Array.isArray(p.prescriptions)?p.prescriptions:[];
@@ -517,6 +554,8 @@ function loadDb(){
  return raw;
 }
 let db=loadDb();
+// V2.1 : la migration enrichit les anciens dossiers puis les resauvegarde immédiatement.
+localStorage.setItem(KEY,JSON.stringify(db));
 function persist(){localStorage.setItem(KEY,JSON.stringify(db))}
 function active(){return db.patients.find(p=>String(p.id)===String(db.activeId))||null}
 function activePregnancy(p=active()){return p?.pregnancies?.find(x=>x.status==='active')||null}
@@ -528,12 +567,28 @@ function syncLegacyPregnancy(p=active()){
 function showToast(msg){
  const t=$('toast');t.textContent='✓ '+msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400)
 }
+function calcBmi(weightKg,heightCm){
+ const w=Number(weightKg),h=Number(heightCm)/100;
+ if(!w||!h||h<=0)return '';
+ return (w/(h*h)).toFixed(1);
+}
+function updatePatientBmi(){
+ if($('imc'))$('imc').value=calcBmi($('poidsReference')?.value,$('taille')?.value);
+}
+function updateWeightGain(){
+ const p=active(),ref=Number(p?.poidsReference||0),current=Number($('poids')?.value||0),el=$('weightGainInfo');
+ if(!el)return;
+ if(!ref){el.textContent='Poids de référence non renseigné dans la fiche patiente.';return}
+ if(!current){el.textContent=`Poids de référence : ${ref.toFixed(1)} kg`;return}
+ const diff=current-ref;
+ el.innerHTML=`Poids de référence : ${ref.toFixed(1)} kg — <b>prise de poids : ${diff>0?'+':''}${diff.toFixed(1)} kg</b>`;
+}
 function renderActive(){
  const p=active(),term=p?.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
  $('sidebarPatientName').textContent=p?`${p.nom} ${p.prenom}`.trim():'Aucune patiente';
  $('sidebarPatientInfo').innerHTML=p?`${p.dob?'Née le '+fmtDate(p.dob):''}${term?'<br><strong>'+term+'</strong>':''}`:'Sélectionne ou crée une patiente';
  $('patientTop').innerHTML=p
-   ? `<div class="icon">👤</div><div><div class="eyebrow">Dossier patiente actif</div><div class="mainline">${esc(p.nom)} ${esc(p.prenom)}</div><div class="subline">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`
+   ? `<div class="icon">👤</div><div style="flex:1"><div class="eyebrow">Dossier patiente actif</div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="mainline">${esc(p.nom)} ${esc(p.prenom)}</div><button class="btn secondary" type="button" onclick="editActivePatient()">Fiche patiente</button></div><div class="subline">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`
    : `<div class="icon">👤</div><div><div class="eyebrow">Dossier patiente</div><div class="mainline">Aucune patiente sélectionnée</div><div class="subline">Sélectionne ou crée une patiente</div></div>`;
  document.querySelectorAll('.clinical').forEach(b=>b.disabled=!p);
 }
@@ -591,21 +646,37 @@ function startNewPatientFromSearch(){
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('patientEdit').classList.add('active');$('pageTitle').textContent='Informations patiente';
 }
 function clearPatientForm(){
- ['nom','prenom','dob','tel','email','adresse','groupe','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux','alertNote'].forEach(id=>$(id).value='');
+ ['nom','prenom','dob','tel','email','adresse','groupe','taille','poidsReference','imc','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux','alertNote'].forEach(id=>$(id).value='');
  $('alertEnabled').checked=false;surgeryDraft=[];pregHistoryDraft=[];renderSurgeryList();renderPregHistory()
 }
 function loadPatientForm(p=active()){
- if(!p)return;['nom','prenom','dob','tel','email','adresse','groupe','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux'].forEach(id=>$(id).value=p[id]||'');
- $('alertNote').value=p.alertNote?.text||'';$('alertEnabled').checked=!!p.alertNote?.enabled;
- surgeryDraft=[...(p.atcdChirurgicaux||[])];pregHistoryDraft=JSON.parse(JSON.stringify(p.pregnancyHistory||[]));renderSurgeryList();renderPregHistory()
+ if(!p)return;
+ ['nom','prenom','dob','tel','email','adresse','groupe','taille','poidsReference','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux'].forEach(id=>$(id).value=p[id]||'');
+ updatePatientBmi();
+ $('alertNote').value=p.alertNote?.text||'';
+ $('alertEnabled').checked=!!p.alertNote?.enabled;
+ surgeryDraft=[...(p.atcdChirurgicaux||[])];
+ pregHistoryDraft=JSON.parse(JSON.stringify(p.pregnancyHistory||[]));
+ renderSurgeryList();
+ renderPregHistory();
 }
 function savePatient(){
  const nom=$('nom').value.trim().toUpperCase(),prenom=$('prenom').value.trim(),dob=parseDateAny($('dob').value);
  if(!nom||!prenom||!dob){showToast('Nom, prénom et date de naissance sont nécessaires');return}
  let p=active(),isNew=!p;
  if(!p)p=migratePatient({id:uid('pat')});
- Object.assign(p,{nom,prenom,dob,tel:$('tel').value.trim(),email:$('email').value.trim(),adresse:$('adresse').value.trim(),groupe:$('groupe').value.trim(),allergies:$('allergies').value.trim(),atcdMedicaux:$('atcdMedicaux').value.trim(),atcdChirurgicaux:[...surgeryDraft],gestite:$('gestite').value.trim(),parite:$('parite').value.trim(),pregnancyHistory:JSON.parse(JSON.stringify(pregHistoryDraft)),atcdObst:$('atcdObst').value.trim(),atcdGyneco:$('atcdGyneco').value.trim(),atcdFamiliaux:$('atcdFamiliaux').value.trim(),alertNote:{text:$('alertNote').value.trim(),enabled:$('alertEnabled').checked}});
- if(isNew)db.patients.unshift(p);db.activeId=p.id;persist();updateLocalCount();renderActive();renderDossier();go('dossier');showToast('Dossier patiente enregistré')
+ Object.assign(p,{
+   nom,prenom,dob,
+   tel:$('tel').value.trim(),email:$('email').value.trim(),adresse:$('adresse').value.trim(),groupe:$('groupe').value.trim(),
+   taille:$('taille').value.trim(),poidsReference:$('poidsReference').value.trim(),
+   allergies:$('allergies').value.trim(),atcdMedicaux:$('atcdMedicaux').value.trim(),
+   atcdChirurgicaux:[...surgeryDraft],gestite:$('gestite').value.trim(),parite:$('parite').value.trim(),
+   pregnancyHistory:JSON.parse(JSON.stringify(pregHistoryDraft)),atcdObst:$('atcdObst').value.trim(),
+   atcdGyneco:$('atcdGyneco').value.trim(),atcdFamiliaux:$('atcdFamiliaux').value.trim(),
+   alertNote:{text:$('alertNote').value.trim(),enabled:$('alertEnabled').checked}
+ });
+ if(isNew)db.patients.unshift(p);
+ db.activeId=p.id;persist();updateLocalCount();renderActive();renderDossier();go('dossier');showToast('Dossier patiente enregistré');
 }
 function addSurgery(){const v=$('surgeryInput').value.trim();if(!v)return;surgeryDraft.push(v);$('surgeryInput').value='';renderSurgeryList();showToast('Antécédent chirurgical ajouté')}
 function renderSurgeryList(){
@@ -635,13 +706,80 @@ function editPregHistory(i){
  const x=pregHistoryDraft[i];const outcome=prompt('Issue',x.outcome||'');if(outcome===null)return;const term=prompt('Terme',x.term||'');if(term===null)return;const complication=prompt('Complications / commentaires',x.complication||'');if(complication===null)return;x.outcome=outcome;x.term=term;x.complication=complication;renderPregHistory()
 }
 
+
+function editActivePatient(){
+ const p=active();if(!p)return;
+ loadPatientForm(p);
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ $('patientEdit').classList.add('active');
+ $('pageTitle').textContent='Informations patiente';
+ renderActive();
+}
+
 function renderDossier(){
  const p=active();if(!p)return;syncLegacyPregnancy(p);
- $('dossierName').textContent=`${p.nom} ${p.prenom}`.trim();$('dossierMeta').innerHTML=`${p.dob?'Née le '+fmtDate(p.dob):''}${p.tel?'<br>Tél. '+esc(p.tel):''}${p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):''}`;
- $('dossierPregnancy').innerHTML=p.pregnancy?.ddg?`<strong>${termFrom(p.pregnancy.ddg)}</strong><br><span class="hint">DDG ${fmtDate(p.pregnancy.ddg)} · DPA ${fmtDate(calcDpa(p.pregnancy.ddg))}</span>`:'Aucune grossesse enregistrée.';
- $('dossierCurrentPregnancy').innerHTML=p.pregnancy?.ddg?`<strong>${termFrom(p.pregnancy.ddg)}</strong><br>DDG : ${fmtDate(p.pregnancy.ddg)}`:'Aucune grossesse enregistrée.';
- $('dossierConsultations').innerHTML='';(p.consultations||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(c=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${fmtDate(c.date)} — ${c.consultType==='gynecologie'?'Gynécologie':c.consultType==='obstetrique'?'Obstétrique':'Autre'}</strong><small>${esc(c.motif||'')}${c.term?' · '+esc(c.term):''}</small>`;d.onclick=()=>openRecordModal('Consultation du '+fmtDate(c.date),consultationHtml(c,p));$('dossierConsultations').appendChild(d)});
- $('dossierRecent').innerHTML='';(p.history||[]).slice(0,6).forEach((h,i)=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);$('dossierRecent').appendChild(d)});
+
+ $('dossierName').textContent=`${p.nom} ${p.prenom}`.trim();
+ $('dossierMeta').innerHTML=`${p.dob?'Née le '+fmtDate(p.dob):''}${p.tel?'<br>Tél. '+esc(p.tel):''}${p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):''}`;
+
+ $('dossierPregnancy').innerHTML=p.pregnancy?.ddg
+   ? `<strong>${termFrom(p.pregnancy.ddg)}</strong><br><span class="hint">DDG ${fmtDate(p.pregnancy.ddg)} · DPA ${fmtDate(calcDpa(p.pregnancy.ddg))}</span>`
+   : 'Aucune grossesse enregistrée.';
+
+ $('dossierCurrentPregnancy').innerHTML=p.pregnancy?.ddg
+   ? `<strong>${termFrom(p.pregnancy.ddg)}</strong><br>DDG : ${fmtDate(p.pregnancy.ddg)}`
+   : 'Aucune grossesse enregistrée.';
+
+ const contact=[];
+ if(p.adresse)contact.push(`<div><b>Adresse :</b><br>${esc(p.adresse).replace(/\n/g,'<br>')}</div>`);
+ if(p.tel)contact.push(`<div><b>Téléphone :</b> ${esc(p.tel)}</div>`);
+ if(p.email)contact.push(`<div><b>Email :</b> ${esc(p.email)}</div>`);
+ if(p.groupe)contact.push(`<div><b>Groupe sanguin :</b> ${esc(p.groupe)}</div>`);
+ if(p.taille)contact.push(`<div><b>Taille :</b> ${esc(p.taille)} cm</div>`);
+ if(p.poidsReference)contact.push(`<div><b>Poids de référence :</b> ${esc(p.poidsReference)} kg</div>`);
+ const bmi=calcBmi(p.poidsReference,p.taille);
+ if(bmi)contact.push(`<div><b>IMC :</b> ${esc(bmi)} kg/m²</div>`);
+ $('dossierContact').innerHTML=contact.length
+   ? `<div class="row">${contact.map(x=>`<div class="entry">${x}</div>`).join('')}</div>`
+   : '<div class="hint">Aucune coordonnée complémentaire renseignée.</div>';
+
+ let ant='';
+ ant+=`<div class="entry"><b>Allergies</b><div>${esc(p.allergies||'Aucune renseignée')}</div></div>`;
+ ant+=`<div class="entry"><b>Antécédents médicaux</b><div>${esc(p.atcdMedicaux||'Aucun renseigné').replace(/\n/g,'<br>')}</div></div>`;
+ ant+=`<div class="entry"><b>Antécédents chirurgicaux</b><div>${(p.atcdChirurgicaux||[]).length?(p.atcdChirurgicaux||[]).map(esc).join(' · '):'Aucun renseigné'}</div></div>`;
+
+ let obst=`<b>Antécédents obstétricaux</b><div><b>G/P :</b> ${esc(p.gestite||'—')} / ${esc(p.parite||'—')}</div>`;
+ if(p.atcdObst)obst+=`<div>${esc(p.atcdObst).replace(/\n/g,'<br>')}</div>`;
+ if((p.pregnancyHistory||[]).length){
+   obst+='<div style="margin-top:8px">';
+   (p.pregnancyHistory||[]).forEach(x=>{
+     obst+=`<div style="margin:5px 0">• <b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.healthy?' — Enfant en bonne santé : '+esc(x.healthy):''}${x.childComment?' — '+esc(x.childComment):''}${x.complication?' — '+esc(x.complication):''}</div>`;
+   });
+   obst+='</div>';
+ }
+ ant+=`<div class="entry">${obst}</div>`;
+ ant+=`<div class="entry"><b>Antécédents gynécologiques</b><div>${esc(p.atcdGyneco||'Aucun renseigné').replace(/\n/g,'<br>')}</div></div>`;
+ ant+=`<div class="entry"><b>Antécédents familiaux</b><div>${esc(p.atcdFamiliaux||'Aucun renseigné').replace(/\n/g,'<br>')}</div></div>`;
+ $('dossierAntecedents').innerHTML=ant;
+
+ $('dossierConsultations').innerHTML='';
+ (p.consultations||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(c=>{
+   const d=document.createElement('div');d.className='entry';
+   d.innerHTML=`<strong>${fmtDate(c.date)} — ${c.consultType==='gynecologie'?'Gynécologie':c.consultType==='obstetrique'?'Obstétrique':'Autre'}</strong><small>${esc(c.motif||'')}${c.term?' · '+esc(c.term):''}</small>`;
+   d.onclick=()=>openRecordModal('Consultation du '+fmtDate(c.date),consultationHtml(c,p));
+   $('dossierConsultations').appendChild(d)
+ });
+ if(!(p.consultations||[]).length)$('dossierConsultations').innerHTML='<div class="hint">Aucune consultation enregistrée.</div>';
+
+ $('dossierRecent').innerHTML='';
+ (p.history||[]).slice(0,6).forEach((h,i)=>{
+   const d=document.createElement('div');d.className='entry';
+   d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;
+   d.onclick=()=>openHistoryRecord(i);
+   $('dossierRecent').appendChild(d)
+ });
+ if(!(p.history||[]).length)$('dossierRecent').innerHTML='<div class="hint">Aucun élément enregistré.</div>';
+
  countBilans().then(n=>$('dossierBilanCount').textContent=n).catch(()=>{})
 }
 
@@ -662,17 +800,37 @@ function renderPregnancyEpisodes(){const p=active(),el=$('pregnancyEpisodes');el
 
 function checked(container){return [...$(container).querySelectorAll('input:checked')].map(x=>x.value)}
 function consultObject(){
- const mode=$('consultType').value;return {consultType:mode,date:$('csDate').value||today(),term:mode==='obstetrique'?$('csTerm').value:'',motif:$('motif').value.trim(),inter:mode==='obstetrique'?checked('interChecks'):[],ta:$('ta').value,poids:$('poids').value,hu:$('hu').value,bcf:$('bcf').value,oedemes:$('oedemes').value,bu:$('bu').value,cat:mode==='obstetrique'?checked('catChecks'):[],notes:$('notes').value.trim()}
+ const mode=$('consultType').value;
+ const ref=Number(active()?.poidsReference||0),current=Number($('poids').value||0);
+ return {
+   consultType:mode,date:$('csDate').value||today(),term:mode==='obstetrique'?$('csTerm').value:'',
+   motif:$('motif').value.trim(),inter:mode==='obstetrique'?checked('interChecks'):[],
+   ta:$('ta').value,poids:$('poids').value,poidsReference:ref||'',prisePoids:(ref&&current)?Number((current-ref).toFixed(1)):null,
+   hu:$('hu').value,bcf:$('bcf').value,oedemes:$('oedemes').value,bu:$('bu').value,
+   cat:mode==='obstetrique'?checked('catChecks'):[],notes:$('notes').value.trim()
+ };
 }
 function startNewConsultation(){resetConsult();go('consult')}
-function resetConsult(){$('consultType').value='obstetrique';$('csDate').value=today();$('motif').value='Suivi de grossesse';['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value='');$('oedemes').value='Non';document.querySelectorAll('#interChecks input,#catChecks input').forEach(x=>x.checked=false);syncConsultTerm();updateConsultMode()}
+function resetConsult(){$('consultType').value='obstetrique';$('csDate').value=today();$('motif').value='Suivi de grossesse';['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value='');$('oedemes').value='Non';document.querySelectorAll('#interChecks input,#catChecks input').forEach(x=>x.checked=false);syncConsultTerm();updateConsultMode();updateWeightGain()}
 function syncConsultTerm(){const ddg=active()?.pregnancy?.ddg;$('csTerm').value=ddg?termFrom(ddg,$('csDate').value||today()):'';updateConsultPreview()}
 function updateConsultMode(){const obst=$('consultType').value==='obstetrique';document.querySelectorAll('.obst-only').forEach(x=>x.style.display=obst?'':'none');if(obst&&(!$('motif').value||$('motif').value==='Consultation gynécologique'))$('motif').value='Suivi de grossesse';if($('consultType').value==='gynecologie'&&(!$('motif').value||$('motif').value==='Suivi de grossesse'))$('motif').value='Consultation gynécologique';syncConsultTerm();updateConsultPreview()}
-function updateConsultPreview(){const c=consultObject();$('consultPreview').innerHTML=`<b>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation'}</b><br>${c.term?'<b>Terme :</b> '+esc(c.term)+'<br>':''}<b>Motif :</b> ${esc(c.motif||'—')}`}
+function updateConsultPreview(){
+ const c=consultObject();
+ const weight=(c.consultType==='obstetrique'&&c.poids)?`<br><b>Poids :</b> ${esc(c.poids)} kg${c.prisePoids!==null?` — <b>prise de poids :</b> ${c.prisePoids>0?'+':''}${esc(c.prisePoids)} kg`:''}`:'';
+ $('consultPreview').innerHTML=`<b>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation'}</b><br>${c.term?'<b>Terme :</b> '+esc(c.term)+'<br>':''}<b>Motif :</b> ${esc(c.motif||'—')}${weight}`;
+}
 function saveConsult(){
  const p=active(),c=consultObject();if(!c.motif){showToast('Renseigne le motif');return}const saved={...c,id:uid('cs'),savedAt:new Date().toISOString()};p.consultations.unshift(saved);p.history.unshift({id:saved.id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' · '+c.term:''}`,snapshot:JSON.parse(JSON.stringify(saved))});persist();activeConsultDraft=null;renderDossier();renderHistory();showToast('Consultation enregistrée');setTimeout(resetConsult,100)
 }
-function consultationHtml(c,p){let out=`<h2>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Consultation'}</h2><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p><p><b>Date :</b> ${fmtDate(c.date)}${c.term?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>`;if(c.consultType==='obstetrique')out+=`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p><p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p><p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`;if(c.notes)out+=`<p><b>Notes :</b> ${esc(c.notes)}</p>`;return out}
+function consultationHtml(c,p){
+ let out=`<h2>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Consultation'}</h2><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p><p><b>Date :</b> ${fmtDate(c.date)}${c.term?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>`;
+ if(c.consultType==='obstetrique'){
+   const gain=(c.prisePoids!==null&&c.prisePoids!==undefined)?` ; Prise de poids ${Number(c.prisePoids)>0?'+':''}${esc(c.prisePoids)} kg`:'';
+   out+=`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p><p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} kg${gain} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p><p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`;
+ }
+ if(c.notes)out+=`<p><b>Notes :</b> ${esc(c.notes)}</p>`;
+ return out;
+}
 function printConsult(){const p=active();printHtmlDocument('Compte rendu de consultation',consultationHtml(consultObject(),p)+signatureBlock())}
 function leaveConsultForRx(){activeConsultDraft=consultObject();go('rx');showToast('Consultation conservée pendant l’ordonnance')}
 function returnToConsult(){go('consult');if(activeConsultDraft){const c=activeConsultDraft;$('consultType').value=c.consultType;$('csDate').value=c.date;$('motif').value=c.motif;$('csTerm').value=c.term;['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value=c[id]||'');$('oedemes').value=c.oedemes||'Non';document.querySelectorAll('#interChecks input').forEach(x=>x.checked=c.inter.includes(x.value));document.querySelectorAll('#catChecks input').forEach(x=>x.checked=c.cat.includes(x.value));updateConsultMode()}}
@@ -736,7 +894,7 @@ function printOpenedRecord(){closeRecordModal();setTimeout(()=>printHtmlDocument
 function printFullHistory(){
  const p=active();let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob):''}${p.adresse?'<br>'+esc(p.adresse):''}${p.tel?'<br>Tél. '+esc(p.tel):''}</p>`;
  if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${fmtDate(calcDpa(p.pregnancy.ddg))} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p>`;
- body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
+ body+=`<h2>Données anthropométriques</h2><p><b>Taille :</b> ${p.taille?esc(p.taille)+' cm':'—'}<br><b>Poids de référence :</b> ${p.poidsReference?esc(p.poidsReference)+' kg':'—'}<br><b>IMC :</b> ${calcBmi(p.poidsReference,p.taille)||'—'}</p>`; body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
  if(p.pregnancyHistory?.length){body+='<h3>Grossesses antérieures</h3>';p.pregnancyHistory.forEach(x=>body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.healthy?' — Enfant en bonne santé : '+esc(x.healthy):''}${x.childComment?'<br>'+esc(x.childComment):''}${x.complication?'<br>'+esc(x.complication):''}</p>`)}
  const e=p.echos||{};body+='<h2>Résumé des échographies</h2>';if(e.t1)body+=`<p><b>T1 :</b> ${fmtDate(e.t1.date)} — ${termFrom(e.t1.ddg,e.t1.date)}<br>Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>CN : ${esc(e.t1.cn||'—')} mm — LCC : ${esc(e.t1.lcc||'—')} mm — Poids : ${esc(e.t1.weight||'—')} kg</p>`;if(e.t2)body+=`<p><b>T2 :</b> ${fmtDate(e.t2.date)} — habituelle : ${esc(e.t2.normal||'—')}${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;if(e.t3)body+=`<p><b>T3 :</b> ${fmtDate(e.t3.date)} — habituelle : ${esc(e.t3.normal||'—')}${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;(p.extraEchos||[]).forEach(x=>body+=`<p><b>Échographie supplémentaire :</b> ${fmtDate(x.date)}${x.term?' — '+esc(x.term):''}${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`);
  body+='<h2>Consultations</h2>';(p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(c=>body+=`<div class="avoid-break" style="border-top:1px solid #ccc;padding-top:8px;margin-top:10px">${consultationHtml(c,p)}</div>`);
@@ -752,7 +910,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.0',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.2',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
