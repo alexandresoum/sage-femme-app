@@ -1007,20 +1007,68 @@ function printT1Markers(){
  printHtmlDocument('Ordonnance',body);
 }
 function printT1ConsentLab(){
- const p=active();if(!p)return;const t1=p.echos?.t1||{},ddg=t1.ddg||p.pregnancy?.ddg;if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
- const w=markerWindow(ddg),consultDate=t1.date||today(),term=t1.date?termFrom(ddg,t1.date):termFrom(ddg);
- const body=`<div style="text-align:center"><h2>ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p>Information, demande et consentement en vue d’un dépistage prénatal utilisant les marqueurs sériques maternels</p></div><hr>
- <h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> Mme Clarisse SOUM — Sage-femme — RPPS 10004054820<br><b>Échographiste :</b> ${esc(t1.echoName||'—')} &nbsp; <b>N° d’agrément :</b> ${esc(t1.echoApproval||'—')}</p>
- <h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'}<br><b>Adresse :</b> ${esc(p.adresse||'—')}</p>
- <h3>INFORMATIONS SUR LA GROSSESSE EN COURS</h3><p><b>DDG :</b> ${fmtDate(ddg)} &nbsp; <b>DPA :</b> ${calcDpaText(ddg)}<br><b>Date de l’échographie T1 :</b> ${t1.date?fmtDate(t1.date):'—'} &nbsp; <b>Terme :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t1.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t1.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t1.weight||'—')} kg</p>
- <p><b>Période de prélèvement du 1er trimestre :</b> du <strong>${fmtDate(w.start)}</strong> au <strong>${fmtDate(w.end)}</strong>.</p><hr>
- <h3>INFORMATION, DEMANDE ET CONSENTEMENT DE LA FEMME ENCEINTE</h3>
- <p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>Mme Clarisse SOUM, sage-femme</b>, au cours d’une consultation en date du <b>${fmtDate(consultDate)}</b>, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
+ const p=active();if(!p)return;
+ p.echos=p.echos||{};
+ const previous=p.echos.t1||{};
+ const t1={
+   date:$('t1Date')?.value||previous.date||'',
+   ddg:$('t1Ddg')?.value||previous.ddg||p.pregnancy?.ddg||'',
+   echoName:$('t1EchoName')?.value?.trim()||previous.echoName||'',
+   echoApproval:$('t1EchoApproval')?.value?.trim()||previous.echoApproval||'',
+   cn:$('t1Cn')?.value||previous.cn||'',
+   lcc:$('t1Lcc')?.value||previous.lcc||'',
+   weight:$('t1Weight')?.value||previous.weight||''
+ };
+ p.echos.t1=t1;persist();
+ const ddg=t1.ddg;
+ if(!ddg){alert('Renseigne la date de début de grossesse.');return}
+ if(!t1.date){alert("Renseigne la date de l’échographie T1.");return}
+ const w=markerWindow(ddg);
+ const termT1=termFrom(ddg,t1.date);
+ const patientName=`${esc(p.prenom)} ${esc(p.nom)}`;
+ const pro=`<p><b>Prescripteur :</b> Mme Clarisse SOUM — Sage-femme — RPPS 10004054820<br>
+ <b>Échographiste :</b> ${esc(t1.echoName||'—')} &nbsp;&nbsp; <b>N° d’agrément :</b> ${esc(t1.echoApproval||'—')}</p>`;
+ const preg=`<p><b>DDG :</b> ${fmtDate(ddg)} &nbsp;&nbsp; <b>DPA :</b> ${calcDpaText(ddg)}<br>
+ <b>Date de l’échographie T1 :</b> ${fmtDate(t1.date)} &nbsp;&nbsp; <b>Terme à l’échographie T1 :</b> ${esc(termT1)}<br>
+ <b>LCC :</b> ${esc(t1.lcc||'—')} mm &nbsp;&nbsp; <b>CN :</b> ${esc(t1.cn||'—')} mm &nbsp;&nbsp; <b>Poids :</b> ${esc(t1.weight||'—')} kg</p>`;
+ const infoText=`<p>Je soussignée <b>${patientName}</b> atteste avoir reçu de <b>Mme Clarisse SOUM, sage-femme</b> une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
  <p>Cette information a porté notamment sur les caractéristiques de la trisomie 21 et les modalités de prise en charge des personnes porteuses de trisomie 21, sur la différence entre dépistage et diagnostic, sur la mesure de la clarté nucale, et sur le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d’estimer un risque mais ne permet pas à lui seul d’établir un diagnostic.</p>
  <p>J’ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, notamment un examen portant sur l’ADN fœtal libre circulant dans le sang maternel ou un examen diagnostique chromosomique après prélèvement invasif. J’ai également été informée que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p>
- <p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p>
- <div style="display:flex;justify-content:space-between;gap:40px;margin-top:60px"><div><b>Date :</b> ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>Mme Clarisse SOUM</b><br>Sage-femme<br><br><b>Signature / tampon</b></div></div><hr style="margin-top:65px">
- <h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br><b>DDG :</b> ${fmtDate(ddg)} — <b>Terme à la T1 :</b> ${esc(term)}<br><b>Échographiste :</b> ${esc(t1.echoName||'—')} — <b>Agrément :</b> ${esc(t1.echoApproval||'—')}<br><b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br><b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p>`;
+ <p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p>`;
+ const signatures=`<div style="display:flex;justify-content:space-between;gap:40px;margin-top:34px">
+ <div><b>Date :</b> ____ / ____ / ______<br><br><b>Signature de la patiente</b></div>
+ <div><b>Mme Clarisse SOUM</b><br>Sage-femme<br><br><b>Signature / tampon</b></div></div>`;
+
+ const copy=(label,compact=false)=>`<section class="${compact?'consent-copy compact':'consent-copy'}">
+ <div style="text-align:center"><h2>ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2>
+ <p><b>Information, demande et consentement</b><br>${label}</p></div>
+ <h3>IDENTIFICATION DES PROFESSIONNELS</h3>${pro}
+ <h3>IDENTIFICATION DE LA PATIENTE</h3>
+ <p><b>Nom :</b> ${esc(p.nom)} &nbsp;&nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br>
+ <b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp;&nbsp; <b>Adresse :</b> ${esc(p.adresse||'—')}</p>
+ <h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3>${preg}
+ <p><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}.</p>
+ <h3>INFORMATION ET CONSENTEMENT</h3>${infoText}${signatures}</section>`;
+
+ const lab=`<section class="lab-copy"><h2>RENSEIGNEMENTS POUR LE LABORATOIRE</h2>
+ <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
+ <b>DDG :</b> ${fmtDate(ddg)} — <b>Date T1 :</b> ${fmtDate(t1.date)} — <b>Terme à la T1 :</b> ${esc(termT1)}<br>
+ <b>Échographiste :</b> ${esc(t1.echoName||'—')} — <b>Agrément :</b> ${esc(t1.echoApproval||'—')}<br>
+ <b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br>
+ <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></section>`;
+
+ const body=`<style>
+ @media print{
+   .consent-copy{break-after:page;page-break-after:always}
+   .two-copies-page{break-before:page;page-break-before:always}
+   .compact{font-size:9.4px;line-height:1.18;margin:0 0 8mm 0;padding-bottom:5mm;border-bottom:1px dashed #999}
+   .compact h2{font-size:15px;margin:3px 0} .compact h3{font-size:11px;margin:6px 0 2px}
+   .compact p{margin:3px 0} .lab-copy{break-before:page;page-break-before:always}
+ }
+ </style>
+ ${copy('Exemplaire patiente')}
+ <div class="two-copies-page">${copy('Exemplaire prescripteur',true)}${copy('Exemplaire laboratoire',true)}</div>
+ ${lab}`;
  printHtmlDocument('Consentement — dépistage de la trisomie 21',body);
 }
 
