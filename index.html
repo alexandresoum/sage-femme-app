@@ -197,6 +197,7 @@ body:not(.has-patient) #patientTop{display:none}
               <div id="localPatientCount" class="hint"></div>
             </div>
             <div class="actions">
+              <button class="btn secondary" type="button" onclick="showAllLocalPatients()">Afficher les dossiers</button>
               <button class="btn secondary" type="button" onclick="exportPatientDatabase()">Exporter les dossiers</button>
               <label class="btn secondary" style="cursor:pointer">Importer les dossiers
                 <input id="patientDbImport" type="file" accept="application/json" style="display:none" onchange="importPatientDatabase(event)">
@@ -945,17 +946,17 @@ function disablePostit(){
 }
 
 function selectPatient(id){
- const p=(db.patients||[]).find(x=>String(x.id)===String(id));
+ let p=(db.patients||[]).find(x=>String(x.id)===String(id));
  if(!p){showToast('Dossier introuvable');return}
  db.activeId=p.id;
  localStorage.setItem(KEY,JSON.stringify(db));
- loadPatient();
- renderActive();
- renderHistory();
- renderDossier();
+ try{loadPatient()}catch(e){console.error('loadPatient ancien dossier',e)}
+ try{renderActive()}catch(e){console.error(e)}
+ try{renderHistory()}catch(e){console.error(e)}
+ try{renderDossier()}catch(e){console.error(e)}
  go('dossier');
  showToast('Dossier patiente ouvert');
- setTimeout(maybeShowPostit,180);
+ setTimeout(()=>{try{maybeShowPostit()}catch(e){}},180);
 }
 function loadPatient(){
  const p=active();if(!p)return;
@@ -1020,128 +1021,130 @@ function patientMatchScore(p,qn,qp,qd){
  }
  return used?score:0;
 }
-function renderHomePatients(){
- const el=$('homePatientResults');
- if(!el)return;
 
- let qn=norm($('searchNom')?.value||'');
- let qp=norm($('searchPrenom')?.value||'');
- const qd=$('searchDob')?.value||'';
-
- if(!qn && !qp && !qd){
-   el.innerHTML='<div class="hint">Saisis un nom, un prénom ou une date de naissance pour rechercher une patiente.</div>';
-   return;
+function normalizeSearchValue(v){
+ return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function patientSearchBlob(p){
+ try{
+   return normalizeSearchValue(JSON.stringify(p));
+ }catch(e){
+   return normalizeSearchValue(String(p));
  }
-
- const results=[];
-
- (db.patients||[]).forEach((p,index)=>{
-   try{
-     const nom=norm(p?.nom||p?.lastName||p?.lastname||p?.name||p?.nomPatiente||'');
-     const prenom=norm(p?.prenom||p?.firstName||p?.firstname||p?.givenName||p?.prenomPatiente||'');
-     const dob=String(p?.dob||p?.birthDate||p?.dateNaissance||p?.ddn||'');
-
-     let score=0;
-
-     if(qn){
-       if(nom===qn) score+=100;
-       else if(nom.startsWith(qn)) score+=80;
-       else if(nom.includes(qn)) score+=60;
-       else if(qn.length>=3 && nom.startsWith(qn.slice(0,3))) score+=40;
-       else return;
-     }
-
-     if(qp){
-       if(prenom===qp) score+=90;
-       else if(prenom.startsWith(qp)) score+=70;
-       else if(prenom.includes(qp)) score+=50;
-       else if(qp.length>=3 && prenom.startsWith(qp.slice(0,3))) score+=35;
-       else return;
-     }
-
-     if(qd){
-       if(dob===qd) score+=120;
-       else return;
-     }
-
-     results.push({p,index,score});
-   }catch(err){
-     console.warn('Dossier ancien ignoré pendant la recherche',index,err);
+}
+function findPatientFieldDeep(obj,keys,depth=0){
+ if(!obj || typeof obj!=='object' || depth>4)return '';
+ const wanted=keys.map(k=>normalizeSearchValue(k));
+ for(const [k,v] of Object.entries(obj)){
+   if(wanted.includes(normalizeSearchValue(k)) && (typeof v==='string'||typeof v==='number')) return String(v);
+ }
+ for(const v of Object.values(obj)){
+   if(v && typeof v==='object' && !Array.isArray(v)){
+     const found=findPatientFieldDeep(v,keys,depth+1);
+     if(found)return found;
    }
- });
-
- // Recherche "DUPONT Mélanie" saisie dans le champ Nom.
- if(!results.length && qn && !qp && qn.includes(' ')){
-   const tokens=qn.split(/\s+/).filter(Boolean);
-   (db.patients||[]).forEach((p,index)=>{
-     try{
-       const hay=norm([
-         p?.nom,p?.prenom,p?.name,p?.lastName,p?.firstName
-       ].filter(Boolean).join(' '));
-
-       let score=0;
-       for(const token of tokens){
-         if(hay.includes(token))score+=50;
-         else if(token.length>=3 && hay.includes(token.slice(0,3)))score+=25;
-         else return;
-       }
-       results.push({p,index,score});
-     }catch(err){}
-   });
  }
+ return '';
+}
+function displayPatientIdentity(p,index){
+ let nom=findPatientFieldDeep(p,['nom','lastname','lastName','nomPatiente','familyName']);
+ let prenom=findPatientFieldDeep(p,['prenom','firstname','firstName','givenName','prenomPatiente']);
+ let dob=findPatientFieldDeep(p,['dob','birthDate','dateNaissance','ddn','date_de_naissance']);
 
- results.sort((a,b)=>b.score-a.score);
+ // Last fallback for very old records.
+ if((!nom || !prenom) && typeof p?.name==='string'){
+   const parts=p.name.trim().split(/\s+/);
+   if(!nom && parts.length)nom=parts.shift()||'';
+   if(!prenom && parts.length)prenom=parts.join(' ');
+ }
+ if(!nom && !prenom){
+   nom='Dossier';
+   prenom=String(index+1);
+ }
+ return {nom:String(nom||''),prenom:String(prenom||''),dob:String(dob||'')};
+}
+function renderPatientSearchResults(records){
+ const el=$('homePatientResults'); if(!el)return;
  el.innerHTML='';
-
- if(!results.length){
-   el.innerHTML=`<div class="notice">
-     Aucun dossier trouvé avec ces critères.<br>
-     <span class="hint">${(db.patients||[]).length} dossier(s) sont pourtant présents dans la base locale.</span>
-   </div>`;
+ if(!records.length){
+   el.innerHTML='<div class="notice">Aucun dossier correspondant.</div>';
    return;
  }
-
- results.slice(0,30).forEach(({p,index})=>{
+ records.forEach(({p,index})=>{
+   const id=displayPatientIdentity(p,index);
    const row=document.createElement('div');
    row.className='search-result';
 
-   const nom=String(p?.nom||p?.lastName||p?.name||'').trim();
-   const prenom=String(p?.prenom||p?.firstName||p?.givenName||'').trim();
-   const dob=String(p?.dob||p?.birthDate||p?.dateNaissance||p?.ddn||'');
-
    let term='';
    try{
-     const ddg=p?.pregnancy?.ddg;
-     if(typeof ddg==='string' && /^\d{4}-\d{2}-\d{2}$/.test(ddg)){
-       term=termFrom(ddg);
-     }
-   }catch(err){}
+     const ddg=findPatientFieldDeep(p,['ddg']);
+     if(/^\d{4}-\d{2}-\d{2}$/.test(ddg)) term=termFrom(ddg);
+   }catch(e){}
 
    const info=document.createElement('div');
-   info.innerHTML=`<div class="search-result-name">${esc(nom)} ${esc(prenom)}</div>
-     <div class="search-result-meta">${dob?'Née le '+fmtDate(dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
+   info.innerHTML=`<div class="search-result-name">${esc(id.nom)} ${esc(id.prenom)}</div>
+     <div class="search-result-meta">${id.dob?'Née le '+fmtDate(id.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
 
-   const btn=document.createElement('button');
-   btn.type='button';
-   btn.className='btn primary';
-   btn.textContent='Ouvrir le dossier';
-
-   // Use actual patient id; if an old record has none, assign one now.
    if(!p.id){
      p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
      localStorage.setItem(KEY,JSON.stringify(db));
    }
 
-   btn.onclick=(ev)=>{
-     ev.preventDefault();
-     ev.stopPropagation();
-     selectPatient(p.id);
-   };
+   const btn=document.createElement('button');
+   btn.type='button';
+   btn.className='btn primary';
+   btn.textContent='Ouvrir le dossier';
+   btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatient(p.id)};
 
    row.appendChild(info);
    row.appendChild(btn);
    el.appendChild(row);
  });
+}
+function showAllLocalPatients(){
+ const list=(db.patients||[]).map((p,index)=>({p,index}));
+ renderPatientSearchResults(list);
+ showToast(list.length+' dossier(s) affiché(s)');
+}
+
+function renderHomePatients(){
+ const el=$('homePatientResults');if(!el)return;
+
+ const qNom=normalizeSearchValue($('searchNom')?.value||'');
+ const qPrenom=normalizeSearchValue($('searchPrenom')?.value||'');
+ const qDob=normalizeSearchValue($('searchDob')?.value||'');
+
+ const queries=[qNom,qPrenom,qDob].filter(Boolean);
+
+ if(!queries.length){
+   el.innerHTML='<div class="hint">Saisis un critère ou clique sur « Afficher les dossiers ».</div>';
+   return;
+ }
+
+ const results=[];
+ (db.patients||[]).forEach((p,index)=>{
+   const blob=patientSearchBlob(p);
+
+   // Every entered criterion must occur somewhere in the saved patient record.
+   let ok=true;
+   for(const q of queries){
+     if(!blob.includes(q)){
+       // For names/prenames, allow first 3 letters as requested.
+       if(q.length>=3 && blob.includes(q.slice(0,3))) continue;
+       ok=false;break;
+     }
+   }
+   if(ok)results.push({p,index});
+ });
+
+ renderPatientSearchResults(results);
+
+ if(!results.length){
+   el.innerHTML=`<div class="notice">
+     Aucun dossier correspondant à ces critères.<br>
+     <span class="hint">${(db.patients||[]).length} dossiers sont présents. Clique sur « Afficher les dossiers » pour les voir directement.</span>
+   </div>`;
+ }
 }
 function renderDossier(){
  const p=active();if(!p)return;
