@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.18 locale</title>
+<title>Cabinet Sage-Femme — V2.19 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -1433,7 +1433,7 @@ function printConsultPrescriptions(){
  const pages=consultRxDraft.map((sel,i)=>{
    const rec={id:uid('preview'),title:sel.title||'Ordonnance',date,lines:[...(sel.lines||[])]};
    return `<section class="rx-page">
-     ${documentHeader(rec.title)}
+     ${documentHeader('')}
      ${prescriptionHtml(rec,p)}
    </section>`;
  }).join('');
@@ -2052,7 +2052,7 @@ function printFullHistory(){
  printHtmlDocument('Dossier de suivi à transmettre à la maternité',body)
 }
 
-function documentHeader(title){return `<div style="font-size:12px;line-height:1.35"><b>Cabinet de sage-femme</b><br>${CABINET.name}<br>${CABINET.address}<br>${CABINET.city}<br>${CABINET.phone}</div><hr style="margin:8mm 0"><h1 style="font-size:20px">${esc(title)}</h1>`}
+function documentHeader(title){return `<div style="font-size:12px;line-height:1.35"><b>Cabinet de sage-femme</b><br>${CABINET.name}<br>${CABINET.address}<br>${CABINET.city}<br>${CABINET.phone}</div><hr style="margin:8mm 0">${title?`<h1 style="font-size:20px">${esc(title)}</h1>`:''}`}
 function signatureBlock(){return `<p style="text-align:right;margin-top:45px"><strong>${CABINET.name}</strong><br>${CABINET.profession}<br><br>Signature :</p>`}
 function renderBarcodes(root=document){try{if(window.JsBarcode)root.querySelectorAll('.rppsBarcode').forEach(svg=>JsBarcode(svg,CABINET.rpps,{format:'CODE128',displayValue:true,fontSize:13,height:40,margin:0,width:1.5}))}catch(e){console.error(e)}}
 function printHtmlDocument(title,body){$('printDoc').innerHTML=documentHeader(title)+body;renderBarcodes($('printDoc'));setTimeout(()=>window.print(),180)}
@@ -2061,7 +2061,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.18',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.19',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
