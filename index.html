@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.19 locale</title>
+<title>Cabinet Sage-Femme — V2.20 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -414,7 +414,7 @@ textarea{resize:vertical}
 
     <section id="consult" class="section">
       <div class="grid">
-        <div class="card span-8">
+        <div class="card span-12">
           <h2>Consultation</h2>
           <div class="row3">
             <div class="field"><label>Type</label><select id="consultType" onchange="updateConsultMode()"><option value="obstetrique">Obstétrique</option><option value="gynecologie">Gynécologie</option><option value="autre">Autre</option></select></div>
@@ -460,10 +460,10 @@ textarea{resize:vertical}
           <div class="actions">
             <button class="btn primary" type="button" onclick="saveConsult()">Enregistrer la consultation</button>
             <button class="btn secondary" type="button" onclick="printConsult()">Compte rendu / PDF</button>
-            <button class="btn secondary" type="button" onclick="leaveConsultForRx()">Créer une ordonnance</button>
+            
           </div>
         </div>
-        <div class="card span-4"><h2>Aperçu</h2><div id="consultPreview" class="hint"></div></div>
+        </div>
       </div>
     </section>
 
@@ -1505,7 +1505,7 @@ function updateConsultMode(){const obst=$('consultType').value==='obstetrique';d
 function updateConsultPreview(){
  const c=consultObject();
  const weight=(c.consultType==='obstetrique'&&c.poids)?`<br><b>Poids :</b> ${esc(c.poids)} kg${c.prisePoids!==null?` — <b>prise de poids :</b> ${c.prisePoids>0?'+':''}${esc(c.prisePoids)} kg`:''}`:'';
- $('consultPreview').innerHTML=`<b>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation'}</b><br>${c.term?'<b>Terme :</b> '+esc(c.term)+'<br>':''}<b>Motif :</b> ${esc(c.motif||'—')}${weight}`;
+ if($('consultPreview'))$('consultPreview').innerHTML=`<b>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation'}</b><br>${c.term?'<b>Terme :</b> '+esc(c.term)+'<br>':''}<b>Motif :</b> ${esc(c.motif||'—')}${weight}`;
 }
 
 function updateConsultEditUi(){
@@ -2061,7 +2061,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.19',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.20',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
