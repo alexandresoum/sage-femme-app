@@ -1,390 +1,264 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cabinet Sage-Femme — V1 locale</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cabinet Sage-Femme — V2 locale</title>
 <style>
 :root{
-  --bg:#f5f7fb; --card:#ffffff; --ink:#162033; --muted:#6e7687;
-  --primary:#273a68; --primary2:#556ba7; --accent:#d9c5ef; --accent2:#eadff7;
-  --ok:#dff2e5; --warn:#fff1cc; --line:#e6e9f0; --danger:#ffe0e0;
+  --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
+  --text:#1f2630;--muted:#6c7583;--soft:#eef2f7;--ok:#dff2e5;--warn:#fff2bf;--danger:#a83232;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-button,input,textarea,select{font:inherit}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
 button{cursor:pointer}
-.app{display:grid;grid-template-columns:235px 1fr;min-height:100vh}
-.sidebar{background:linear-gradient(180deg,#24345f,#182644);color:white;padding:22px 14px;position:sticky;top:0;height:100vh}
-.brand{font-size:21px;font-weight:800;padding:8px 12px 22px}
-.brand small{display:block;font-size:11px;font-weight:500;opacity:.68;margin-top:5px}
-.nav button{width:100%;border:0;background:transparent;color:white;text-align:left;padding:12px 14px;border-radius:12px;margin:3px 0;font-weight:650}
-.nav button:hover{background:rgba(255,255,255,.10)}.nav button.active{background:rgba(255,255,255,.20);box-shadow:inset 4px 0 0 #fff;font-weight:850}
-.sidebar .foot{position:absolute;bottom:18px;left:16px;right:16px;font-size:11px;opacity:.7;line-height:1.45}
-main{padding:28px;max-width:1450px;width:100%}
-.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
-.top h1{margin:0;font-size:28px}
-.badge{padding:7px 10px;border-radius:999px;background:var(--ok);font-size:12px;font-weight:750}
-.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(23,32,51,.04)}
-.card h2{font-size:18px;margin:0 0 14px}
-.card h3{font-size:14px;margin:18px 0 10px;color:var(--primary)}
-.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
-.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.quick button{border:1px solid var(--line);background:white;border-radius:16px;padding:18px 12px;font-weight:750;min-height:88px}
-.quick button:hover{border-color:#c8cfea;box-shadow:0 5px 15px rgba(44,58,104,.08)}
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:11px}
-label{font-size:12px;font-weight:700;color:#586174}
-input,textarea,select{border:1px solid #d9deea;border-radius:11px;padding:10px 11px;background:#fff;color:var(--ink);outline:none}
-input:focus,textarea:focus,select:focus{border-color:#8190c1;box-shadow:0 0 0 3px rgba(85,107,167,.12)}
-.row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.check{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#fbfcfe;font-size:13px}
-.check input{accent-color:var(--primary);width:17px;height:17px}
-.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.btn{border:0;border-radius:11px;padding:10px 14px;font-weight:750}
-.primary{background:var(--primary);color:white}.secondary{background:#e9edf7;color:var(--primary)}.soft{background:var(--accent2);color:#523b73}.danger{background:var(--danger);color:#8b3535}
-.kpi{font-size:30px;font-weight:850;color:var(--primary)}
-.kpi small{font-size:13px;color:var(--muted);font-weight:600}
-.timeline{display:flex;flex-direction:column;gap:9px}
-.entry{border-left:4px solid #b8a1d4;background:#faf8fd;padding:10px 12px;border-radius:6px 12px 12px 6px}
-.entry strong{display:block;font-size:13px}.entry small{color:var(--muted)}
-.section{display:none}.section.active{display:block}
+.app{display:grid;grid-template-columns:285px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,var(--navy),#081a38);color:#fff;padding:28px 22px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand h1{font-size:25px;line-height:1.15;margin:0 0 12px}
+.brand p{font-size:13px;line-height:1.45;margin:0;opacity:.9}
+.active-box{margin:28px 0 20px;padding:16px;border:1px solid rgba(255,255,255,.18);border-radius:18px;background:rgba(255,255,255,.06)}
+.active-box .eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.active-box .name{font-size:20px;font-weight:800;margin-top:7px}
+.active-box .meta{font-size:12px;opacity:.8;margin-top:5px;line-height:1.45}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav button{border:0;background:transparent;color:#fff;text-align:left;padding:13px 14px;border-radius:12px;font-weight:700}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.14)}
+.nav button[disabled]{opacity:.45;cursor:not-allowed}
+.sidebar .disclaimer{font-size:10px;line-height:1.35;opacity:.68;margin-top:30px}
+.main{padding:34px 38px 90px;min-width:0}
+.page-title{font-size:36px;margin:0 0 18px}
+.patient-banner{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 18px;margin-bottom:22px}
+.patient-banner .icon{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:22px}
+.patient-banner .eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.patient-banner .mainline{font-size:22px;font-weight:800;margin-top:2px}
+.patient-banner .subline{font-size:13px;color:var(--muted);margin-top:3px}
+.section{display:none}
+.section.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+.span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-7{grid-column:span 7}.span-6{grid-column:span 6}.span-5{grid-column:span 5}.span-4{grid-column:span 4}
+h2{margin:0 0 16px;font-size:23px}h3{margin:20px 0 10px;font-size:17px}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.field{margin-bottom:14px}.field label{display:block;font-size:12px;font-weight:800;margin:0 0 6px;color:#3a4350}
+input,select,textarea{width:100%;border:1px solid #cfd6df;background:#fff;border-radius:11px;padding:11px 12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#7690ba;box-shadow:0 0 0 3px rgba(23,59,115,.08)}
+textarea{resize:vertical}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.check{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;padding:10px;background:#fafbfc}
+.check input{width:auto;margin-top:2px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.btn{border:0;border-radius:11px;padding:10px 14px;font-weight:800}
+.primary{background:var(--navy);color:#fff}.secondary{background:#e9edf4;color:#22314a}.danger{background:#f6e1e1;color:#922}
 .hint{font-size:12px;color:var(--muted);line-height:1.45}
-hr{border:0;border-top:1px solid var(--line);margin:16px 0}
-.rx-list{display:flex;flex-direction:column;gap:8px}
-.rx-item{display:flex;gap:8px}.rx-item input[type=text]{flex:1}
-.notice{background:#fff6dd;border:1px solid #f1dea7;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.4}
-.patient-chip{display:inline-flex;gap:8px;align-items:center;background:#eef1f8;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:750}
-@media(max-width:900px){
- .app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:12px}.brand{padding-bottom:8px}.nav{display:flex;overflow:auto;gap:6px}.nav button{white-space:nowrap;width:auto}.sidebar .foot{display:none}
- main{padding:16px}.span-4,.span-6,.span-8,.span-12{grid-column:span 12}.quick{grid-template-columns:1fr 1fr}.checks{grid-template-columns:1fr}.row,.row3{grid-template-columns:1fr}
+.notice{background:var(--warn);padding:11px 13px;border-radius:11px;font-size:13px}
+.success{background:var(--ok);padding:11px 13px;border-radius:11px;font-size:13px}
+.search-result{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.search-result:first-child{border-top:0}
+.search-name{font-size:18px;font-weight:800}.search-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}.kpi strong{font-size:23px;display:block}
+.entry{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;background:#fff}.entry:hover{background:#fafbfd}.entry small{display:block;color:var(--muted);margin-top:4px}
+.pills{display:flex;gap:7px;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:#fff;font-size:12px}
+.file-row{display:flex;gap:8px;align-items:center;margin:7px 0}.file-row input{flex:1}
+.preg-row{border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;background:#fbfcfe}
+.preg-row.active{border-color:#7f95be;background:#f3f6fb}
+.badge{display:inline-block;font-size:10px;font-weight:800;padding:4px 7px;border-radius:999px;background:#e5ebf5}.badge.closed{background:#eee;color:#666}
+.postit{background:#fff2a8;border:1px solid #dcc55a;border-radius:14px;padding:16px}
+.toast{position:fixed;right:24px;bottom:24px;background:#132f5b;color:#fff;padding:12px 16px;border-radius:12px;font-weight:800;opacity:0;pointer-events:none;transform:translateY(10px);transition:.18s;z-index:1000}
+.toast.show{opacity:1;transform:none}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(10,18,32,.55);z-index:900;padding:30px;overflow:auto}
+.modal-backdrop.show{display:flex;align-items:flex-start;justify-content:center}
+.modal-box{width:min(850px,96vw);background:#fff;border-radius:18px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:16px}.modal-head h2{margin:0}.modal-close{border:0;background:#eef1f5;border-radius:10px;padding:8px 10px;font-weight:800}
+.term-big{font-size:42px;font-weight:900;line-height:1}
+.print-doc{display:none}
+.barcode-wrap{margin:18px 0}
+@media (max-width:1000px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.grid{grid-template-columns:1fr}.span-12,.span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 1}.row,.row3,.checks,.kpis{grid-template-columns:1fr}.main{padding:22px}}
+@media print{
+  body *{visibility:hidden!important}
+  #printDoc,#printDoc *{visibility:visible!important}
+  #printDoc{display:block!important;position:absolute;left:0;top:0;width:100%;padding:12mm 14mm;background:#fff;color:#000}
+  @page{size:A4;margin:0}
+  .no-print{display:none!important}
+  .page-break{break-before:page;page-break-before:always}
+  .avoid-break{break-inside:avoid;page-break-inside:avoid}
+  .two-consents{display:grid;grid-template-rows:1fr 1fr;height:270mm;gap:3mm}
+  .consent-compact{font-size:9px;line-height:1.16;overflow:hidden}
+  .consent-compact h2{font-size:14px;margin:2px 0}.consent-compact h3{font-size:10px;margin:4px 0 2px}.consent-compact p{margin:2px 0}
 }
-@media print{.modal-backdrop,.toast{display:none!important}
- .sidebar,.top,.no-print,.notice{display:none!important}.app{display:block}main{padding:0}.card{box-shadow:none;border:0;padding:0}.section{display:none!important}#printArea{display:block!important}
-}
-#printArea{display:none}
-.print-doc{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:auto;padding:20px}
-.print-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:18px}
-.print-doc h1{font-size:20px}.print-doc h2{font-size:16px;margin-top:22px}.print-doc p{line-height:1.45}
-
-.sidebar-patient{margin:0 4px 18px;padding:13px 12px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15)}
-.sidebar-patient-label{font-size:10px;letter-spacing:.08em;font-weight:800;opacity:.72;margin-bottom:6px}
-.sidebar-patient-name{font-size:16px;font-weight:850;line-height:1.2}
-.sidebar-patient-info{font-size:11px;opacity:.78;margin-top:5px;line-height:1.35}
-.patient-banner{display:flex;align-items:center;gap:12px;margin-top:8px;padding:11px 14px;background:#eef1f8;border:1px solid #dfe4ef;border-radius:14px;width:max-content;max-width:100%}
-.patient-banner-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#273a68;color:white;font-size:17px;flex:0 0 auto}
-.patient-banner-main{font-size:17px;font-weight:850;color:#1c2947}
-.patient-banner-sub{font-size:11px;color:#687188;margin-top:2px}
-.context-title{font-size:11px;font-weight:800;letter-spacing:.06em;color:#7a8293;text-transform:uppercase;margin-bottom:2px}
-
-
-/* V1.5 : accueil cabinet -> dossier patiente */
-.nav .patient-only{display:none}
-body.has-patient .nav .patient-only{display:block}
-.home-search-wrap{display:flex;gap:10px;align-items:end}
-.home-search-wrap .field{flex:1;margin:0}
-.search-results{display:flex;flex-direction:column;gap:9px;margin-top:14px}
-.search-result{display:flex;justify-content:space-between;align-items:center;gap:14px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:13px 14px}
-.search-result:hover{border-color:#bfc8e2;box-shadow:0 5px 16px rgba(44,58,104,.07)}
-.search-result-name{font-weight:850;font-size:15px}
-.search-result-meta{font-size:12px;color:var(--muted);margin-top:3px}
-.dossier-hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
-.dossier-name{font-size:28px;font-weight:900;color:var(--primary);margin:2px 0 4px}
-.dossier-meta{color:var(--muted);font-size:13px;line-height:1.5}
-.dossier-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-.dossier-actions button{border:1px solid var(--line);background:white;border-radius:16px;padding:20px 14px;font-weight:800;min-height:96px;font-size:15px}
-.dossier-actions button:hover{border-color:#bfc8e2;box-shadow:0 5px 16px rgba(44,58,104,.08)}
-.back-home{background:rgba(255,255,255,.08)!important;font-size:12px!important;margin-bottom:10px!important}
-.patient-sidebar-card{display:none}
-body.has-patient .patient-sidebar-card{display:block}
-body:not(.has-patient) #patientTop{display:none}
-@media(max-width:900px){.dossier-actions{grid-template-columns:1fr 1fr}.home-search-wrap{flex-direction:column;align-items:stretch}}
-
-
-/* V1.6 dossier enrichi */
-.search-3{display:grid;grid-template-columns:1.2fr 1.2fr .9fr auto;gap:10px;align-items:end}
-.autocomplete-note{font-size:11px;color:var(--muted);margin-top:5px}
-.dossier-actions{grid-template-columns:repeat(4,1fr)}
-.section-title-line{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
-.form-sep{border-top:1px solid var(--line);margin:18px 0}
-.file-row{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
-.file-meta{font-size:11px;color:var(--muted);margin-top:3px}
-.echo-card{border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;background:#fbfcfe}
-.echo-card h3{margin-top:0}
-.small-actions{display:flex;gap:7px;flex-wrap:wrap}
-.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef1f8;font-size:11px;font-weight:750;margin-right:5px}
-.lab-window{font-size:18px;font-weight:850;color:var(--primary);margin:6px 0}
-@media(max-width:900px){.search-3{grid-template-columns:1fr}.dossier-actions{grid-template-columns:1fr 1fr}}
-
-
-.toast{position:fixed;right:24px;bottom:24px;z-index:9999;background:#1e2f57;color:#fff;padding:13px 16px;border-radius:13px;box-shadow:0 12px 30px rgba(0,0,0,.2);font-weight:750;font-size:13px;opacity:0;transform:translateY(12px);pointer-events:none;transition:.2s}
-.toast.show{opacity:1;transform:translateY(0)}
-.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(16,25,45,.45);z-index:9990;padding:28px;overflow:auto}
-.modal-backdrop.show{display:block}
-.modal-box{max-width:900px;margin:30px auto;background:#fff;border-radius:18px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
-.modal-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:15px}
-.modal-close{border:0;background:#eef1f8;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer}
-.history-click{cursor:pointer}.history-click:hover{background:#f1eef7}
-.consult-type-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-@media(max-width:900px){.consult-type-row{grid-template-columns:1fr}}
-
-.postit-note{background:#fff4a8;border:1px solid #e4cf57;border-radius:14px;padding:12px 14px;box-shadow:0 6px 16px rgba(0,0,0,.08)}
-.preg-episode{border:1px solid var(--line);border-radius:14px;padding:13px;margin:9px 0;background:#fbfcfe}
-.preg-episode.active{border-color:#8090c4;background:#f2f4fb}
-.status-pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800;background:#e9edf7}
-.status-pill.closed{background:#ececec;color:#666}
-.template-help{font-size:11px;color:var(--muted);margin-top:5px}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">Cabinet de sage-femme<small>Mme Soum Clarisse<br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>02 51 36 36 77</small></div>
-    <div id="sidebarPatientContext" class="sidebar-patient patient-sidebar-card">
-      <div class="sidebar-patient-label">DOSSIER PATIENTE</div>
-      <div id="sidebarPatientName" class="sidebar-patient-name">Aucune patiente</div>
-      <div id="sidebarPatientInfo" class="sidebar-patient-info">Sélectionne ou crée une patiente</div>
-<button class="nav back-home" style="width:100%;border:0;color:white;margin-top:10px;padding:8px 10px;border-radius:10px" onclick="exitPatient()">← Quitter le dossier</button>
+    <div class="brand">
+      <h1>Cabinet de sage-femme</h1>
+      <p>Mme Soum Clarisse<br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>02 51 36 36 77</p>
+    </div>
+    <div class="active-box">
+      <div class="eyebrow">Dossier patiente</div>
+      <div id="sidebarPatientName" class="name">Aucune patiente</div>
+      <div id="sidebarPatientInfo" class="meta">Sélectionne ou crée une patiente</div>
+      <div class="actions"><button class="btn secondary" type="button" onclick="quitPatient()">← Quitter le dossier</button></div>
     </div>
     <nav class="nav">
-      <button class="active" data-section="home">⌂ Accueil</button>
-      <button class="patient-only" data-section="dossier">👤 Dossier patiente</button>
-      <button class="patient-only" data-section="pregnancy">🤰 Grossesse</button>
-      <button class="patient-only" data-section="consult">🩺 Consultation</button>
-      <button class="patient-only" data-section="rx">💊 Ordonnance</button>
-      <button class="patient-only" data-section="echos">🖥 Échos</button>
-      <button class="patient-only" data-section="bilans">📎 Bilans</button>
-      <button class="patient-only" data-section="history">🗂 Historique</button>
+      <button data-section="home" class="active">⌂ Accueil</button>
+      <button data-section="dossier" class="clinical">👤 Dossier patiente</button>
+      <button data-section="pregnancy" class="clinical">🤰 Grossesse</button>
+      <button data-section="consult" class="clinical">🩺 Consultation</button>
+      <button data-section="rx" class="clinical">💊 Ordonnance</button>
+      <button data-section="echos" class="clinical">🖥 Échos</button>
+      <button data-section="bilans" class="clinical">📎 Bilans</button>
+      <button data-section="history" class="clinical">📁 Historique</button>
     </nav>
-    <div class="foot">Les données de cette démonstration restent dans le navigateur de cet appareil. Ne pas utiliser avec de vraies données de santé avant sécurisation de production.</div>
+    <div class="disclaimer">Les données restent dans le navigateur de cet appareil. Pour une utilisation réelle avec données de santé, une sécurisation et une stratégie de sauvegarde adaptées sont nécessaires.</div>
   </aside>
 
-  <main>
-    <div class="top">
-      <div>
-        <h1 id="pageTitle">Accueil</h1>
-        <div id="patientTop" class="patient-banner">
-          <div class="patient-banner-icon">👤</div>
-          <div>
-            <div class="context-title">Dossier patiente</div>
-            <div class="patient-banner-main">Aucune patiente sélectionnée</div>
-            <div class="patient-banner-sub">Sélectionne ou crée une patiente</div>
-          </div>
-        </div>
-      </div>
-      <span class="badge">● Hors ligne / local</span>
+  <main class="main">
+    <h1 id="pageTitle" class="page-title">Accueil</h1>
+    <div id="patientTop" class="patient-banner">
+      <div class="icon">👤</div>
+      <div><div class="eyebrow">Dossier patiente</div><div class="mainline">Aucune patiente sélectionnée</div><div class="subline">Sélectionne ou crée une patiente</div></div>
     </div>
 
     <section id="home" class="section active">
-      <div class="grid">
-        <div class="card span-12">
-          <h2>Rechercher une patiente</h2>
-          <div class="search-3">
-            <div class="field"><label>Nom</label><input id="searchNom" placeholder="DUPONT" oninput="renderHomePatients()"></div>
-            <div class="field"><label>Prénom</label><input id="searchPrenom" placeholder="Marie" oninput="renderHomePatients()"></div>
-            <div class="field"><label>Date de naissance</label><input id="searchDob" type="date" oninput="renderHomePatients()"></div>
-            <button class="btn primary" onclick="startNewPatientFromSearch()">+ Nouvelle patiente</button>
-          </div>
-          <div class="autocomplete-note">La recherche fonctionne avec un, deux ou trois critères. Dès 3 lettres du nom ou du prénom, les dossiers proches sont proposés.</div>
-          <div id="homePatientResults" class="search-results"></div>
-          <div class="form-sep"></div>
-          <div class="section-title-line">
-            <div>
-              <strong>Base locale de ce navigateur</strong>
-              <div id="localPatientCount" class="hint"></div>
-            </div>
-            <div class="actions">
-              <button id="showAllPatientsBtn" class="btn secondary" type="button" onclick="showAllLocalPatients();return false;">Afficher les dossiers</button>
-              <button class="btn secondary" type="button" onclick="exportPatientDatabase()">Exporter les dossiers</button>
-              <label class="btn secondary" style="cursor:pointer">Importer les dossiers
-                <input id="patientDbImport" type="file" accept="application/json" style="display:none" onchange="importPatientDatabase(event)">
-              </label>
-            </div>
-          </div>
+      <div class="card">
+        <h2>Rechercher une patiente</h2>
+        <div class="row3">
+          <div class="field"><label>Nom</label><input id="searchNom" oninput="renderHomePatients()"></div>
+          <div class="field"><label>Prénom</label><input id="searchPrenom" oninput="renderHomePatients()"></div>
+          <div class="field"><label>Date de naissance</label><input id="searchDob" type="date" oninput="renderHomePatients()"></div>
         </div>
+        <div class="actions">
+          <button class="btn primary" type="button" onclick="startNewPatientFromSearch()">+ Nouvelle patiente</button>
+          <button class="btn secondary" type="button" onclick="showAllPatients()">Afficher les dossiers</button>
+          <button class="btn secondary" type="button" onclick="exportDatabase()">Exporter les dossiers</button>
+          <label class="btn secondary">Importer les dossiers<input id="dbImport" type="file" accept="application/json" style="display:none" onchange="importDatabase(event)"></label>
+        </div>
+        <div id="localCount" class="hint" style="margin-top:10px"></div>
+        <div id="homeResults" style="margin-top:15px"></div>
       </div>
     </section>
 
-    
-    <section id="dossier" class="section">
+    <section id="patientEdit" class="section">
       <div class="grid">
-        <div class="card span-12">
-          <div class="dossier-hero">
-            <div>
-              <div class="context-title">Dossier patiente</div>
-              <div id="dossierName" class="dossier-name">—</div>
-              <div id="dossierMeta" class="dossier-meta"></div>
-            </div>
-            <button class="btn secondary" onclick="go('patientEdit')">Modifier les informations</button>
-          </div>
-          <div class="dossier-actions">
-            <button onclick="go('pregnancy')">🤰<br>Grossesse / terme</button>
-            <button onclick="startNewConsultation()">🩺<br>Nouvelle consultation</button>
-            <button onclick="go('rx')">💊<br>Ordonnance</button>
-            <button onclick="go('echos')">🖥<br>Échographies</button>
-            <button onclick="go('bilans')">📎<br>Bilans PDF</button>
-            <button onclick="go('history')">🗂<br>Historique</button>
-            <button onclick="go('patientEdit')">👤<br>Identité / antécédents</button>
-            <button onclick="exitPatient()">⌂<br>Retour à l’accueil</button>
-          </div>
-        </div>
-        <div class="card span-6">
-          <h2>Grossesse en cours</h2>
-          <div id="dossierPregnancy" class="hint">Aucune grossesse enregistrée.</div>
-        </div>
-        <div class="card span-6">
-          <h2>Derniers éléments</h2>
-          <div id="dossierRecent" class="timeline"></div></div>
-        <div class="card span-12"><h2>Consultations enregistrées</h2><div id="dossierConsultations" class="timeline"></div>
-        </div>
-      </div>
-    </section>
-
-<section id="patientEdit" class="section">
-      <div class="grid">
-        <div class="card span-12">
-          <h2>Créer / modifier une patiente</h2>
-          <div class="row">
-            <div class="field"><label>Nom</label><input id="nom" placeholder="DUPONT"></div>
-            <div class="field"><label>Prénom</label><input id="prenom" placeholder="Marie"></div>
-          </div>
+        <div class="card span-8">
+          <h2>Informations patiente</h2>
           <div class="row3">
+            <div class="field"><label>Nom</label><input id="nom"></div>
+            <div class="field"><label>Prénom</label><input id="prenom"></div>
             <div class="field"><label>Date de naissance</label><input id="dob" type="date"></div>
-            <div class="field"><label>Téléphone</label><input id="tel" placeholder="06..."></div>
-            <div class="field"><label>Email</label><input id="email" type="email"></div>
           </div>
-          <div class="field"><label>Adresse</label><input id="adresse"></div>
-          <div class="field"><label>Groupe sanguin</label><input id="groupe" placeholder="A+"></div>
-          <h3>Pense-bête important</h3>
-          <div class="field"><textarea id="alertNote" rows="2" placeholder="Allergie importante, malformation, information à voir dès l’ouverture du dossier…"></textarea></div>
-          <label class="check" style="max-width:430px"><input id="alertEnabled" type="checkbox"> Afficher automatiquement à l’ouverture du dossier</label>
+          <div class="row">
+            <div class="field"><label>Téléphone</label><input id="tel"></div>
+            <div class="field"><label>Email</label><input id="email"></div>
+          </div>
+          <div class="field"><label>Adresse</label><textarea id="adresse" rows="2"></textarea></div>
+          <div class="field"><label>Groupe sanguin</label><input id="groupe"></div>
 
-          <div class="form-sep"></div>
           <h3>Allergies</h3>
           <div class="field"><textarea id="allergies" rows="2" placeholder="Aucune connue / préciser"></textarea></div>
 
           <h3>Antécédents médicaux</h3>
-          <div class="field"><textarea id="atcdMedicaux" rows="3" placeholder="HTA, diabète, asthme…"></textarea></div>
+          <div class="field"><textarea id="atcdMedicaux" rows="2" placeholder="HTA, diabète, asthme…"></textarea></div>
 
           <h3>Antécédents chirurgicaux</h3>
-          <div class="field">
-            <input id="atcdChirInput" list="surgerySuggestions" placeholder="Commencer à taper : app…, cés…, chol…" onkeydown="addSurgeryOnEnter(event)">
-            <datalist id="surgerySuggestions">
-              <option value="Appendicectomie"><option value="Césarienne"><option value="Cholécystectomie">
-              <option value="Adénoïdectomie / végétations"><option value="Extraction des dents de sagesse">
-              <option value="Amygdalectomie"><option value="Hernie inguinale"><option value="Arthroscopie">
-              <option value="Coelioscopie"><option value="Hystéroscopie"><option value="Curetage / aspiration">
-            </datalist>
+          <div class="row">
+            <div class="field"><input id="surgeryInput" list="surgerySuggestions" placeholder="Commencer à taper…"></div>
             <div class="actions"><button class="btn secondary" type="button" onclick="addSurgery()">+ Ajouter</button></div>
-            <div id="surgeryChips" style="margin-top:8px"></div>
           </div>
+          <datalist id="surgerySuggestions"><option>Appendicectomie</option><option>Césarienne</option><option>Cholécystectomie</option><option>Adénoïdectomie / végétations</option><option>Dents de sagesse</option></datalist>
+          <div id="surgeryList"></div>
 
           <h3>Antécédents obstétricaux</h3>
           <div class="row">
-            <div class="field"><label>Gestité (G)</label><input id="gestite" type="number" min="0"></div>
-            <div class="field"><label>Parité (P)</label><input id="parite" type="number" min="0"></div>
+            <div class="field"><label>Gestité (G)</label><input id="gestite"></div>
+            <div class="field"><label>Parité (P)</label><input id="parite"></div>
           </div>
-
-          <div class="echo-card">
-            <div class="section-title-line">
-              <h3 style="margin:0">Grossesses antérieures</h3>
-              <span class="hint">Ajouter une ligne par grossesse</span>
-            </div>
-            <div class="row3">
-              <div class="field">
-                <label>Issue de la grossesse</label>
-                <select id="pregOutcome">
-                  <option value="">— Choisir —</option>
-                  <option>Naissance vivante</option>
-                  <option>FCS</option>
-                  <option>GEU</option>
-                  <option>IVG</option>
-                  <option>IMG</option>
-                  <option>MFIU</option>
-                </select>
-              </div>
-              <div class="field"><label>Date</label><input id="pregDate" type="date"></div>
-              <div class="field"><label>Terme</label><input id="pregTerm" placeholder="39 SA + 2 j"></div>
-            </div>
-            <div class="row3">
-              <div class="field"><label>Poids de naissance (g)</label><input id="pregWeight" type="number" min="0" placeholder="3250"></div>
-              <div class="field">
-                <label>Sexe</label>
-                <select id="pregSex">
-                  <option value="">—</option>
-                  <option>Fille</option>
-                  <option>Garçon</option>
-                  <option>Indéterminé / non applicable</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Voie d’accouchement</label>
-                <select id="pregDelivery">
-                  <option value="">—</option>
-                  <option>Voie basse spontanée</option>
-                  <option>Voie basse instrumentale</option>
-                  <option>Césarienne programmée</option>
-                  <option>Césarienne en urgence</option>
-                  <option>Non applicable</option>
-                </select>
-              </div>
-            </div>
-            <div class="row">
-                <div class="field"><label>Enfant en bonne santé</label><select id="pregHealthy"><option value="">—</option><option>Oui</option><option>Non</option><option>Non applicable</option></select></div>
-                <div class="field"><label>Commentaire sur l’enfant</label><input id="pregChildComment" placeholder="Malformation, suivi particulier…"></div>
-              </div>
-              <div class="field"><label>Complication(s) / commentaires grossesse</label><textarea id="pregComplication" rows="2" placeholder="HPP, pré-éclampsie, prématurité, RCIU, déchirure…"></textarea></div>
-            <div class="actions"><button class="btn secondary" type="button" onclick="addPregnancyHistory()">+ Ajouter cette grossesse</button></div>
-            <div id="pregnancyHistoryList" style="margin-top:12px"></div>
+          <div class="row3">
+            <div class="field"><label>Issue</label><select id="pregHistOutcome"><option>Naissance vivante</option><option>FCS</option><option>GEU</option><option>IVG</option><option>IMG</option><option>MFIU</option></select></div>
+            <div class="field"><label>Date</label><input id="pregHistDate" type="date"></div>
+            <div class="field"><label>Terme</label><input id="pregHistTerm" placeholder="39 SA + 2 j"></div>
           </div>
+          <div class="row3">
+            <div class="field"><label>Poids (g)</label><input id="pregHistWeight" type="number"></div>
+            <div class="field"><label>Sexe</label><select id="pregHistSex"><option value="">—</option><option>Fille</option><option>Garçon</option><option>Indéterminé / non applicable</option></select></div>
+            <div class="field"><label>Voie d'accouchement</label><select id="pregHistDelivery"><option value="">—</option><option>Voie basse spontanée</option><option>Voie basse instrumentale</option><option>Césarienne programmée</option><option>Césarienne en urgence</option><option>Non applicable</option></select></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Enfant en bonne santé</label><select id="pregHistHealthy"><option value="">—</option><option>Oui</option><option>Non</option><option>Non applicable</option></select></div>
+            <div class="field"><label>Commentaire sur l'enfant</label><input id="pregHistChildComment"></div>
+          </div>
+          <div class="field"><label>Complications / commentaires grossesse</label><textarea id="pregHistComplication" rows="2"></textarea></div>
+          <div class="actions"><button class="btn secondary" type="button" onclick="addPregHistory()">+ Ajouter cette grossesse</button></div>
+          <div id="pregHistoryList"></div>
 
           <h3>Autres antécédents obstétricaux</h3>
-          <div class="field"><textarea id="atcdObst" rows="2" placeholder="Informations obstétricales complémentaires"></textarea></div>
+          <div class="field"><textarea id="atcdObst" rows="2"></textarea></div>
 
           <h3>Antécédents gynécologiques</h3>
-          <div class="field"><textarea id="atcdGyneco" rows="3" placeholder="Contraception, endométriose, fibrome, dysplasie…"></textarea></div>
+          <div class="field"><textarea id="atcdGyneco" rows="2"></textarea></div>
 
           <h3>Antécédents familiaux</h3>
-          <div class="field"><textarea id="atcdFamiliaux" rows="3" placeholder="Cancer, thrombose, diabète, HTA…"></textarea></div>
+          <div class="field"><textarea id="atcdFamiliaux" rows="2"></textarea></div>
+
+          <h3>Pense-bête important</h3>
+          <div class="field"><textarea id="alertNote" rows="2" placeholder="Allergie importante, malformation, information à voir à l'ouverture…"></textarea></div>
+          <label class="check"><input id="alertEnabled" type="checkbox"> Afficher automatiquement à l'ouverture du dossier</label>
 
           <div class="actions">
-            <button class="btn primary" onclick="savePatient()">Enregistrer la patiente</button>
-            <button class="btn secondary" onclick="exitPatient()">Annuler / retour accueil</button>
+            <button class="btn primary" type="button" onclick="savePatient()">Enregistrer la patiente</button>
+            <button class="btn secondary" type="button" onclick="go('home')">Annuler / retour accueil</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="dossier" class="section">
+      <div class="grid">
+        <div class="card span-12">
+          <div class="eyebrow">Dossier patiente</div>
+          <h2 id="dossierName">—</h2>
+          <div id="dossierMeta" class="hint"></div>
+        </div>
+        <div class="card span-4"><h3>Grossesse / terme</h3><div id="dossierPregnancy">—</div></div>
+        <div class="card span-4"><h3>Nouvelle consultation</h3><button class="btn primary" type="button" onclick="startNewConsultation()">🩺 Nouvelle consultation</button></div>
+        <div class="card span-4"><h3>Historique</h3><button class="btn secondary" type="button" onclick="go('history')">📁 Ouvrir l'historique</button></div>
+        <div class="card span-6"><h3>Bilans PDF</h3><div id="dossierBilanCount" class="term-big">0</div></div>
+        <div class="card span-6"><h3>Grossesse en cours</h3><div id="dossierCurrentPregnancy"></div></div>
+        <div class="card span-12"><h3>Consultations enregistrées</h3><div id="dossierConsultations"></div></div>
+        <div class="card span-12"><h3>Éléments récents</h3><div id="dossierRecent"></div></div>
       </div>
     </section>
 
     <section id="pregnancy" class="section">
       <div class="grid">
-        <div class="card span-7">
+        <div class="card span-8">
           <h2>Grossesse en cours / Roulette</h2>
           <div class="row">
             <div class="field"><label>DDR</label><input id="ddr" type="date" oninput="calcFromDdr()"></div>
             <div class="field"><label>DDG théorique (DDR + 14 j)</label><input id="theoreticalDdg" type="date" readonly></div>
           </div>
           <div class="row">
-            <div class="field"><label>DDG retenue / corrigée</label><input id="ddg" type="date" onchange="calcTerm()" oninput="calcTerm()"></div>
+            <div class="field"><label>DDG retenue / corrigée</label><input id="ddg" type="date" oninput="calcTerm()"></div>
             <div class="field"><label>DPA calculée</label><input id="dpa" readonly></div>
           </div>
-          <div class="field"><label>Datation retenue par</label><select id="datingMethod"><option value="DDR">DDR</option><option value="Échographie T1">Échographie T1</option><option value="Échographie précoce">Échographie précoce</option><option value="Autre">Autre</option></select></div>
-          <div class="actions"><button class="btn primary" onclick="savePregnancy()">Enregistrer la grossesse</button><button class="btn secondary" onclick="closeCurrentPregnancy()">Clôturer cette grossesse</button><button class="btn secondary" onclick="startNewPregnancy()">+ Nouvelle grossesse</button></div>
-          <div id="pregnancySaveStatus" style="display:none;margin-top:12px;padding:10px 12px;border-radius:11px;background:#dff2e5;color:#245d37;font-size:13px;font-weight:750"></div>
+          <div class="field"><label>Datation retenue par</label><select id="datingMethod"><option>DDR</option><option>Échographie T1</option><option>Échographie précoce</option><option>Autre</option></select></div>
+          <div class="actions">
+            <button class="btn primary" type="button" onclick="savePregnancy()">Enregistrer la grossesse</button>
+            <button class="btn secondary" type="button" onclick="closePregnancy()">Clôturer cette grossesse</button>
+            <button class="btn secondary" type="button" onclick="newPregnancy()">+ Nouvelle grossesse</button>
+          </div>
+          <div id="pregnancyStatus" style="margin-top:12px"></div>
         </div>
-        <div class="card span-5">
-          <h2>Terme aujourd’hui</h2>
-          <div class="kpi" id="termNow">—</div>
-          <p class="hint" id="termDetail">Renseigne la DDG.</p>
-          <hr>
-          <div id="termSuggestion" class="notice">Les propositions selon le terme pourront ici déclencher les examens, ordonnances et rappels configurés.</div>
+        <div class="card span-4">
+          <h2>Terme aujourd'hui</h2>
+          <div id="termToday" class="term-big">—</div>
+          <div id="termHint" class="hint" style="margin-top:10px"></div>
         </div>
-      <div class="card span-12">
-          <h2>Historique des grossesses</h2>
-          <div id="pregnancyEpisodes"></div>
-        </div>
+        <div class="card span-12"><h2>Historique des grossesses</h2><div id="pregnancyEpisodes"></div></div>
       </div>
     </section>
 
@@ -392,54 +266,48 @@ body:not(.has-patient) #patientTop{display:none}
       <div class="grid">
         <div class="card span-8">
           <h2>Consultation</h2>
-<div class="consult-type-row">
-  <div class="field"><label>Type de consultation</label><select id="consultType" onchange="updateConsultMode()"><option value="obstetrique">Obstétrique</option><option value="gynecologie">Gynécologie</option><option value="autre">Autre consultation</option></select></div>
-  <div class="field"><label>Date</label><input id="csDate" type="date"></div>
-  <div class="field obst-only"><label>Terme</label><input id="csTerm" readonly></div>
-</div>
-          <div class="field"><label>Motif</label><input id="motif" value="Suivi mensuel de grossesse"></div>
-
-          <div class="obst-only"><h3>Interrogatoire</h3>
-          <div class="checks" id="interChecks">
-            <label class="check"><input type="checkbox" value="Mouvements actifs fœtaux perçus"> Mouvements actifs perçus</label>
-            <label class="check"><input type="checkbox" value="Contractions utérines"> Contractions</label>
-            <label class="check"><input type="checkbox" value="Métrorragies"> Métrorragies</label>
-            <label class="check"><input type="checkbox" value="Pertes liquidiennes"> Pertes liquidiennes</label>
-            <label class="check"><input type="checkbox" value="Signes fonctionnels urinaires"> Signes urinaires</label>
-            <label class="check"><input type="checkbox" value="Céphalées / phosphènes"> Céphalées / phosphènes</label>
-          </div>
-
-          </div><div class="obst-only"><h3>Examen</h3>
           <div class="row3">
-            <div class="field"><label>TA</label><input id="ta" placeholder="120/70 mmHg"></div>
-            <div class="field"><label>Poids</label><input id="poids" placeholder="68 kg"></div>
-            <div class="field"><label>HU</label><input id="hu" placeholder="27 cm"></div>
-            <div class="field"><label>BCF</label><input id="bcf" placeholder="145 bpm"></div>
-            <div class="field"><label>Œdèmes</label><select id="oedemes"><option>Non</option><option>Oui</option></select></div>
-            <div class="field"><label>BU</label><input id="bu" placeholder="RAS"></div>
+            <div class="field"><label>Type</label><select id="consultType" onchange="updateConsultMode()"><option value="obstetrique">Obstétrique</option><option value="gynecologie">Gynécologie</option><option value="autre">Autre</option></select></div>
+            <div class="field"><label>Date</label><input id="csDate" type="date" onchange="syncConsultTerm()"></div>
+            <div class="field obst-only"><label>Terme</label><input id="csTerm" readonly></div>
           </div>
-
-          </div><div class="obst-only"><h3>Conduite à tenir</h3>
-          <div class="checks" id="catChecks">
-            <label class="check"><input type="checkbox" value="Évolution clinique satisfaisante"> RAS / suivi habituel</label>
-            <label class="check"><input type="checkbox" value="Bilan biologique prescrit"> Bilan biologique</label>
-            <label class="check"><input type="checkbox" value="Échographie prescrite"> Échographie</label>
-            <label class="check"><input type="checkbox" value="Avis spécialisé demandé"> Avis spécialisé</label>
-            <label class="check"><input type="checkbox" value="Ordonnance remise"> Ordonnance</label>
-            <label class="check"><input type="checkbox" value="Conseils et signes d'alerte expliqués"> Conseils / signes d’alerte</label>
+          <div class="field"><label>Motif</label><input id="motif"></div>
+          <div class="obst-only">
+            <h3>Interrogatoire</h3>
+            <div id="interChecks" class="checks">
+              <label class="check"><input type="checkbox" value="Mouvements actifs fœtaux perçus">Mouvements actifs fœtaux perçus</label>
+              <label class="check"><input type="checkbox" value="Contractions">Contractions</label>
+              <label class="check"><input type="checkbox" value="Métrorragies">Métrorragies</label>
+              <label class="check"><input type="checkbox" value="Pertes liquidiennes">Pertes liquidiennes</label>
+              <label class="check"><input type="checkbox" value="Signes urinaires">Signes urinaires</label>
+              <label class="check"><input type="checkbox" value="Céphalées / phosphènes">Céphalées / phosphènes</label>
+            </div>
+            <h3>Examen</h3>
+            <div class="row3">
+              <div class="field"><label>TA</label><input id="ta"></div>
+              <div class="field"><label>Poids</label><input id="poids"></div>
+              <div class="field"><label>HU</label><input id="hu"></div>
+              <div class="field"><label>BCF</label><input id="bcf"></div>
+              <div class="field"><label>Œdèmes</label><select id="oedemes"><option>Non</option><option>Oui</option></select></div>
+              <div class="field"><label>BU</label><input id="bu"></div>
+            </div>
+            <h3>Conduite à tenir</h3>
+            <div id="catChecks" class="checks">
+              <label class="check"><input type="checkbox" value="RAS / suivi habituel">RAS / suivi habituel</label>
+              <label class="check"><input type="checkbox" value="Bilan biologique">Bilan biologique</label>
+              <label class="check"><input type="checkbox" value="Échographie">Échographie</label>
+              <label class="check"><input type="checkbox" value="Avis spécialisé">Avis spécialisé</label>
+              <label class="check"><input type="checkbox" value="Ordonnance">Ordonnance</label>
+            </div>
           </div>
-          </div><div class="field" style="margin-top:12px"><label>Notes libres</label><textarea id="notes" rows="4"></textarea></div>
+          <div class="field"><label>Notes / conclusion</label><textarea id="notes" rows="3"></textarea></div>
           <div class="actions">
             <button class="btn primary" type="button" onclick="saveConsult()">Enregistrer la consultation</button>
-            <button class="btn soft" type="button" onclick="printConsult()">Compte rendu / PDF</button>
-            <button class="btn secondary" type="button" onclick="leaveConsultationForPrescription()">Créer une ordonnance</button>
+            <button class="btn secondary" type="button" onclick="printConsult()">Compte rendu / PDF</button>
+            <button class="btn secondary" type="button" onclick="leaveConsultForRx()">Créer une ordonnance</button>
           </div>
         </div>
-
-        <div class="card span-4">
-          <h2>Résumé automatique</h2>
-          <div id="consultPreview" class="hint">Le résumé se construit à partir de la consultation.</div>
-        </div>
+        <div class="card span-4"><h2>Aperçu</h2><div id="consultPreview" class="hint"></div></div>
       </div>
     </section>
 
@@ -447,1415 +315,451 @@ body:not(.has-patient) #patientTop{display:none}
       <div class="grid">
         <div class="card span-8">
           <h2>Ordonnance</h2>
-          <div class="field"><label>Modèle rapide</label>
-            <select id="rxTemplate" onchange="applyTemplate()">
-              <option value="">— Choisir —</option>
-              <option value="debut">Bilan début de grossesse complet</option><option value="hgpo">HGPO 75 g (selon indication)</option><option value="dpni">DPNI / ADN libre circulant (selon indication)</option>
-              <option value="six">Bilan grossesse — modèle personnalisable</option>
-              <option value="vitd">Vitamine D</option>
-              <option value="fer">Fer — modèle à personnaliser</option>
-            </select>
+          <div class="field"><label>Modèle</label><select id="rxTemplate" onchange="applyRxTemplate()"><option value="">— Modèle libre —</option><option value="debut">Bilan début de grossesse complet</option><option value="hgpo">HGPO 75 g (selon indication)</option><option value="dpni">DPNI / ADN libre circulant (selon indication)</option><option value="six">Bilan 6e mois</option><option value="vitd">Vitamine D</option><option value="fer">Fer</option></select></div>
+          <div id="rxLines"></div>
+          <div class="actions">
+            <button class="btn secondary" type="button" onclick="addRxLine()">+ Ajouter une ligne</button>
+            <button class="btn primary" type="button" onclick="printRx()">Imprimer / PDF</button>
+            <button id="returnConsultBtn" class="btn secondary" type="button" style="display:none" onclick="returnToConsult()">← Retour à la consultation active</button>
           </div>
-          <div class="rx-list" id="rxList"></div>
-          <div class="actions"><button id="returnConsultBtn" class="btn secondary" type="button" onclick="returnToActiveConsultation()" style="display:none">← Retour à la consultation</button>
-            <button class="btn secondary" onclick="addRxLine()">+ Ajouter une ligne</button>
-            <button class="btn soft" type="button" onclick="printRx()">Imprimer / PDF</button>
-          </div>
-          <div class="notice" style="margin-top:14px">Les modèles de prescriptions sont volontairement génériques dans cette V1. Ils devront être validés et personnalisés par la sage-femme avant toute utilisation réelle.</div>
-        </div>
-        <div class="card span-4">
-          <h2>Favoris à terme</h2>
-          <p class="hint">On pourra ajouter ses propres modèles : biologie, contraception, vaccins, traitements, imagerie, arrêt, courrier d’adressage… avec un clic pour les réutiliser.</p>
+          <div class="hint">Les modèles sont modifiables ligne par ligne avant impression.</div>
         </div>
       </div>
     </section>
 
-    
     <section id="echos" class="section">
       <div class="grid">
-        <div class="card span-12">
-          <div class="section-title-line"><h2>Échographies</h2><span class="hint">Données rattachées à la grossesse en cours</span></div>
-        </div>
-
-        <div class="card span-6">
+        <div class="card span-12"><h2>Échographies</h2></div>
+        <div class="card span-7">
           <h2>T1 — Échographie du premier trimestre</h2>
           <div class="row">
-            <div class="field"><label>Date de l’échographie</label><input id="t1Date" type="date"></div>
+            <div class="field"><label>Date de l'échographie</label><input id="t1Date" type="date" oninput="updateT1Window()"></div>
             <div class="field"><label>Date de début de grossesse (DDG)</label><input id="t1Ddg" type="date" oninput="updateT1Window()"></div>
           </div>
           <div class="row">
-            <div class="field"><label>Échographiste</label><input id="t1EchoName" list="echoRegistryList" placeholder="Nom Prénom" oninput="fillEchoApprovalFromRegistry()"></div>
-            <div class="field"><label>N° d’agrément</label><input id="t1EchoApproval" placeholder="N° agrément"></div>
+            <div class="field"><label>Échographiste</label><input id="t1EchoName" list="echoRegistry" oninput="fillEchoApproval()"></div>
+            <div class="field"><label>N° d'agrément</label><input id="t1EchoApproval"></div>
           </div>
-          <datalist id="echoRegistryList"></datalist>
+          <datalist id="echoRegistry"></datalist>
           <div class="row3">
-            <div class="field"><label>CN (mm)</label><input id="t1Cn" inputmode="decimal"></div>
-            <div class="field"><label>LCC (mm)</label><input id="t1Lcc" inputmode="decimal"></div>
-            <div class="field"><label>Poids patiente (kg)</label><input id="t1Weight" inputmode="decimal"></div>
+            <div class="field"><label>CN (mm)</label><input id="t1Cn"></div>
+            <div class="field"><label>LCC (mm)</label><input id="t1Lcc"></div>
+            <div class="field"><label>Poids patiente (kg)</label><input id="t1Weight"></div>
           </div>
-          <div id="t1WindowBox" class="notice">Renseigne la DDG pour calculer les dates des marqueurs sériques.</div>
+          <div id="t1Window" class="notice">Renseigne la DDG pour calculer les dates des marqueurs sériques.</div>
           <div class="actions">
-            <button class="btn primary" onclick="saveT1()">Enregistrer T1</button>
-            <button class="btn soft" onclick="printT1Markers()">Ordonnance marqueurs sériques</button>
-            <button class="btn soft" onclick="printT1ConsentLab()">Consentement + fiche labo</button>
+            <button class="btn primary" type="button" onclick="saveT1()">Enregistrer T1</button>
+            <button class="btn secondary" type="button" onclick="printT1Markers()">Ordonnance marqueurs sériques</button>
+            <button class="btn secondary" type="button" onclick="printT1Consent()">Consentement + fiche labo</button>
           </div>
         </div>
-
-        <div class="card span-6">
-          <h2>T2 — Échographie du deuxième trimestre</h2>
+        <div class="card span-5">
+          <h2>T2</h2>
           <div class="field"><label>Date</label><input id="t2Date" type="date"></div>
-          <div class="field"><label>Échographie habituelle</label><select id="t2Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
-          <div class="field"><label>Commentaires</label><textarea id="t2Comments" rows="5"></textarea></div>
-          <button class="btn primary" onclick="saveEchoSimple('t2')">Enregistrer T2</button>
-
-          <div class="form-sep"></div>
-          <h2>T3 — Échographie du troisième trimestre</h2>
+          <div class="field"><label>Habituelle</label><select id="t2Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
+          <div class="field"><label>Commentaires</label><textarea id="t2Comments" rows="3"></textarea></div>
+          <button class="btn primary" type="button" onclick="saveEchoSimple('t2')">Enregistrer T2</button>
+          <h2 style="margin-top:25px">T3</h2>
           <div class="field"><label>Date</label><input id="t3Date" type="date"></div>
-          <div class="field"><label>Échographie habituelle</label><select id="t3Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
-          <div class="field"><label>Commentaires</label><textarea id="t3Comments" rows="5"></textarea></div>
-          <button class="btn primary" onclick="saveEchoSimple('t3')">Enregistrer T3</button>
+          <div class="field"><label>Habituelle</label><select id="t3Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
+          <div class="field"><label>Commentaires</label><textarea id="t3Comments" rows="3"></textarea></div>
+          <button class="btn primary" type="button" onclick="saveEchoSimple('t3')">Enregistrer T3</button>
         </div>
-
         <div class="card span-12">
-          <h2>Échographies supplémentaires</h2>
+          <h2>Échographie supplémentaire</h2>
           <div class="row3">
-            <div class="field"><label>Date</label><input id="extraEchoDate" type="date"></div>
-            <div class="field"><label>Terme</label><input id="extraEchoTerm" placeholder="Calculé si DDG enregistrée"></div>
+            <div class="field"><label>Date</label><input id="extraEchoDate" type="date" onchange="updateExtraEchoTerm()"></div>
+            <div class="field"><label>Terme</label><input id="extraEchoTerm" readonly></div>
             <div class="field"><label>Motif</label><input id="extraEchoReason"></div>
           </div>
-          <div class="field"><label>Conclusion</label><textarea id="extraEchoConclusion" rows="3"></textarea></div>
-          <button class="btn primary" onclick="addExtraEcho()">+ Ajouter l’échographie</button>
-          <div id="extraEchoList" style="margin-top:14px"></div>
+          <div class="field"><label>Conclusion</label><textarea id="extraEchoConclusion" rows="2"></textarea></div>
+          <button class="btn primary" type="button" onclick="addExtraEcho()">Enregistrer l'échographie supplémentaire</button>
+          <div id="extraEchoList" style="margin-top:12px"></div>
         </div>
       </div>
     </section>
 
     <section id="bilans" class="section">
-      <div class="grid">
-        <div class="card span-12">
-          <h2>Bilans / PDF</h2>
-          <p class="hint">Les PDF sont conservés localement dans le navigateur de cet appareil (IndexedDB), séparément du code GitHub.</p>
-          <div class="actions">
-            <input id="bilanFile" type="file" accept="application/pdf" style="max-width:420px">
-            <button class="btn primary" onclick="storeBilanPdf()">Ajouter le PDF au dossier</button>
-          </div>
-          <div id="bilanList" style="margin-top:16px"></div>
-        </div>
-      </div>
-    </section>
-
-<section id="history" class="section">
       <div class="card">
-        <h2>Historique de la patiente active</h2>
-        <div id="historyList" class="timeline"></div>
-        <div class="actions no-print"><button class="btn soft" onclick="printFullHistory()">Dossier complet / PDF maternité</button><button class="btn danger" onclick="clearDemo()">Effacer les données de démonstration</button></div>
+        <h2>Bilans / PDF</h2>
+        <input id="bilanFile" type="file" accept="application/pdf" onchange="storeBilanPdf(event)">
+        <div id="bilanList" style="margin-top:15px"></div>
       </div>
     </section>
 
-    <section id="printArea">
-      <div class="print-doc" id="printDoc"></div>
+    <section id="history" class="section">
+      <div class="card">
+        <div class="actions" style="justify-content:space-between"><h2>Historique</h2><button class="btn primary" type="button" onclick="printFullHistory()">Dossier complet / PDF maternité</button></div>
+        <div id="historyList"></div>
+      </div>
     </section>
   </main>
 </div>
 
-<script>
-const KEY='sf_local_v1';
-let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null,"echographists":[]}');
-db.echographists=db.echographists||[];
-db.patients=db.patients||[];
-
-function migratePatients(){
- let changed=false;
- db.patients=(db.patients||[]).map((raw,index)=>{
-   const p={...raw};
-
-   // Compatibilité avec d'anciennes structures de dossier.
-   if(!p.nom) p.nom=p.lastName||p.lastname||p.name||p.nomPatiente||'';
-   if(!p.prenom) p.prenom=p.firstName||p.firstname||p.givenName||p.prenomPatiente||'';
-   if(!p.dob) p.dob=p.birthDate||p.dateNaissance||p.ddn||'';
-
-   // Si un ancien champ "name" contenait "NOM Prénom", on tente de le scinder.
-   if((!p.prenom || !p.nom) && typeof raw.name==='string' && raw.name.trim()){
-     const parts=raw.name.trim().split(/\s+/);
-     if(!p.nom && parts.length) p.nom=parts.shift()||'';
-     if(!p.prenom && parts.length) p.prenom=parts.join(' ');
-   }
-
-   p.nom=String(p.nom||'').trim();
-   p.prenom=String(p.prenom||'').trim();
-
-   if(!p.id){
-     p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
-     changed=true;
-   }
-   if(p !== raw || p.nom!==raw.nom || p.prenom!==raw.prenom || p.dob!==raw.dob) changed=true;
-   return p;
- });
- if(changed) localStorage.setItem(KEY,JSON.stringify(db));
-}
-migratePatients();
-
-let activeConsultDraft=null;
-let returningToConsultation=false;
-const $=id=>document.getElementById(id);
-const today=()=>new Date().toISOString().slice(0,10);
-$('csDate').value=today();
-
-
-let toastTimer=null,openedRecordHtml='',openedRecordTitle='';
-function showToast(message){
- const t=$('toast'); if(!t)return;
- t.textContent='✓ '+message;
- t.classList.add('show');
- clearTimeout(toastTimer);
- toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
-}
-function closeRecordModal(){$('recordModal')?.classList.remove('show')}
-function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=body;$('recordModalTitle').textContent=title;$('recordModalBody').innerHTML=body;$('recordModal').classList.add('show')}
-function documentHeader(title){return `<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>Tél. 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div><h1>${esc(title)}</h1>`}
-function prescriberBarcodeBlock(){return `<div style="margin:18px 0"><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong><br>N° RPPS : <strong>10004054820</strong><br><svg class="rppsBarcode"></svg></div>`}
-function renderBarcodes(root=document){try{if(window.JsBarcode){root.querySelectorAll('.rppsBarcode').forEach(svg=>JsBarcode(svg,"10004054820",{format:"CODE128",displayValue:true,fontSize:13,height:40,margin:0,width:1.5}))}}catch(e){console.error(e)}}
-function printHtmlDocument(title,body){$('printDoc').innerHTML=documentHeader(title)+body;renderBarcodes($('printDoc'));setTimeout(()=>window.print(),180)}
-function printOpenedRecord(){
- if(!openedRecordHtml)return;
- closeRecordModal();
- setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80);
-}
-
-function renderAll(){
- try{renderActive()}catch(e){console.error('renderActive',e)}
- try{renderHomePatients()}catch(e){console.error('renderHomePatients',e)}
- try{updateLocalPatientCount()}catch(e){console.error('updateLocalPatientCount',e)}
- if(active()){
-   try{loadPatient()}catch(e){console.error('loadPatient',e)}
-   try{renderHistory()}catch(e){console.error('renderHistory',e)}
-   try{renderDossier()}catch(e){console.error('renderDossier',e)}
- }
-}
-
-function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
-
-function ensurePregnancyEpisodes(p=active()){
- if(!p)return [];
- p.pregnancies=p.pregnancies||[];
- if(p.pregnancy && !p.pregnancies.length){
-   p.pregnancies.push({
-     id:crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now(),
-     status:'active',
-     startedAt:new Date().toISOString(),
-     ddr:p.pregnancy.ddr||'',
-     theoreticalDdg:p.pregnancy.theoreticalDdg||'',
-     ddg:p.pregnancy.ddg||'',
-     datingMethod:p.pregnancy.datingMethod||'DDR'
-   });
- }
- return p.pregnancies;
-}
-function activePregnancy(p=active()){
- if(!p)return null;
- ensurePregnancyEpisodes(p);
- return p.pregnancies.find(x=>x.status==='active')||null;
-}
-function syncLegacyPregnancy(p=active()){
- if(!p)return;
- const a=activePregnancy(p);
- p.pregnancy=a?{ddr:a.ddr||'',theoreticalDdg:a.theoreticalDdg||'',ddg:a.ddg||'',datingMethod:a.datingMethod||''}:null;
-}
-function calcFromDdr(){
- const ddr=$('ddr')?.value||'';
- if(!ddr){if($('theoreticalDdg'))$('theoreticalDdg').value='';return}
- const [y,m,d]=ddr.split('-').map(Number);
- const dt=new Date(Date.UTC(y,m-1,d+14));
- const iso=dt.toISOString().slice(0,10);
- $('theoreticalDdg').value=iso;
- if(!$('ddg').value || $('ddg').dataset.auto==='1'){
-   $('ddg').value=iso;$('ddg').dataset.auto='1';
- }
- calcTerm();
-}
-function renderPregnancyEpisodes(){
- const p=active(),el=$('pregnancyEpisodes'); if(!p||!el)return;
- ensurePregnancyEpisodes(p);el.innerHTML='';
- const list=[...p.pregnancies].sort((a,b)=>(b.startedAt||'').localeCompare(a.startedAt||''));
- if(!list.length){el.innerHTML='<div class="hint">Aucune grossesse enregistrée.</div>';return}
- list.forEach((x,i)=>{
-   const d=document.createElement('div');d.className='preg-episode '+(x.status==='active'?'active':'');
-   d.innerHTML=`<strong>Grossesse ${list.length-i}</strong> <span class="status-pill ${x.status==='active'?'':'closed'}">${x.status==='active'?'En cours':'Clôturée'}</span>
-   <div class="file-meta">${x.ddr?'DDR '+fmtDate(x.ddr)+' · ':''}${x.ddg?'DDG '+fmtDate(x.ddg):''}${x.ddg?' · '+termFrom(x.ddg):''}${x.closedAt?' · clôturée le '+new Date(x.closedAt).toLocaleDateString('fr-FR'):''}</div>`;
-   el.appendChild(d);
- });
-}
-function startNewPregnancy(){
- const p=active();if(!p)return;
- const current=activePregnancy(p);
- if(current && current.ddg){showToast('Clôture d’abord la grossesse en cours');return}
- if(!current){
-   p.pregnancies.push({id:crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now(),status:'active',startedAt:new Date().toISOString(),ddr:'',theoreticalDdg:'',ddg:'',datingMethod:'DDR'});
- }
- syncLegacyPregnancy(p);localStorage.setItem(KEY,JSON.stringify(db));
- ['ddr','theoreticalDdg','ddg','dpa'].forEach(id=>{if($(id))$(id).value='';});
- if($('datingMethod'))$('datingMethod').value='DDR';
- renderPregnancyEpisodes();showToast('Nouvelle grossesse créée');
-}
-function closeCurrentPregnancy(){
- const p=active();if(!p)return;const a=activePregnancy(p);
- if(!a){showToast('Aucune grossesse en cours');return}
- a.status='closed';a.closedAt=new Date().toISOString();
- syncLegacyPregnancy(p);localStorage.setItem(KEY,JSON.stringify(db));
- renderPregnancyEpisodes();renderDossier();showToast('Grossesse clôturée');
-}
-
-function active(){
- const id=db.activeId;
- if(id===null || id===undefined || id==='')return null;
- return (db.patients||[]).find(p=>String(p?.id)===String(id)) || null;
-}
-function markerWindow(ddg){
- if(!ddg)return null;
- const [y,m,d]=ddg.split('-').map(Number);
- // DDG = conception. 11 SA = DDG + 9 weeks; 13 SA + 6 = DDG + 11 weeks + 6 days.
- const start=new Date(Date.UTC(y,m-1,d+63));
- const end=new Date(Date.UTC(y,m-1,d+83));
- return {start:start.toISOString().slice(0,10),end:end.toISOString().slice(0,10)};
-}
-
-function ensureEchoData(){
- const p=active(); if(!p)return null;
- p.echos=p.echos||{}; p.extraEchos=p.extraEchos||[]; return p;
-}
-
-function renderEchoRegistry(){
- const dl=$('echoRegistryList'); if(!dl)return; dl.innerHTML='';
- (db.echographists||[]).forEach(e=>{const o=document.createElement('option');o.value=e.name;o.label=e.approval||'';dl.appendChild(o)});
-}
-
-function registerEcho(name,approval){
- if(!name)return;
- const i=(db.echographists||[]).findIndex(e=>norm(e.name)===norm(name));
- if(i>=0){if(approval)db.echographists[i].approval=approval}
- else db.echographists.push({name,approval});
-}
-
-function loadEchoForm(){
- const p=ensureEchoData();if(!p)return;
- renderEchoRegistry();
- const t1=p.echos.t1||{},t2=p.echos.t2||{},t3=p.echos.t3||{};
- const currentDdg=p.pregnancy?.ddg||(typeof activePregnancy==='function' ? activePregnancy(p)?.ddg : '')||'';
-
- $('t1Date').value=t1.date||'';
- $('t1Ddg').value=t1.ddg||currentDdg||'';
- $('t1EchoName').value=t1.echoName||'';
- $('t1EchoApproval').value=t1.echoApproval||'';
- $('t1Cn').value=t1.cn||'';
- $('t1Lcc').value=t1.lcc||'';
- $('t1Weight').value=t1.weight||'';
-
- $('t2Date').value=t2.date||'';
- $('t2Normal').value=t2.normal||'';
- $('t2Comments').value=t2.comments||'';
- $('t3Date').value=t3.date||'';
- $('t3Normal').value=t3.normal||'';
- $('t3Comments').value=t3.comments||'';
-
- updateT1Window();
- renderExtraEchos();
-
- if(!$('extraEchoDate').value)$('extraEchoDate').value=today();
- $('extraEchoTerm').value=currentDdg?termFrom(currentDdg,$('extraEchoDate').value):'';
-}
-
-function updateT1Window(){
- const ddg=$('t1Ddg')?.value||active()?.pregnancy?.ddg||'';
- const box=$('t1WindowBox'); if(!box)return;
- const w=markerWindow(ddg);
- if(!w){box.innerHTML='Renseigne la DDG pour calculer les dates des marqueurs sériques.';return}
- box.innerHTML=`<strong>Marqueurs sériques du 1er trimestre</strong><div class="lab-window">du ${fmtDate(w.start)} au ${fmtDate(w.end)}</div><span class="hint">Fenêtre 11 SA + 0 à 13 SA + 6.</span>`;
-}
-
-function fillEchoApprovalFromRegistry(){
- const found=(db.echographists||[]).find(e=>norm(e.name)===norm($('t1EchoName').value));
- if(found)$('t1EchoApproval').value=found.approval||'';
-}
-
-function saveT1(){
- const p=ensureEchoData(); if(!p)return;
- const ddg=$('t1Ddg').value||p.pregnancy?.ddg||'';
- p.echos.t1={date:$('t1Date').value,ddg,echoName:$('t1EchoName').value.trim(),echoApproval:$('t1EchoApproval').value.trim(),cn:$('t1Cn').value,lcc:$('t1Lcc').value,weight:$('t1Weight').value};
- if(ddg){p.pregnancy=p.pregnancy||{};p.pregnancy.ddg=ddg}
- registerEcho(p.echos.t1.echoName,p.echos.t1.echoApproval);
- p.history=p.history||[]; p.history.unshift({type:'Échographie T1',date:p.echos.t1.date||today(),summary:`CN ${p.echos.t1.cn||'—'} mm · LCC ${p.echos.t1.lcc||'—'} mm`});
- persist(); renderEchoRegistry(); renderDossier(); showToast('Échographie T1 enregistrée');
-}
-
-function saveEchoSimple(which){
- const p=ensureEchoData(); if(!p)return;
- const prefix=which==='t2'?'t2':'t3';
- p.echos[prefix]={date:$(prefix+'Date').value,normal:$(prefix+'Normal').value,comments:$(prefix+'Comments').value};
- p.history=p.history||[]; p.history.unshift({type:'Échographie '+prefix.toUpperCase(),date:p.echos[prefix].date||today(),summary:'Habituelle : '+(p.echos[prefix].normal||'—')});
- persist(); renderDossier(); showToast('Échographie '+prefix.toUpperCase()+' enregistrée');
-}
-
-function addExtraEcho(){
- const p=ensureEchoData(); if(!p)return;
- const date=$('extraEchoDate').value||today();
- const item={id:crypto.randomUUID(),date,term:$('extraEchoTerm').value||(p.pregnancy?.ddg?termFrom(p.pregnancy.ddg,date):''),reason:$('extraEchoReason').value,conclusion:$('extraEchoConclusion').value};
- p.extraEchos.unshift(item); p.history=p.history||[]; p.history.unshift({type:'Échographie supplémentaire',date,summary:(item.term?item.term+' · ':'')+(item.reason||'')});
- persist(); $('extraEchoReason').value='';$('extraEchoConclusion').value='';renderExtraEchos();
-
- showToast('Échographie supplémentaire enregistrée');
-}
-
-function renderExtraEchos(){
- const p=active(),el=$('extraEchoList');if(!el||!p)return;el.innerHTML='';
- (p.extraEchos||[]).forEach(x=>{const d=document.createElement('div');d.className='echo-card';d.innerHTML=`<strong>${fmtDate(x.date)} — ${esc(x.term||'')}</strong><br><span class="hint">${esc(x.reason||'')}</span><p>${esc(x.conclusion||'')}</p>`;el.appendChild(d)});
- if(!(p.extraEchos||[]).length)el.innerHTML='<div class="hint">Aucune échographie supplémentaire.</div>';
-}
-
-function printT1Markers(){
- const p=active();if(!p)return;
- const t1=p.echos?.t1||{},ddg=t1.ddg||p.pregnancy?.ddg;
- if(!ddg){showToast('Renseigne et enregistre la DDG/T1');return}
- const w=markerWindow(ddg);
- const line=`Marqueurs sériques maternels du 1er trimestre (PAPP-A et sous-unité β libre de l’hCG), prélèvement entre le ${fmtDate(w.start)} et le ${fmtDate(w.end)}.`;
- const rec=savePrescriptionRecord('Ordonnance marqueurs sériques T1',[line],{kind:'t1_markers',ddg,window:w});
- printHtmlDocument('Ordonnance',prescriptionHtml(rec,p));
-}
-
-function printT1ConsentLab(){
- const p=active();if(!p)return;
- p.echos=p.echos||{};
- const previous=p.echos.t1||{};
- const t1={
-   date:$('t1Date')?.value||previous.date||'',
-   ddg:$('t1Ddg')?.value||previous.ddg||p.pregnancy?.ddg||'',
-   echoName:$('t1EchoName')?.value?.trim()||previous.echoName||'',
-   echoApproval:$('t1EchoApproval')?.value?.trim()||previous.echoApproval||'',
-   cn:$('t1Cn')?.value||previous.cn||'',
-   lcc:$('t1Lcc')?.value||previous.lcc||'',
-   weight:$('t1Weight')?.value||previous.weight||''
- };
- p.echos.t1=t1;persist();
- const ddg=t1.ddg;
- if(!ddg){alert('Renseigne la date de début de grossesse.');return}
- if(!t1.date){alert("Renseigne la date de l’échographie T1.");return}
- const w=markerWindow(ddg);
- const termT1=termFrom(ddg,t1.date);
- const patientName=`${esc(p.prenom)} ${esc(p.nom)}`;
- const pro=`<p><b>Prescripteur :</b> Mme Clarisse SOUM — Sage-femme — RPPS 10004054820<br>
- <b>Échographiste :</b> ${esc(t1.echoName||'—')} &nbsp;&nbsp; <b>N° d’agrément :</b> ${esc(t1.echoApproval||'—')}</p>`;
- const preg=`<p><b>DDG :</b> ${fmtDate(ddg)} &nbsp;&nbsp; <b>DPA :</b> ${calcDpaText(ddg)}<br>
- <b>Date de l’échographie T1 :</b> ${fmtDate(t1.date)} &nbsp;&nbsp; <b>Terme à l’échographie T1 :</b> ${esc(termT1)}<br>
- <b>LCC :</b> ${esc(t1.lcc||'—')} mm &nbsp;&nbsp; <b>CN :</b> ${esc(t1.cn||'—')} mm &nbsp;&nbsp; <b>Poids :</b> ${esc(t1.weight||'—')} kg</p>`;
- const infoText=`<p>Je soussignée <b>${patientName}</b> atteste avoir reçu de <b>Mme Clarisse SOUM, sage-femme</b> une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
- <p>Cette information a porté notamment sur les caractéristiques de la trisomie 21 et les modalités de prise en charge des personnes porteuses de trisomie 21, sur la différence entre dépistage et diagnostic, sur la mesure de la clarté nucale, et sur le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d’estimer un risque mais ne permet pas à lui seul d’établir un diagnostic.</p>
- <p>J’ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, notamment un examen portant sur l’ADN fœtal libre circulant dans le sang maternel ou un examen diagnostique chromosomique après prélèvement invasif. J’ai également été informée que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p>
- <p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p>`;
- const signatures=`<div style="display:flex;justify-content:space-between;gap:40px;margin-top:34px">
- <div><b>Date :</b> ____ / ____ / ______<br><br><b>Signature de la patiente</b></div>
- <div><b>Mme Clarisse SOUM</b><br>Sage-femme<br><br><b>Signature / tampon</b></div></div>`;
-
- const copy=(label,compact=false)=>`<section class="${compact?'consent-copy compact':'consent-copy'}">
- <div style="text-align:center"><h2>ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2>
- <p><b>Information, demande et consentement</b><br>${label}</p></div>
- <h3>IDENTIFICATION DES PROFESSIONNELS</h3>${pro}
- <h3>IDENTIFICATION DE LA PATIENTE</h3>
- <p><b>Nom :</b> ${esc(p.nom)} &nbsp;&nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br>
- <b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp;&nbsp; <b>Adresse :</b> ${esc(p.adresse||'—')}</p>
- <h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3>${preg}
- <p><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}.</p>
- <h3>INFORMATION ET CONSENTEMENT</h3>${infoText}${signatures}</section>`;
-
- const lab=`<section class="lab-copy"><h2>RENSEIGNEMENTS POUR LE LABORATOIRE</h2>
- <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
- <b>DDG :</b> ${fmtDate(ddg)} — <b>Date T1 :</b> ${fmtDate(t1.date)} — <b>Terme à la T1 :</b> ${esc(termT1)}<br>
- <b>Échographiste :</b> ${esc(t1.echoName||'—')} — <b>Agrément :</b> ${esc(t1.echoApproval||'—')}<br>
- <b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br>
- <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></section>`;
-
- const firstPage=`<div class="consent-page-one">
-   ${copy('Exemplaire patiente',false)}
-   <div class="lab-inline">
-     <h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3>
-     <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
-     <b>DDG :</b> ${fmtDate(ddg)} — <b>Date T1 :</b> ${fmtDate(t1.date)} — <b>Terme à la T1 :</b> ${esc(termT1)}<br>
-     <b>Échographiste :</b> ${esc(t1.echoName||'—')} — <b>Agrément :</b> ${esc(t1.echoApproval||'—')}<br>
-     <b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br>
-     <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p>
-   </div>
- </div>`;
-
- const secondPage=`<div class="two-copies-page">
-   ${copy('Exemplaire prescripteur',true)}
-   ${copy('Exemplaire laboratoire',true)}
- </div>`;
-
- const body=`<style>
- @media print{
-   .consent-page-one{page-break-after:always;break-after:page;font-size:11.5px;line-height:1.28}
-   .consent-page-one .consent-copy h2{font-size:18px;margin:4px 0}
-   .consent-page-one .consent-copy h3{font-size:12.5px;margin:7px 0 3px}
-   .consent-page-one .consent-copy p{margin:4px 0}
-   .consent-page-one .lab-inline{font-size:10.5px}
-   .consent-page-one .lab-inline h3{font-size:12.5px}
-   .two-copies-page{page-break-before:auto;break-before:auto}
-   .consent-copy.compact{font-size:9px;line-height:1.12;margin:0;padding:0 0 4mm 0}
-   .consent-copy.compact h2{font-size:14px;margin:2px 0}
-   .consent-copy.compact h3{font-size:10.5px;margin:4px 0 2px}
-   .consent-copy.compact p{margin:2px 0}
-   .two-copies-page .consent-copy:first-child{border-bottom:1px dashed #999;margin-bottom:4mm;padding-bottom:4mm}
-   .lab-inline{margin-top:5mm;border-top:1px solid #777;padding-top:3mm;font-size:10px}
-   .lab-inline h3{font-size:12px;margin:0 0 2mm}
- }
- </style>${firstPage}${secondPage}`;
- printHtmlDocument('Consentement — dépistage de la trisomie 21',body);
-}
-
-function openBilanDb(){
- return new Promise((resolve,reject)=>{
-   const req=indexedDB.open(BILAN_DB,1);
-   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(BILAN_STORE))req.result.createObjectStore(BILAN_STORE,{keyPath:'id'})};
-   req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
- });
-}
-
-async function getPatientBilans(){
- const p=active();if(!p)return[];
- const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readonly'),req=tx.objectStore(BILAN_STORE).getAll();
- const all=await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result||[]);req.onerror=()=>rej(req.error)});
- return all.filter(x=>x.patientId===p.id).sort((a,b)=>b.date.localeCompare(a.date));
-}
-
-async function getBilan(id){const dbi=await openBilanDb(),req=dbi.transaction(BILAN_STORE,'readonly').objectStore(BILAN_STORE).get(id);return await new Promise((res,rej)=>{req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error)})}
-
-async function openBilan(id){const x=await getBilan(id);if(!x)return;window.open(URL.createObjectURL(x.blob),'_blank')}
-
-async function downloadBilan(id){const x=await getBilan(id);if(!x)return;const a=document.createElement('a');a.href=URL.createObjectURL(x.blob);a.download=x.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-
-async function deleteBilan(id){if(!confirm('Supprimer ce PDF du dossier local ?'))return;const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);tx.oncomplete=renderBilans}
-
-async function renderBilans(){
- const el=$('bilanList');if(!el)return;el.innerHTML='<div class="hint">Chargement…</div>';
- const list=await getPatientBilans();el.innerHTML='';
- if(!list.length){el.innerHTML='<div class="hint">Aucun PDF dans ce dossier.</div>';return}
- list.forEach(x=>{
-   const d=document.createElement('div');d.className='file-row';
-   d.innerHTML=`<div><strong>📄 ${esc(x.name)}</strong><div class="file-meta">${new Date(x.date).toLocaleString('fr-FR')}</div></div>
-   <div class="small-actions"><button class="btn secondary" onclick="openBilan('${x.id}')">Ouvrir</button><button class="btn secondary" onclick="downloadBilan('${x.id}')">Extraire</button><button class="btn danger" onclick="deleteBilan('${x.id}')">Supprimer</button></div>`;
-   el.appendChild(d);
- });
-}
-
-async function storeBilanPdf(){
- const p=active(), f=$('bilanFile')?.files?.[0]; if(!p){alert('Ouvre un dossier patiente.');return} if(!f){alert('Choisis un PDF.');return}
- if(f.type!=='application/pdf'){alert('Le fichier doit être un PDF.');return}
- const id=crypto.randomUUID(),dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');
- tx.objectStore(BILAN_STORE).put({id,patientId:p.id,name:f.name,date:new Date().toISOString(),blob:f});
- await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
- $('bilanFile').value='';renderBilans();
-
- showToast('PDF ajouté au dossier');
-}
-
-function printFullHistory(){
- const p=active();if(!p)return;
-
- let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2>
- <p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse)+'<br>':''}${p.tel?'Tél. '+esc(p.tel):''}</p>`;
-
- if(p.pregnancy?.ddg){
-   body+=`<h2>Grossesse en cours</h2>
-   <p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${calcDpaText(p.pregnancy.ddg)} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p>`;
- }
-
- body+=`<h2>Antécédents</h2>
- <p><b>Allergies :</b> ${esc(p.allergies||'—')}<br>
- <b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br>
- <b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br>
- <b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br>
- <b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br>
- <b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
-
- if((p.pregnancyHistory||[]).length){
-   body+='<h3>Grossesses antérieures</h3>';
-   p.pregnancyHistory.forEach(x=>{
-     body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.complication?'<br>'+esc(x.complication):''}</p>`;
-   });
- }
-
- // Ultrasound summary
- const e=p.echos||{};
- if(e.t1 || e.t2 || e.t3 || (p.extraEchos||[]).length){
-   body+='<h2>Résumé des échographies</h2>';
-
-   if(e.t1){
-     const t1term=e.t1.ddg&&e.t1.date?termFrom(e.t1.ddg,e.t1.date):'';
-     body+=`<p><b>T1 :</b> ${e.t1.date?fmtDate(e.t1.date):'—'}${t1term?' — '+esc(t1term):''}<br>
-     Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>
-     CN : ${esc(e.t1.cn||'—')} mm — LCC : ${esc(e.t1.lcc||'—')} mm — Poids : ${esc(e.t1.weight||'—')} kg</p>`;
-   }
-
-   if(e.t2){
-     body+=`<p><b>T2 :</b> ${e.t2.date?fmtDate(e.t2.date):'—'} — Échographie habituelle : ${esc(e.t2.normal||'—')}
-     ${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;
-   }
-
-   if(e.t3){
-     body+=`<p><b>T3 :</b> ${e.t3.date?fmtDate(e.t3.date):'—'} — Échographie habituelle : ${esc(e.t3.normal||'—')}
-     ${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;
-   }
-
-   (p.extraEchos||[]).forEach(x=>{
-     body+=`<p><b>Échographie supplémentaire :</b> ${x.date?fmtDate(x.date):'—'}${x.term?' — '+esc(x.term):''}
-     ${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}
-     ${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`;
-   });
- }
-
- body+='<h2>Consultations</h2>';
- const list=(p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
- if(!list.length)body+='<p>Aucune consultation enregistrée.</p>';
- else list.forEach(c=>{
-   body+='<div style="border-top:1px solid #ccc;padding-top:10px;margin-top:12px">'+consultationHtml(c,p)+'</div>';
- });
-
- printHtmlDocument('Dossier de suivi à transmettre à la maternité',body);
-}
-
-function clearDemo(){ if(confirm('Effacer toutes les données locales de cette V1 ?')){localStorage.removeItem(KEY);db={patients:[],activeId:null};location.reload();} }
-function go(id){
- const clinical=['dossier','pregnancy','consult','rx','echos','bilans','history'];
- if(clinical.includes(id) && !active()){
-   showToast('Sélectionne d’abord une patiente');
-   id='home';
- }
- document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
- const target=$(id);
- if(target)target.classList.add('active');
- document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
- const labels={home:'Accueil',dossier:'Dossier patiente',patientEdit:'Informations patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation grossesse',rx:'Ordonnance',echos:'Échographies',bilans:'Bilans / PDF',history:'Historique'};
- if($('pageTitle'))$('pageTitle').textContent=labels[id]||'';
-
- if(id==='consult'){try{hydrateConsultTerm();updateConsultMode()}catch(e){console.error(e)}}
- if(id==='history'){try{renderHistory()}catch(e){console.error(e)}}
- if(id==='echos'){try{loadEchoForm()}catch(e){console.error(e)}}
- if(id==='bilans'){try{renderBilans()}catch(e){console.error(e)}}
- if(id==='dossier'){try{renderDossier()}catch(e){console.error(e)}}
- if(id==='home'){try{renderHomePatients()}catch(e){console.error(e)}}
-
- const back=$('returnConsultBtn');
- if(back)back.style.display=(id==='rx'&&activeConsultDraft)?'inline-block':'none';
- renderActive();
-}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{
- const id=b.dataset.section;
- if(id==='consult')startNewConsultation();
- else go(id);
-});
-
-let surgeryDraft=[];
-let pregnancyHistoryDraft=[];
-
-function savePatient(){
- const nom=$('nom')?.value.trim().toUpperCase()||'';
- const prenom=$('prenom')?.value.trim()||'';
- const dob=$('dob')?.value||'';
-
- if(!nom || !prenom || !dob){
-   showToast('Nom, prénom et date de naissance sont nécessaires');
-   return;
- }
-
- let p=active();
- const id=p?.id || (crypto.randomUUID?crypto.randomUUID():'pat_'+Date.now()+'_'+Math.random().toString(16).slice(2));
-
- const base={
-   id,
-   nom,
-   prenom,
-   dob,
-   tel:$('tel')?.value||'',
-   email:$('email')?.value||'',
-   adresse:$('adresse')?.value||'',
-   groupe:$('groupe')?.value||'',
-   allergies:$('allergies')?.value||'',
-   atcdMedicaux:$('atcdMedicaux')?.value||'',
-   atcdChirurgicaux:[...surgeryDraft],
-   gestite:$('gestite')?.value||'',
-   parite:$('parite')?.value||'',
-   pregnancyHistory:[...pregnancyHistoryDraft],
-   atcdObst:$('atcdObst')?.value||'',
-   atcdGyneco:$('atcdGyneco')?.value||'',
-   atcdFamiliaux:$('atcdFamiliaux')?.value||'',
-   alertNote:{text:$('alertNote')?.value.trim()||'',enabled:!!$('alertEnabled')?.checked},
-   pregnancies:p?.pregnancies||[],
-   history:p?.history||[],
-   consultations:p?.consultations||[],
-   prescriptions:p?.prescriptions||[],
-   pregnancy:p?.pregnancy||null,
-   echos:p?.echos||{},
-   extraEchos:p?.extraEchos||[]
- };
-
- const idx=(db.patients||[]).findIndex(x=>x.id===id);
- if(idx>=0) db.patients[idx]=base;
- else db.patients.unshift(base);
-
- db.activeId=id;
- localStorage.setItem(KEY,JSON.stringify(db));
- renderActive();
- loadPatient();
- renderDossier();
- renderHistory();
- go('dossier');
- showToast('Dossier patiente enregistré');
-}
-function addSurgery(){
- const el=$('atcdChirInput');const v=el?.value.trim()||'';if(!v)return;
- if(!surgeryDraft.some(x=>norm(x)===norm(v)))surgeryDraft.push(v);
- el.value='';renderSurgeryChips();persistAntecedentDrafts();showToast('Antécédent chirurgical ajouté');
-}
-function addSurgeryOnEnter(e){if(e.key==='Enter'){e.preventDefault();addSurgery()}}
-function removeSurgery(i){
- surgeryDraft.splice(i,1);renderSurgeryChips();persistAntecedentDrafts();showToast('Antécédent chirurgical supprimé');
-}
-function renderSurgeryChips(){
- const el=$('surgeryChips');if(!el)return;
- el.innerHTML='';
- if(!surgeryDraft.length){el.innerHTML='<div class="hint">Aucun antécédent chirurgical renseigné.</div>';return}
- surgeryDraft.forEach((value,i)=>{
-   const row=document.createElement('div');row.className='file-row';
-   const input=document.createElement('input');input.value=value||'';input.style.flex='1';
-   input.onchange=()=>editSurgery(i,input.value);
-   const del=document.createElement('button');del.type='button';del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>removeSurgery(i);
-   row.appendChild(input);row.appendChild(del);el.appendChild(row);
- });
-}
-function editSurgery(i,value){
- surgeryDraft[i]=(value||'').trim();persistAntecedentDrafts();
-}
-
-function persistAntecedentDrafts(){
- const p=active();if(!p)return;
- p.atcdChirurgicaux=[...surgeryDraft];
- p.pregnancyHistory=JSON.parse(JSON.stringify(pregnancyHistoryDraft));
- localStorage.setItem(KEY,JSON.stringify(db));
-}
-function editPregnancyHistoryPopup(i){
- const x=pregnancyHistoryDraft[i];if(!x)return;
- const outcome=prompt('Issue de la grossesse',x.outcome||'');if(outcome===null)return;
- const term=prompt('Terme',x.term||'');if(term===null)return;
- const complication=prompt('Complications / commentaires',x.complication||'');if(complication===null)return;
- x.outcome=outcome.trim();x.term=term.trim();x.complication=complication.trim();
- persistAntecedentDrafts();renderPregnancyHistory();showToast('Grossesse antérieure modifiée');
-}
-
-function addPregnancyHistory(){
- const outcome=$('pregOutcome')?.value||'';if(!outcome){showToast('Choisis l’issue de la grossesse');return}
- const item={
-   id:crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now(),
-   outcome,date:$('pregDate')?.value||'',term:$('pregTerm')?.value.trim()||'',
-   weight:$('pregWeight')?.value||'',sex:$('pregSex')?.value||'',delivery:$('pregDelivery')?.value||'',
-   healthy:$('pregHealthy')?.value||'',childComment:$('pregChildComment')?.value.trim()||'',complication:$('pregComplication')?.value.trim()||''
- };
- pregnancyHistoryDraft.push(item);
- ['pregOutcome','pregDate','pregTerm','pregWeight','pregSex','pregDelivery','pregHealthy','pregChildComment','pregComplication'].forEach(id=>{if($(id))$(id).value=''});
- renderPregnancyHistory();persistAntecedentDrafts();showToast('Grossesse antérieure ajoutée');
-}
-function removePregnancyHistory(i){
- pregnancyHistoryDraft.splice(i,1);renderPregnancyHistory();persistAntecedentDrafts();showToast('Grossesse antérieure supprimée');
-}
-function renderPregnancyHistory(){
- const el=$('pregnancyHistoryList');if(!el)return;
- el.innerHTML='';
- if(!pregnancyHistoryDraft.length){el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>';return}
- pregnancyHistoryDraft.forEach((x,i)=>{
-   const row=document.createElement('div');row.className='echo-card';
-   row.innerHTML=`<strong>${esc(x.outcome||'Grossesse')}</strong>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}
-   <div class="file-meta">${x.weight?esc(x.weight)+' g · ':''}${esc(x.sex||'')}${x.delivery?' · '+esc(x.delivery):''}${x.healthy?' · Enfant en bonne santé : '+esc(x.healthy):''}</div>
-   ${x.childComment?'<div><b>Enfant :</b> '+esc(x.childComment)+'</div>':''}${x.complication?'<div>'+esc(x.complication)+'</div>':''}
-   <div class="actions"><button class="btn secondary" type="button" onclick="editPregnancyHistoryPopup(${i})">Modifier</button><button class="btn danger" type="button" onclick="removePregnancyHistory(${i})">Supprimer</button></div>`;
-   el.appendChild(row);
- });
-}
-function editPregnancyHistory(i,key,value){
- if(!pregnancyHistoryDraft[i])return;
- pregnancyHistoryDraft[i][key]=value;
-}
-
-function startNewPatientFromSearch(){
- const nom=$('searchNom')?.value||'';
- const prenom=$('searchPrenom')?.value||'';
- const dob=$('searchDob')?.value||'';
-
- startNewPatient();
-
- if($('nom'))$('nom').value=nom;
- if($('prenom'))$('prenom').value=prenom;
- if($('dob'))$('dob').value=dob;
-}
-function startNewPatient(){
- db.activeId=null;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','alertNote','ddr','theoreticalDdg','ddg','dpa'].forEach(id=>{
-   const el=$(id);if(el)el.value='';
- });
- if($('alertEnabled'))$('alertEnabled').checked=false;
- surgeryDraft=[];
- pregnancyHistoryDraft=[];
- renderSurgeryChips();
- renderPregnancyHistory();
- renderActive();
-
- document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
- if($('patientEdit'))$('patientEdit').classList.add('active');
- if($('pageTitle'))$('pageTitle').textContent='Informations patiente';
-}
-function newPatient(){
- db.activeId=null;
- ['nom','prenom','dob','tel','email','adresse','gestite','parite','groupe','allergies','atcdMedicaux','atcdChirInput','atcdObst','atcdGyneco','atcdFamiliaux','ddg','dpa'].forEach(id=>$(id).value='');
- renderAll();
-}
-
-function closePostit(){$('postitModal')?.classList.remove('show')}
-function maybeShowPostit(){
- const p=active();if(!p||!p.alertNote?.enabled||!p.alertNote?.text)return;
- $('postitText').textContent=p.alertNote.text;$('postitModal').classList.add('show');
-}
-function disablePostit(){
- const p=active();if(!p)return;p.alertNote=p.alertNote||{};p.alertNote.enabled=false;
- localStorage.setItem(KEY,JSON.stringify(db));closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures');
-}
-
-function selectPatient(id){
- const p=(db.patients||[]).find(x=>String(x?.id)===String(id));
- if(!p){showToast('Dossier introuvable');return}
- db.activeId=p.id;
- localStorage.setItem(KEY,JSON.stringify(db));
-
- loadPatient();
- renderActive();
- renderHistory();
- renderDossier();
- go('dossier');
-
- showToast('Dossier patiente ouvert');
- setTimeout(()=>{try{maybeShowPostit()}catch(e){}},180);
-}
-function loadPatient(){
- const p=active();if(!p)return;
- ['nom','prenom','dob','tel','email','adresse','groupe','gestite','parite'].forEach(id=>{const el=$(id);if(el)el.value=p[id]||''});
- $('allergies').value=p.allergies||'';
- $('atcdMedicaux').value=p.atcdMedicaux||p.antecedents||'';
- $('atcdObst').value=p.atcdObst||'';
- $('atcdGyneco').value=p.atcdGyneco||'';
- $('atcdFamiliaux').value=p.atcdFamiliaux||'';
- if($('alertNote'))$('alertNote').value=p.alertNote?.text||'';
- if($('alertEnabled'))$('alertEnabled').checked=!!p.alertNote?.enabled;
- surgeryDraft=[...(p.atcdChirurgicaux||[])];renderSurgeryChips();
- pregnancyHistoryDraft=[...(p.pregnancyHistory||[])];renderPregnancyHistory();
- ensurePregnancyEpisodes(p);syncLegacyPregnancy(p);
- const a=activePregnancy(p);
- if($('ddr'))$('ddr').value=a?.ddr||'';
- if($('theoreticalDdg'))$('theoreticalDdg').value=a?.theoreticalDdg||'';
- if($('ddg'))$('ddg').value=a?.ddg||'';
- if($('datingMethod'))$('datingMethod').value=a?.datingMethod||'DDR';
- calcTerm();renderPregnancyEpisodes();
- const status=$('pregnancySaveStatus');
- if(status){status.style.display=a?.ddg?'block':'none';status.innerHTML=a?.ddg?'✓ Grossesse en cours — '+termFrom(a.ddg):''}
-}
-
-function exitPatient(){
- db.activeId=null;
- localStorage.setItem(KEY,JSON.stringify(db));
- ['searchNom','searchPrenom','searchDob'].forEach(id=>{const el=$(id);if(el)el.value='';});
- renderActive();renderHomePatients();go('home');
-}
-function norm(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
-function patientMatchScore(p,qn,qp,qd){
- let score=0,used=0;
- const n=norm(p.nom||p.lastName||p.name||'');
- const pr=norm(p.prenom||p.firstName||p.givenName||'');
- const dob=String(p.dob||p.birthDate||p.dateNaissance||p.ddn||'');
-
- function textScore(value,query,exactPts,prefixPts,containsPts){
-   if(!query)return 0;
-   if(value===query)return exactPts;
-   if(value.startsWith(query))return prefixPts;
-   if(value.includes(query))return containsPts;
-   if(query.length>=3 && value.startsWith(query.slice(0,3)))return Math.max(10,containsPts-5);
-   if(value.length>=3 && query.includes(value.slice(0,3)))return 8;
-   return -1;
- }
-
- if(qn){
-   used++;
-   const s=textScore(n,qn,70,55,35);
-   if(s<0)return -1;score+=s;
- }
- if(qp){
-   used++;
-   const s=textScore(pr,qp,60,45,30);
-   if(s<0)return -1;score+=s;
- }
- if(qd){
-   used++;
-   if(dob===qd)score+=80;
-   else return -1;
- }
- return used?score:0;
-}
-
-function normalizeSearchValue(v){
- return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-}
-function patientSearchBlob(p){
- try{
-   return normalizeSearchValue(JSON.stringify(p));
- }catch(e){
-   return normalizeSearchValue(String(p));
- }
-}
-function findPatientFieldDeep(obj,keys,depth=0){
- if(!obj || typeof obj!=='object' || depth>4)return '';
- const wanted=keys.map(k=>normalizeSearchValue(k));
- for(const [k,v] of Object.entries(obj)){
-   if(wanted.includes(normalizeSearchValue(k)) && (typeof v==='string'||typeof v==='number')) return String(v);
- }
- for(const v of Object.values(obj)){
-   if(v && typeof v==='object' && !Array.isArray(v)){
-     const found=findPatientFieldDeep(v,keys,depth+1);
-     if(found)return found;
-   }
- }
- return '';
-}
-
-function safeDisplayDate(v){
- const s=String(v||'').trim();
- if(!s)return '';
- if(/^\d{4}-\d{2}-\d{2}$/.test(s)){
-   const [y,m,d]=s.split('-');
-   return `${d}/${m}/${y}`;
- }
- if(/^\d{2}\/\d{2}\/\d{4}$/.test(s))return s;
- return s;
-}
-
-function displayPatientIdentity(p,index){
- try{
-   let nom=findPatientFieldDeep(p,['nom','lastname','lastName','nomPatiente','familyName']);
-   let prenom=findPatientFieldDeep(p,['prenom','firstname','firstName','givenName','prenomPatiente']);
-   let dob=findPatientFieldDeep(p,['dob','birthDate','dateNaissance','ddn','date_de_naissance']);
-
-   if((!nom||!prenom) && typeof p?.name==='string'){
-     const parts=p.name.trim().split(/\s+/);
-     if(!nom && parts.length)nom=parts.shift()||'';
-     if(!prenom && parts.length)prenom=parts.join(' ');
-   }
-
-   if(!nom && !prenom){
-     nom='Dossier';
-     prenom=String(index+1);
-   }
-
-   return {
-     nom:String(nom||''),
-     prenom:String(prenom||''),
-     dob:String(dob||'')
-   };
- }catch(e){
-   console.warn('Identité ancien dossier impossible à lire',index,e);
-   return {nom:'Dossier',prenom:String(index+1),dob:''};
- }
-}
-function renderPatientSearchResults(records){
- const el=$('homePatientResults');if(!el)return;
- el.innerHTML='';
- if(!Array.isArray(records)||!records.length){el.innerHTML='<div class="notice">Aucun dossier à afficher.</div>';return}
-
- records.forEach((item,position)=>{
-   const p=item?.p??item;
-   const index=Number.isInteger(item?.index)?item.index:position;
-   const ident=displayPatientIdentity(p,index);
-
-   if(!p.id){
-     p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
-     localStorage.setItem(KEY,JSON.stringify(db));
-   }
-
-   const row=document.createElement('div');row.className='search-result';
-   const info=document.createElement('div');
-   info.innerHTML=`<div class="search-result-name">${esc(ident.nom||p.nom||'')} ${esc(ident.prenom||p.prenom||'')}</div>
-   <div class="search-result-meta">${(ident.dob||p.dob)?'Née le '+safeDisplayDate(ident.dob||p.dob):'Date de naissance non renseignée'}</div>`;
-
-   const btn=document.createElement('button');
-   btn.type='button';btn.className='btn primary';btn.textContent='Ouvrir le dossier';
-   btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatient(p.id)};
-
-   row.appendChild(info);row.appendChild(btn);el.appendChild(row);
- });
-}
-function showAllLocalPatients(){
- const list=Array.isArray(db.patients)?db.patients:[];
- const el=$('homePatientResults');
- if(!el)return;
-
- if(!list.length){
-   el.innerHTML='<div class="notice">La base locale ne contient aucun dossier.</div>';
-   showToast('0 dossier dans la base');
-   return;
- }
-
- const records=list.map((p,index)=>({p,index}));
- renderPatientSearchResults(records);
-
- const visible=el.querySelectorAll('.search-result').length;
- showToast(`${visible} dossier(s) affiché(s) sur ${list.length}`);
-}
-
-function renderHomePatients(){
- const el=$('homePatientResults');if(!el)return;
-
- const qNom=normalizeSearchValue($('searchNom')?.value||'');
- const qPrenom=normalizeSearchValue($('searchPrenom')?.value||'');
- const qDob=String($('searchDob')?.value||'').trim();
-
- if(!qNom && !qPrenom && !qDob){
-   el.innerHTML='<div class="hint">Saisis un critère ou clique sur « Afficher les dossiers ».</div>';
-   return;
- }
-
- const list=Array.isArray(db.patients)?db.patients:[];
- const results=[];
-
- list.forEach((p,index)=>{
-   try{
-     const ident=displayPatientIdentity(p,index);
-     const nom=normalizeSearchValue(ident.nom||p.nom||'');
-     const prenom=normalizeSearchValue(ident.prenom||p.prenom||'');
-     const dob=String(ident.dob||p.dob||'');
-
-     if(qNom && !nom.startsWith(qNom))return;
-     if(qPrenom && !prenom.startsWith(qPrenom))return;
-     if(qDob && dob!==qDob)return;
-
-     results.push({p,index});
-   }catch(err){console.warn(err)}
- });
-
- if(!results.length){
-   el.innerHTML=`<div class="notice">Aucun dossier correspondant.<br><span class="hint">${list.length} dossier(s) présents.</span></div>`;
-   return;
- }
- renderPatientSearchResults(results);
-}
-function renderDossier(){
- const p=active();if(!p)return;
-
- if($('dossierName'))$('dossierName').textContent=((p.nom||'')+' '+(p.prenom||'')).trim();
- if($('dossierMeta'))$('dossierMeta').innerHTML=(p.dob?'Née le '+safeDisplayDate(p.dob):'Date de naissance non renseignée')+(p.tel?'<br>Tél. '+esc(p.tel):'')+(p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):'');
-
- ensurePregnancyEpisodes(p);syncLegacyPregnancy(p);
-
- if($('dossierPregnancy')){
-   $('dossierPregnancy').innerHTML=p.pregnancy?.ddg
-     ? '<strong>'+termFrom(p.pregnancy.ddg)+'</strong><br>DDG : '+safeDisplayDate(p.pregnancy.ddg)+'<br>DPA estimée : '+calcDpaText(p.pregnancy.ddg)
-     : `Aucune grossesse enregistrée. <button class="btn secondary" type="button" style="margin-top:8px" onclick="go('pregnancy')">Ajouter une grossesse</button>`;
- }
-
- const recent=$('dossierRecent');
- if(recent){
-   recent.innerHTML='';
-   const items=(p.history||[]).slice(0,6);
-   if(!items.length)recent.innerHTML='<div class="hint">Aucun élément enregistré.</div>';
-   else items.forEach((h,i)=>{
-     const row=document.createElement('div');row.className='entry history-click';
-     row.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?safeDisplayDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;
-     row.onclick=()=>openHistoryRecord(i);recent.appendChild(row);
-   });
- }
-
- const csEl=$('dossierConsultations');
- if(csEl){
-   csEl.innerHTML='';
-   const list=(p.consultations||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-   if(!list.length)csEl.innerHTML='<div class="hint">Aucune consultation enregistrée.</div>';
-   else list.forEach(c=>{
-     const row=document.createElement('div');row.className='entry history-click';
-     const label=c.consultType==='obstetrique'?'Obstétrique':c.consultType==='gynecologie'?'Gynécologie':'Autre';
-     row.innerHTML=`<strong>${safeDisplayDate(c.date)} — ${label}</strong><small>${esc(c.motif||'')}${c.term?' · '+esc(c.term):''}</small>`;
-     row.onclick=()=>openRecordModal('Consultation du '+safeDisplayDate(c.date),consultationHtml(c,p));
-     csEl.appendChild(row);
-   });
- }
-}
-function calcDpaText(ddg){
- const [y,m,d]=ddg.split('-').map(Number);
- return new Date(Date.UTC(y,m-1,d+273)).toLocaleDateString('fr-FR',{timeZone:'UTC'});
-}
-
-function renderPatients(){
- const el=$('patientList');
- if(!el)return;
- el.innerHTML='';
- if(!db.patients.length){el.innerHTML='<div class="hint">Aucune patiente.</div>';return}
- db.patients.forEach(p=>{
-   const d=document.createElement('div');d.className='entry';
-   d.innerHTML=`<strong>${esc(p.nom)} ${esc(p.prenom)}</strong><small>${p.dob?fmtDate(p.dob):'Date de naissance non renseignée'}</small>`;
-   d.onclick=()=>selectPatient(p.id); el.appendChild(d);
- });
-}
-function renderActive(){
- const p=active();
- document.body.classList.toggle('has-patient',!!p);
-
- const top=$('patientTop');
- const sideName=$('sidebarPatientName');
- const sideInfo=$('sidebarPatientInfo');
-
- if(p){
-   let term='';
-   try{term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):''}catch(e){term=''}
-
-   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div>
-     <div><div class="context-title">Dossier patiente actif</div>
-     <div class="patient-banner-main">${esc(p.nom||'')} ${esc(p.prenom||'')}</div>
-     <div class="patient-banner-sub">${p.dob?'Née le '+safeDisplayDate(p.dob):''}${term?' · '+term:''}</div></div>`;
-
-   if(sideName)sideName.textContent=((p.nom||'')+' '+(p.prenom||'')).trim()||'Patiente';
-   if(sideInfo)sideInfo.innerHTML=(p.dob?'Née le '+safeDisplayDate(p.dob):'')+(term?'<br><strong>'+term+'</strong>':'');
- }else{
-   if(top)top.innerHTML=`<div class="patient-banner-icon">👤</div>
-     <div><div class="context-title">Dossier patiente</div>
-     <div class="patient-banner-main">Aucune patiente sélectionnée</div>
-     <div class="patient-banner-sub">Sélectionne ou crée une patiente</div></div>`;
-   if(sideName)sideName.textContent='Aucune patiente';
-   if(sideInfo)sideInfo.textContent='Sélectionne ou crée une patiente';
- }
-}
-function calcTerm(){
- const ddg=$('ddg').value;
- if(!ddg){
-   $('termNow').textContent='—';
-   $('dpa').value='';
-   $('termDetail').textContent='Renseigne la DDG.';
-   syncConsultTerm();
-   return;
- }
- const [y,m,d]=ddg.split('-').map(Number);
- const dpaUTC=new Date(Date.UTC(y,m-1,d+273));
- $('dpa').value=dpaUTC.toLocaleDateString('fr-FR',{timeZone:'UTC'});
- $('termNow').textContent=termFrom(ddg);
- $('termDetail').textContent='DPA estimée : '+dpaUTC.toLocaleDateString('fr-FR',{timeZone:'UTC'});
- const now=new Date();
- const nowDays=Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-Date.UTC(y,m-1,d))/86400000);
- const weeks=Math.floor((nowDays+14)/7);
- $('termSuggestion').textContent=weeks<14?'Début de grossesse : les modèles de bilans et documents de début de suivi pourront être proposés ici.':weeks<28?'Deuxième trimestre : l’application peut proposer les prescriptions et documents adaptés à ce terme.':'Troisième trimestre : suivi, examens et documents peuvent être suggérés automatiquement.';
- syncConsultTerm();
-}
-function termFrom(ddg,date=new Date()){
- if(!ddg)return '—';
- const [y,m,d]=ddg.split('-').map(Number);
- const conceptionUTC=Date.UTC(y,m-1,d);
- let targetUTC;
- if(typeof date==='string'){
-   const [ty,tm,td]=date.split('-').map(Number); targetUTC=Date.UTC(ty,tm-1,td);
- }else targetUTC=Date.UTC(date.getFullYear(),date.getMonth(),date.getDate());
- const pregnancyDays=Math.floor((targetUTC-conceptionUTC)/86400000)+14;
- if(pregnancyDays<0)return 'DDG future';
- const w=Math.floor(pregnancyDays/7),days=pregnancyDays%7;
- return `${w} SA + ${days} j`;
-}
-
-function hydrateConsultTerm(){syncConsultTerm()}
-function syncConsultTerm(){
- const p=active();
- const ddg=p?.pregnancy?.ddg || $('ddg')?.value || '';
- const csDate=$('csDate')?.value||today();
- if($('csTerm'))$('csTerm').value=ddg?termFrom(ddg,csDate):'';
- updateConsultPreview();
-}
-function checkedText(container){
- const el=$(container);if(!el)return[];
- return [...el.querySelectorAll('input:checked')].map(x=>x.value);
-}
-function updateConsultMode(){
- const mode=$('consultType')?.value||'obstetrique';
- document.querySelectorAll('.obst-only').forEach(el=>el.style.display=mode==='obstetrique'?'':'none');
- if(mode==='obstetrique'){
-   syncConsultTerm();
-   if(!$('motif')?.value || $('motif').value==='Consultation gynécologique')$('motif').value='Suivi de grossesse';
- }else if(mode==='gynecologie'){
-   if($('csTerm'))$('csTerm').value='';
-   if(!$('motif')?.value || ['Suivi mensuel de grossesse','Suivi de grossesse'].includes($('motif').value))$('motif').value='Consultation gynécologique';
- }else{
-   if($('csTerm'))$('csTerm').value='';
- }
- updateConsultPreview();
-}
-function consultationObject(){
- const mode=$('consultType')?.value||'obstetrique';
- return {
-   type:'Consultation',
-   consultType:mode,
-   date:$('csDate')?.value||today(),
-   term:mode==='obstetrique'?($('csTerm')?.value||''):'',
-   motif:$('motif')?.value||'',
-   inter:mode==='obstetrique'?checkedText('interChecks'):[],
-   ta:mode==='obstetrique'?($('ta')?.value||''):'',
-   poids:mode==='obstetrique'?($('poids')?.value||''):'',
-   hu:mode==='obstetrique'?($('hu')?.value||''):'',
-   bcf:mode==='obstetrique'?($('bcf')?.value||''):'',
-   oedemes:mode==='obstetrique'?($('oedemes')?.value||''):'',
-   bu:mode==='obstetrique'?($('bu')?.value||''):'',
-   cat:mode==='obstetrique'?checkedText('catChecks'):[],
-   notes:$('notes')?.value||''
- };
-}
-function updateConsultPreview(){
- const el=$('consultPreview');if(!el)return;
- const c=consultationObject();
- const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
- el.innerHTML=`<b>${esc(label)}</b><br><b>Motif :</b> ${esc(c.motif||'—')}${c.term?'<br><b>Terme :</b> '+esc(c.term):''}
- ${c.consultType==='obstetrique'?`<br><br>${c.inter.length?'<b>Interrogatoire :</b> '+c.inter.map(esc).join(', '):'Aucun élément coché'}<br><br>
- <b>TA :</b> ${esc(c.ta||'—')} &nbsp; <b>Poids :</b> ${esc(c.poids||'—')}<br>
- <b>HU :</b> ${esc(c.hu||'—')} &nbsp; <b>BCF :</b> ${esc(c.bcf||'—')}<br>
- ${c.cat.length?'<br><b>CAT :</b> '+c.cat.map(esc).join(', '):''}`:''}`;
-}
-function resetConsultationForm(){
- if($('consultType'))$('consultType').value='obstetrique';
- if($('csDate'))$('csDate').value=today();
- if($('motif'))$('motif').value='Suivi de grossesse';
- ['ta','poids','hu','bcf','bu','notes'].forEach(id=>{if($(id))$(id).value=''});
- if($('oedemes'))$('oedemes').value='Non';
- document.querySelectorAll('#interChecks input[type="checkbox"],#catChecks input[type="checkbox"]').forEach(x=>x.checked=false);
- syncConsultTerm();updateConsultMode();updateConsultPreview();
-}
-function startNewConsultation(){
- resetConsultationForm();
- go('consult');
- showToast('Nouvelle consultation prête');
-}
-function captureConsultDraft(){return $('consultType')?consultationObject():null}
-function restoreConsultDraft(d){
- if(!d)return;
- if($('consultType'))$('consultType').value=d.consultType||'obstetrique';
- if($('csDate'))$('csDate').value=d.date||today();
- if($('motif'))$('motif').value=d.motif||'';
- if($('csTerm'))$('csTerm').value=d.term||'';
- ['ta','poids','hu','bcf','bu','notes'].forEach(id=>{if($(id))$(id).value=d[id]||''});
- if($('oedemes'))$('oedemes').value=d.oedemes||'Non';
- document.querySelectorAll('#interChecks input[type="checkbox"]').forEach(x=>x.checked=(d.inter||[]).includes(x.value));
- document.querySelectorAll('#catChecks input[type="checkbox"]').forEach(x=>x.checked=(d.cat||[]).includes(x.value));
- updateConsultMode();updateConsultPreview();
-}
-function leaveConsultationForPrescription(){
- activeConsultDraft=captureConsultDraft();
- returningToConsultation=true;
- go('rx');
- showToast('Consultation conservée pendant l’ordonnance');
-}
-function returnToActiveConsultation(){
- go('consult');
- restoreConsultDraft(activeConsultDraft);
- returningToConsultation=false;
- showToast('Retour à la consultation active');
-}
-function saveConsult(){
- const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
- const c=consultationObject();
- if(!c.motif.trim()){showToast('Renseigne le motif de consultation');return}
- p.consultations=p.consultations||[];p.history=p.history||[];
- const signature=JSON.stringify(c);
- if(p.consultations.some(x=>x.signature===signature)){showToast('Cette consultation est déjà enregistrée');return}
- const id=crypto.randomUUID?crypto.randomUUID():'cs_'+Date.now()+'_'+Math.random().toString(16).slice(2);
- const saved={...c,id,savedAt:new Date().toISOString(),signature};
- p.consultations.unshift(saved);
- p.history.unshift({id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' — '+c.term:''}`,snapshot:JSON.parse(JSON.stringify(saved))});
- localStorage.setItem(KEY,JSON.stringify(db));
- activeConsultDraft=null;returningToConsultation=false;
- renderHistory();renderDossier();showToast('Consultation enregistrée');
- setTimeout(resetConsultationForm,100);
-}
-function consultationHtml(c,p){
- const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
- let out=`<h2>${esc(label)}</h2><p><b>Patiente :</b> ${esc(p.nom||'')} ${esc(p.prenom||'')}${p.dob?' — née le '+fmtDate(p.dob):''}</p>
- <p><b>Date :</b> ${c.date?fmtDate(c.date):'—'}${c.term&&c.consultType==='obstetrique'?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>`;
- if(c.consultType==='obstetrique'){
-   out+=`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p>
-   <p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p>
-   <p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`;
- }
- if(c.notes)out+=`<p><b>Notes :</b> ${esc(c.notes)}</p>`;
- return out;
-}
-function printConsult(){
- const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
- const c=consultationObject();
- printHtmlDocument('Compte rendu de consultation',consultationHtml(c,p)+`<p style="text-align:right;margin-top:50px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`);
-}
-const templates={
- debut:['NFS - plaquettes','Groupe sanguin ABO, Rhésus, Kell (si non documenté)','Recherche d’agglutinines irrégulières (RAI)','Sérologie toxoplasmose','Sérologie rubéole','Sérologie syphilis','Antigène HBs','Sérologie VIH 1 et 2','Examens urinaires selon contexte clinique'],
- hgpo:['HGPO 75 g de glucose','Glycémie veineuse à jeun','Glycémie veineuse à 1 heure après charge','Glycémie veineuse à 2 heures après charge','À réaliser entre 24 et 28 SA selon indication'],
- dpni:['Dépistage prénatal non invasif par analyse de l’ADN libre circulant dans le sang maternel','Dépistage des trisomies selon indication et stratégie en vigueur'],
- six:['NFS - plaquettes','RAI selon groupe sanguin et situation','Examens complémentaires selon le dossier clinique'],
- vitd:['Vitamine D — posologie et spécialité à renseigner par la prescriptrice'],
- fer:['Supplémentation martiale — spécialité, dosage et durée à renseigner par la prescriptrice']
-};
-function addRxLineText(text=''){
- const div=document.createElement('div');div.className='rx-item';
- const input=document.createElement('input');input.type='text';input.value=text||'';input.placeholder='Prescription';
- const btn=document.createElement('button');btn.type='button';btn.className='btn danger';btn.textContent='×';btn.onclick=()=>div.remove();
- div.appendChild(input);div.appendChild(btn);$('rxList')?.appendChild(div);
-}
-function addRxLine(){addRxLineText('')}
-function applyTemplate(){
- const k=$('rxTemplate')?.value||'';
- const list=$('rxList');if(!list)return;list.innerHTML='';
- (templates[k]||[]).forEach(addRxLineText);
-}
-function savePrescriptionRecord(title,lines,extra){
- const p=active();if(!p)return null;
- p.prescriptions=p.prescriptions||[];p.history=p.history||[];
- const id=crypto.randomUUID?crypto.randomUUID():'rx_'+Date.now()+'_'+Math.random().toString(16).slice(2);
- const rec={id,recordType:'prescription',title:title||'Ordonnance',date:today(),lines:[...(lines||[])],createdAt:new Date().toISOString(),...(extra||{})};
- p.prescriptions.unshift(rec);
- p.history.unshift({id,recordType:'prescription',type:rec.title,date:rec.date,summary:rec.lines.join(' ; '),snapshot:JSON.parse(JSON.stringify(rec))});
- localStorage.setItem(KEY,JSON.stringify(db));
- renderHistory();renderDossier();showToast('Ordonnance enregistrée au dossier');
- return rec;
-}
-function prescriptionHtml(rec,p){
- return prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom||'')} ${esc(p.prenom||'')}</h2>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}
- <div style="margin-top:30px">${(rec.lines||[]).map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
- <br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
-}
-function printRx(){
- const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
- const lines=[...($('rxList')?.querySelectorAll('input')||[])].map(i=>i.value.trim()).filter(Boolean);
- if(!lines.length){showToast('Ordonnance vide');return}
- const rec=savePrescriptionRecord('Ordonnance',lines,{});
- printHtmlDocument('Ordonnance',prescriptionHtml(rec,p));
-}
-
-function savePregnancy(){
- const p=active();if(!p){showToast('Sélectionne ou crée une patiente');return}
- ensurePregnancyEpisodes(p);
- let a=activePregnancy(p);
- if(!a){
-   a={id:crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now(),status:'active',startedAt:new Date().toISOString()};
-   p.pregnancies.push(a);
- }
- const ddr=$('ddr')?.value||'';
- const theoretical=$('theoreticalDdg')?.value||'';
- const ddg=$('ddg')?.value||'';
- if(!ddg){showToast('Renseigne une DDR ou une DDG');return}
-
- a.ddr=ddr;
- a.theoreticalDdg=theoretical;
- a.ddg=ddg;
- a.datingMethod=$('datingMethod')?.value||'DDR';
- syncLegacyPregnancy(p);
-
- p.history=p.history||[];
- p.history.unshift({
-   id:'pregsave_'+Date.now(),
-   recordType:'grossesse',
-   type:'Grossesse',
-   date:today(),
-   summary:`${ddr?'DDR '+fmtDate(ddr)+' · ':''}DDG ${fmtDate(ddg)} · ${termFrom(ddg)}`
- });
-
- localStorage.setItem(KEY,JSON.stringify(db));
- calcTerm();
- renderPregnancyEpisodes();
- renderDossier();
- renderActive();
- try{loadEchoForm()}catch(e){console.error(e)}
-
- const status=$('pregnancySaveStatus');
- if(status){
-   status.style.display='block';
-   status.innerHTML='✓ Grossesse enregistrée — '+termFrom(ddg);
- }
- showToast('Grossesse enregistrée');
-}
-function attr(s){return esc(s).replace(/`/g,'&#096;')}
-
-function updateLocalPatientCount(){
- const el=$('localPatientCount');
- if(!el)return;
- const n=Array.isArray(db?.patients)?db.patients.length:0;
- el.innerHTML=`<strong>${n} dossier${n>1?'s':''} patiente${n>1?'s':''}</strong> enregistré${n>1?'s':''} dans ce navigateur. <span style="opacity:.65">[base chargée]</span>`;
-}
-function exportPatientDatabase(){
- const payload={app:'sage-femme-app',version:'1.8.3',exportedAt:new Date().toISOString(),db};
- const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download='sauvegarde-patientes-'+today()+'.json';
- a.click();
- setTimeout(()=>URL.revokeObjectURL(a.href),1000);
- showToast((db.patients||[]).length+' dossier(s) exporté(s)');
-}
-async function importPatientDatabase(event){
- const file=event.target.files?.[0];
- if(!file)return;
- try{
-   const parsed=JSON.parse(await file.text());
-   const incoming=parsed.db||parsed;
-   if(!incoming || !Array.isArray(incoming.patients))throw new Error('Format invalide');
-
-   db.patients=db.patients||[];
-   const byId=new Map(db.patients.map(p=>[String(p.id),p]));
-   incoming.patients.forEach(p=>{
-     const key=String(p.id||'');
-     if(key && byId.has(key)) Object.assign(byId.get(key),p);
-     else db.patients.push(p);
-   });
-
-   db.echographists=db.echographists||[];
-   (incoming.echographists||[]).forEach(e=>{
-     if(!db.echographists.some(x=>norm(x.name)===norm(e.name)))db.echographists.push(e);
-   });
-
-   localStorage.setItem(KEY,JSON.stringify(db));
-   migratePatients();
-   renderHomePatients();
-   updateLocalPatientCount();
-   showToast((incoming.patients||[]).length+' dossier(s) importé(s)');
- }catch(err){
-   console.error(err);
-   showToast('Fichier de sauvegarde non reconnu');
- }
- event.target.value='';
-}
-
-try{renderAll()}catch(e){console.error('renderAll startup',e)}
-try{if($('rxList')&&!$('rxList').children.length)addRxLine()}catch(e){console.error(e)}
-try{updateLocalPatientCount()}catch(e){console.error(e)}
-try{addRxLine()}catch(e){console.error(e)}
-try{if($('consultType'))updateConsultMode()}catch(e){console.error(e)}
-if(!active())go('home');
-</script>
-
 <div id="toast" class="toast"></div>
+
 <div id="recordModal" class="modal-backdrop" onclick="if(event.target===this)closeRecordModal()">
   <div class="modal-box">
-    <div class="modal-head">
-      <h2 id="recordModalTitle" style="margin:0">Élément</h2>
-      <button class="modal-close" onclick="closeRecordModal()">Fermer</button>
-    </div>
-    <div id="recordModalBody"></div>
-    <div class="actions"><button class="btn soft" onclick="printOpenedRecord()">Imprimer / PDF</button></div>
+    <div class="modal-head"><h2 id="recordTitle">Élément</h2><button class="modal-close" type="button" onclick="closeRecordModal()">Fermer</button></div>
+    <div id="recordBody"></div>
+    <div class="actions"><button class="btn primary" type="button" onclick="printOpenedRecord()">Imprimer / PDF</button></div>
   </div>
 </div>
 
 <div id="postitModal" class="modal-backdrop" onclick="if(event.target===this)closePostit()">
   <div class="modal-box" style="max-width:560px">
-    <div class="modal-head"><h2 style="margin:0">📌 Pense-bête dossier</h2><button class="modal-close" onclick="closePostit()">Fermer</button></div>
-    <div id="postitText" class="postit-note"></div>
-    <div class="actions"><button class="btn secondary" onclick="disablePostit()">Ne plus afficher automatiquement</button></div>
+    <div class="modal-head"><h2>📌 Pense-bête dossier</h2><button class="modal-close" onclick="closePostit()">Fermer</button></div>
+    <div id="postitText" class="postit"></div>
+    <div class="actions"><button class="btn secondary" type="button" onclick="disablePostit()">Ne plus afficher automatiquement</button></div>
   </div>
 </div>
+
+<div id="printDoc" class="print-doc"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script>
+'use strict';
+
+const KEY='sf_local_v1';
+const CABINET={name:'Mme Clarisse SOUM',profession:'Sage-femme',address:'1 rue du Moulin Rouge',city:'85000 La Roche-sur-Yon',phone:'02 51 36 36 77',rpps:'10004054820'};
+const BILAN_DB='sf_bilans_v2',BILAN_STORE='bilans';
+const $=id=>document.getElementById(id);
+const uid=prefix=>prefix+'_'+Date.now()+'_'+Math.random().toString(16).slice(2);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+
+let toastTimer=null;
+let activeConsultDraft=null;
+let openedRecordHtml='',openedRecordTitle='';
+let surgeryDraft=[],pregHistoryDraft=[];
+
+function parseDateAny(v){
+ const s=String(v||'').trim();if(!s)return '';
+ if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+ const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+ if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+ return '';
+}
+function fmtDate(v){
+ const iso=parseDateAny(v);if(!iso)return String(v||'');
+ const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`;
+}
+function addDays(iso,days){
+ const d=parseDateAny(iso);if(!d)return '';
+ const [y,m,da]=d.split('-').map(Number);
+ return new Date(Date.UTC(y,m-1,da+days)).toISOString().slice(0,10);
+}
+function termFrom(ddg,date=today()){
+ const a=parseDateAny(ddg),b=parseDateAny(date);if(!a||!b)return '';
+ const A=new Date(a+'T00:00:00Z'),B=new Date(b+'T00:00:00Z');
+ const days=Math.floor((B-A)/86400000)+14;
+ if(days<0)return '';
+ return `${Math.floor(days/7)} SA + ${days%7} j`;
+}
+function calcDpa(ddg){return addDays(ddg,273)}
+function markerWindow(ddg){return ddg?{start:addDays(ddg,63),end:addDays(ddg,83)}:null}
+
+function deepFind(obj,keys,depth=0){
+ if(!obj||typeof obj!=='object'||depth>4)return '';
+ const wanted=keys.map(norm);
+ for(const [k,v] of Object.entries(obj)){
+   if(wanted.includes(norm(k))&&(typeof v==='string'||typeof v==='number'))return String(v);
+ }
+ for(const v of Object.values(obj)){
+   if(v&&typeof v==='object'&&!Array.isArray(v)){
+     const r=deepFind(v,keys,depth+1);if(r)return r;
+   }
+ }
+ return '';
+}
+function inferIdentity(p){
+ let nom=p.nom||deepFind(p,['nom','lastName','lastname','nomPatiente','familyName']);
+ let prenom=p.prenom||deepFind(p,['prenom','firstName','firstname','givenName','prenomPatiente']);
+ let dob=p.dob||deepFind(p,['dob','birthDate','dateNaissance','ddn','date_de_naissance']);
+ if((!nom||!prenom)&&typeof p.name==='string'){
+   const parts=p.name.trim().split(/\s+/);if(!nom)nom=parts.shift()||'';if(!prenom)prenom=parts.join(' ');
+ }
+ return {nom:String(nom||'').trim(),prenom:String(prenom||'').trim(),dob:parseDateAny(dob)||String(dob||'')};
+}
+function migratePatient(raw,index){
+ const p=(raw&&typeof raw==='object')?raw:{};
+ const id=inferIdentity(p);
+ p.id=String(p.id||uid('pat'));
+ p.nom=id.nom||p.nom||'';
+ p.prenom=id.prenom||p.prenom||'';
+ p.dob=id.dob||p.dob||'';
+ p.tel=p.tel||'';p.email=p.email||'';p.adresse=p.adresse||'';p.groupe=p.groupe||'';
+ p.allergies=p.allergies||'';p.atcdMedicaux=p.atcdMedicaux||p.antecedents||'';
+ p.atcdChirurgicaux=Array.isArray(p.atcdChirurgicaux)?p.atcdChirurgicaux:[];
+ p.gestite=p.gestite||'';p.parite=p.parite||'';
+ p.pregnancyHistory=Array.isArray(p.pregnancyHistory)?p.pregnancyHistory:[];
+ p.atcdObst=p.atcdObst||'';p.atcdGyneco=p.atcdGyneco||'';p.atcdFamiliaux=p.atcdFamiliaux||'';
+ p.alertNote=(p.alertNote&&typeof p.alertNote==='object')?p.alertNote:{text:'',enabled:false};
+ p.consultations=Array.isArray(p.consultations)?p.consultations:[];
+ p.prescriptions=Array.isArray(p.prescriptions)?p.prescriptions:[];
+ p.history=Array.isArray(p.history)?p.history:[];
+ p.echos=(p.echos&&typeof p.echos==='object')?p.echos:{};
+ p.extraEchos=Array.isArray(p.extraEchos)?p.extraEchos:[];
+ p.pregnancies=Array.isArray(p.pregnancies)?p.pregnancies:[];
+ if(p.pregnancy&&p.pregnancy.ddg&&!p.pregnancies.length){
+   p.pregnancies.push({id:uid('preg'),status:'active',startedAt:new Date().toISOString(),ddr:p.pregnancy.ddr||'',theoreticalDdg:p.pregnancy.theoreticalDdg||'',ddg:parseDateAny(p.pregnancy.ddg),datingMethod:p.pregnancy.datingMethod||'DDR'});
+ }
+ return p;
+}
+function loadDb(){
+ let raw={patients:[],activeId:null,echographists:[]};
+ try{raw=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
+ raw.patients=Array.isArray(raw.patients)?raw.patients.map(migratePatient):[];
+ raw.echographists=Array.isArray(raw.echographists)?raw.echographists:[];
+ if(!raw.echographists.some(e=>norm(e.name)==='soum alexandre'))raw.echographists.push({name:'soum alexandre',approval:'8501072354301'});
+ localStorage.setItem(KEY,JSON.stringify(raw));
+ return raw;
+}
+let db=loadDb();
+function persist(){localStorage.setItem(KEY,JSON.stringify(db))}
+function active(){return db.patients.find(p=>String(p.id)===String(db.activeId))||null}
+function activePregnancy(p=active()){return p?.pregnancies?.find(x=>x.status==='active')||null}
+function syncLegacyPregnancy(p=active()){
+ if(!p)return;const a=activePregnancy(p);
+ p.pregnancy=a?{ddr:a.ddr||'',theoreticalDdg:a.theoreticalDdg||'',ddg:a.ddg||'',datingMethod:a.datingMethod||''}:null;
+}
+
+function showToast(msg){
+ const t=$('toast');t.textContent='✓ '+msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400)
+}
+function renderActive(){
+ const p=active(),term=p?.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
+ $('sidebarPatientName').textContent=p?`${p.nom} ${p.prenom}`.trim():'Aucune patiente';
+ $('sidebarPatientInfo').innerHTML=p?`${p.dob?'Née le '+fmtDate(p.dob):''}${term?'<br><strong>'+term+'</strong>':''}`:'Sélectionne ou crée une patiente';
+ $('patientTop').innerHTML=p
+   ? `<div class="icon">👤</div><div><div class="eyebrow">Dossier patiente actif</div><div class="mainline">${esc(p.nom)} ${esc(p.prenom)}</div><div class="subline">${p.dob?'Née le '+fmtDate(p.dob):''}${term?' · '+term:''}</div></div>`
+   : `<div class="icon">👤</div><div><div class="eyebrow">Dossier patiente</div><div class="mainline">Aucune patiente sélectionnée</div><div class="subline">Sélectionne ou crée une patiente</div></div>`;
+ document.querySelectorAll('.clinical').forEach(b=>b.disabled=!p);
+}
+function go(id){
+ if(['dossier','pregnancy','consult','rx','echos','bilans','history'].includes(id)&&!active()){showToast('Sélectionne d’abord une patiente');id='home'}
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ $(id)?.classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
+ const labels={home:'Accueil',patientEdit:'Informations patiente',dossier:'Dossier patiente',pregnancy:'Grossesse / Roulette',consult:'Consultation',rx:'Ordonnance',echos:'Échographies',bilans:'Bilans / PDF',history:'Historique'};
+ $('pageTitle').textContent=labels[id]||'';
+ if(id==='dossier')renderDossier();
+ if(id==='pregnancy')loadPregnancyForm();
+ if(id==='consult'){restoreConsultDraftIfAny();updateConsultMode()}
+ if(id==='rx')$('returnConsultBtn').style.display=activeConsultDraft?'inline-block':'none';
+ if(id==='echos')loadEchoForm();
+ if(id==='bilans')renderBilans();
+ if(id==='history')renderHistory();
+ if(id==='home')renderHomePatients();
+ renderActive();
+}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>b.dataset.section==='consult'?startNewConsultation():go(b.dataset.section)));
+
+function updateLocalCount(){$('localCount').textContent=`${db.patients.length} dossier${db.patients.length>1?'s':''} patiente${db.patients.length>1?'s':''} enregistré${db.patients.length>1?'s':''} dans ce navigateur.`}
+function renderHomePatients(){
+ const qn=norm($('searchNom').value),qp=norm($('searchPrenom').value),qd=parseDateAny($('searchDob').value);
+ if(!qn&&!qp&&!qd){$('homeResults').innerHTML='<div class="hint">Saisis un critère ou clique sur « Afficher les dossiers ».</div>';return}
+ const results=db.patients.filter(p=>{
+   if(qn&&!norm(p.nom).startsWith(qn))return false;
+   if(qp&&!norm(p.prenom).startsWith(qp))return false;
+   if(qd&&parseDateAny(p.dob)!==qd)return false;
+   return true;
+ });
+ renderPatientResults(results);
+}
+function renderPatientResults(list){
+ const el=$('homeResults');el.innerHTML='';
+ if(!list.length){el.innerHTML='<div class="notice">Aucun dossier correspondant.</div>';return}
+ list.forEach(p=>{
+   const row=document.createElement('div');row.className='search-result';
+   const info=document.createElement('div');info.innerHTML=`<div class="search-name">${esc(p.nom)} ${esc(p.prenom)}</div><div class="search-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}</div>`;
+   const btn=document.createElement('button');btn.type='button';btn.className='btn primary';btn.textContent='Ouvrir le dossier';btn.onclick=()=>selectPatient(p.id);
+   row.appendChild(info);row.appendChild(btn);el.appendChild(row);
+ })
+}
+function showAllPatients(){renderPatientResults(db.patients)}
+function selectPatient(id){
+ const p=db.patients.find(x=>String(x.id)===String(id));if(!p){showToast('Dossier introuvable');return}
+ db.activeId=p.id;persist();renderActive();renderDossier();go('dossier');showToast(`Dossier de ${p.nom} ${p.prenom} ouvert`);setTimeout(maybeShowPostit,150)
+}
+function quitPatient(){db.activeId=null;persist();activeConsultDraft=null;renderActive();go('home')}
+function startNewPatientFromSearch(){
+ const seed={nom:$('searchNom').value,prenom:$('searchPrenom').value,dob:$('searchDob').value};
+ db.activeId=null;renderActive();
+ clearPatientForm();$('nom').value=seed.nom;$('prenom').value=seed.prenom;$('dob').value=seed.dob;
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('patientEdit').classList.add('active');$('pageTitle').textContent='Informations patiente';
+}
+function clearPatientForm(){
+ ['nom','prenom','dob','tel','email','adresse','groupe','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux','alertNote'].forEach(id=>$(id).value='');
+ $('alertEnabled').checked=false;surgeryDraft=[];pregHistoryDraft=[];renderSurgeryList();renderPregHistory()
+}
+function loadPatientForm(p=active()){
+ if(!p)return;['nom','prenom','dob','tel','email','adresse','groupe','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux'].forEach(id=>$(id).value=p[id]||'');
+ $('alertNote').value=p.alertNote?.text||'';$('alertEnabled').checked=!!p.alertNote?.enabled;
+ surgeryDraft=[...(p.atcdChirurgicaux||[])];pregHistoryDraft=JSON.parse(JSON.stringify(p.pregnancyHistory||[]));renderSurgeryList();renderPregHistory()
+}
+function savePatient(){
+ const nom=$('nom').value.trim().toUpperCase(),prenom=$('prenom').value.trim(),dob=parseDateAny($('dob').value);
+ if(!nom||!prenom||!dob){showToast('Nom, prénom et date de naissance sont nécessaires');return}
+ let p=active(),isNew=!p;
+ if(!p)p=migratePatient({id:uid('pat')});
+ Object.assign(p,{nom,prenom,dob,tel:$('tel').value.trim(),email:$('email').value.trim(),adresse:$('adresse').value.trim(),groupe:$('groupe').value.trim(),allergies:$('allergies').value.trim(),atcdMedicaux:$('atcdMedicaux').value.trim(),atcdChirurgicaux:[...surgeryDraft],gestite:$('gestite').value.trim(),parite:$('parite').value.trim(),pregnancyHistory:JSON.parse(JSON.stringify(pregHistoryDraft)),atcdObst:$('atcdObst').value.trim(),atcdGyneco:$('atcdGyneco').value.trim(),atcdFamiliaux:$('atcdFamiliaux').value.trim(),alertNote:{text:$('alertNote').value.trim(),enabled:$('alertEnabled').checked}});
+ if(isNew)db.patients.unshift(p);db.activeId=p.id;persist();updateLocalCount();renderActive();renderDossier();go('dossier');showToast('Dossier patiente enregistré')
+}
+function addSurgery(){const v=$('surgeryInput').value.trim();if(!v)return;surgeryDraft.push(v);$('surgeryInput').value='';renderSurgeryList();showToast('Antécédent chirurgical ajouté')}
+function renderSurgeryList(){
+ const el=$('surgeryList');el.innerHTML='';surgeryDraft.forEach((v,i)=>{
+   const row=document.createElement('div');row.className='file-row';
+   const input=document.createElement('input');input.value=v;input.onchange=()=>{surgeryDraft[i]=input.value.trim()};
+   const del=document.createElement('button');del.type='button';del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>{surgeryDraft.splice(i,1);renderSurgeryList()};
+   row.append(input,del);el.appendChild(row)
+ })
+}
+function addPregHistory(){
+ pregHistoryDraft.push({id:uid('ph'),outcome:$('pregHistOutcome').value,date:$('pregHistDate').value,term:$('pregHistTerm').value.trim(),weight:$('pregHistWeight').value,sex:$('pregHistSex').value,delivery:$('pregHistDelivery').value,healthy:$('pregHistHealthy').value,childComment:$('pregHistChildComment').value.trim(),complication:$('pregHistComplication').value.trim()});
+ ['pregHistDate','pregHistTerm','pregHistWeight','pregHistSex','pregHistDelivery','pregHistHealthy','pregHistChildComment','pregHistComplication'].forEach(id=>$(id).value='');renderPregHistory();showToast('Grossesse antérieure ajoutée')
+}
+function renderPregHistory(){
+ const el=$('pregHistoryList');el.innerHTML='';
+ if(!pregHistoryDraft.length){el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>';return}
+ pregHistoryDraft.forEach((x,i)=>{
+   const row=document.createElement('div');row.className='preg-row';
+   row.innerHTML=`<strong>${esc(x.outcome||'Grossesse')}</strong>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}<div class="hint">${x.weight?esc(x.weight)+' g · ':''}${esc(x.sex||'')}${x.delivery?' · '+esc(x.delivery):''}${x.healthy?' · Enfant en bonne santé : '+esc(x.healthy):''}</div>${x.childComment?'<div><b>Enfant :</b> '+esc(x.childComment)+'</div>':''}${x.complication?'<div>'+esc(x.complication)+'</div>':''}`;
+   const edit=document.createElement('button');edit.type='button';edit.className='btn secondary';edit.textContent='Modifier';edit.onclick=()=>editPregHistory(i);
+   const del=document.createElement('button');del.type='button';del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>{pregHistoryDraft.splice(i,1);renderPregHistory()};
+   const acts=document.createElement('div');acts.className='actions';acts.append(edit,del);row.appendChild(acts);el.appendChild(row)
+ })
+}
+function editPregHistory(i){
+ const x=pregHistoryDraft[i];const outcome=prompt('Issue',x.outcome||'');if(outcome===null)return;const term=prompt('Terme',x.term||'');if(term===null)return;const complication=prompt('Complications / commentaires',x.complication||'');if(complication===null)return;x.outcome=outcome;x.term=term;x.complication=complication;renderPregHistory()
+}
+
+function renderDossier(){
+ const p=active();if(!p)return;syncLegacyPregnancy(p);
+ $('dossierName').textContent=`${p.nom} ${p.prenom}`.trim();$('dossierMeta').innerHTML=`${p.dob?'Née le '+fmtDate(p.dob):''}${p.tel?'<br>Tél. '+esc(p.tel):''}${p.groupe?'<br>Groupe sanguin : '+esc(p.groupe):''}`;
+ $('dossierPregnancy').innerHTML=p.pregnancy?.ddg?`<strong>${termFrom(p.pregnancy.ddg)}</strong><br><span class="hint">DDG ${fmtDate(p.pregnancy.ddg)} · DPA ${fmtDate(calcDpa(p.pregnancy.ddg))}</span>`:'Aucune grossesse enregistrée.';
+ $('dossierCurrentPregnancy').innerHTML=p.pregnancy?.ddg?`<strong>${termFrom(p.pregnancy.ddg)}</strong><br>DDG : ${fmtDate(p.pregnancy.ddg)}`:'Aucune grossesse enregistrée.';
+ $('dossierConsultations').innerHTML='';(p.consultations||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(c=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${fmtDate(c.date)} — ${c.consultType==='gynecologie'?'Gynécologie':c.consultType==='obstetrique'?'Obstétrique':'Autre'}</strong><small>${esc(c.motif||'')}${c.term?' · '+esc(c.term):''}</small>`;d.onclick=()=>openRecordModal('Consultation du '+fmtDate(c.date),consultationHtml(c,p));$('dossierConsultations').appendChild(d)});
+ $('dossierRecent').innerHTML='';(p.history||[]).slice(0,6).forEach((h,i)=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);$('dossierRecent').appendChild(d)});
+ countBilans().then(n=>$('dossierBilanCount').textContent=n).catch(()=>{})
+}
+
+function loadPregnancyForm(){
+ const p=active(),a=activePregnancy(p);$('ddr').value=a?.ddr||'';$('theoreticalDdg').value=a?.theoreticalDdg||'';$('ddg').value=a?.ddg||'';$('datingMethod').value=a?.datingMethod||'DDR';calcTerm();renderPregnancyEpisodes()
+}
+function calcFromDdr(){const ddr=$('ddr').value;if(!ddr)return;$('theoreticalDdg').value=addDays(ddr,14);if(!$('ddg').value)$('ddg').value=addDays(ddr,14);calcTerm()}
+function calcTerm(){const ddg=$('ddg').value;$('dpa').value=ddg?fmtDate(calcDpa(ddg)):'';$('termToday').textContent=ddg?termFrom(ddg):'—';$('termHint').textContent=ddg?`DPA estimée : ${fmtDate(calcDpa(ddg))}`:''}
+function savePregnancy(){
+ const p=active(),ddg=parseDateAny($('ddg').value);if(!p)return;if(!ddg){showToast('Renseigne une DDR ou une DDG');return}
+ let a=activePregnancy(p);if(!a){a={id:uid('preg'),status:'active',startedAt:new Date().toISOString()};p.pregnancies.push(a)}
+ Object.assign(a,{ddr:parseDateAny($('ddr').value),theoreticalDdg:parseDateAny($('theoreticalDdg').value),ddg,datingMethod:$('datingMethod').value});syncLegacyPregnancy(p);
+ p.history.unshift({id:uid('hist'),recordType:'pregnancy',type:'Grossesse',date:today(),summary:`DDG ${fmtDate(ddg)} · ${termFrom(ddg)}`});persist();$('pregnancyStatus').innerHTML=`<div class="success">✓ Grossesse enregistrée — ${termFrom(ddg)}</div>`;renderPregnancyEpisodes();renderDossier();loadEchoForm();renderActive();showToast('Grossesse enregistrée')
+}
+function closePregnancy(){const p=active(),a=activePregnancy(p);if(!a){showToast('Aucune grossesse en cours');return}a.status='closed';a.closedAt=new Date().toISOString();syncLegacyPregnancy(p);persist();renderPregnancyEpisodes();renderDossier();renderActive();showToast('Grossesse clôturée')}
+function newPregnancy(){const p=active();if(activePregnancy(p)){showToast('Clôture d’abord la grossesse en cours');return}p.pregnancies.push({id:uid('preg'),status:'active',startedAt:new Date().toISOString(),ddr:'',theoreticalDdg:'',ddg:'',datingMethod:'DDR'});syncLegacyPregnancy(p);persist();loadPregnancyForm();showToast('Nouvelle grossesse créée')}
+function renderPregnancyEpisodes(){const p=active(),el=$('pregnancyEpisodes');el.innerHTML='';[...(p?.pregnancies||[])].reverse().forEach((x,i)=>{const d=document.createElement('div');d.className='preg-row '+(x.status==='active'?'active':'');d.innerHTML=`<strong>Grossesse</strong> <span class="badge ${x.status==='active'?'':'closed'}">${x.status==='active'?'En cours':'Clôturée'}</span><div class="hint">${x.ddr?'DDR '+fmtDate(x.ddr)+' · ':''}${x.ddg?'DDG '+fmtDate(x.ddg)+' · '+termFrom(x.ddg):''}${x.closedAt?' · clôturée le '+new Date(x.closedAt).toLocaleDateString('fr-FR'):''}</div>`;el.appendChild(d)})}
+
+function checked(container){return [...$(container).querySelectorAll('input:checked')].map(x=>x.value)}
+function consultObject(){
+ const mode=$('consultType').value;return {consultType:mode,date:$('csDate').value||today(),term:mode==='obstetrique'?$('csTerm').value:'',motif:$('motif').value.trim(),inter:mode==='obstetrique'?checked('interChecks'):[],ta:$('ta').value,poids:$('poids').value,hu:$('hu').value,bcf:$('bcf').value,oedemes:$('oedemes').value,bu:$('bu').value,cat:mode==='obstetrique'?checked('catChecks'):[],notes:$('notes').value.trim()}
+}
+function startNewConsultation(){resetConsult();go('consult')}
+function resetConsult(){$('consultType').value='obstetrique';$('csDate').value=today();$('motif').value='Suivi de grossesse';['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value='');$('oedemes').value='Non';document.querySelectorAll('#interChecks input,#catChecks input').forEach(x=>x.checked=false);syncConsultTerm();updateConsultMode()}
+function syncConsultTerm(){const ddg=active()?.pregnancy?.ddg;$('csTerm').value=ddg?termFrom(ddg,$('csDate').value||today()):'';updateConsultPreview()}
+function updateConsultMode(){const obst=$('consultType').value==='obstetrique';document.querySelectorAll('.obst-only').forEach(x=>x.style.display=obst?'':'none');if(obst&&(!$('motif').value||$('motif').value==='Consultation gynécologique'))$('motif').value='Suivi de grossesse';if($('consultType').value==='gynecologie'&&(!$('motif').value||$('motif').value==='Suivi de grossesse'))$('motif').value='Consultation gynécologique';syncConsultTerm();updateConsultPreview()}
+function updateConsultPreview(){const c=consultObject();$('consultPreview').innerHTML=`<b>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation'}</b><br>${c.term?'<b>Terme :</b> '+esc(c.term)+'<br>':''}<b>Motif :</b> ${esc(c.motif||'—')}`}
+function saveConsult(){
+ const p=active(),c=consultObject();if(!c.motif){showToast('Renseigne le motif');return}const saved={...c,id:uid('cs'),savedAt:new Date().toISOString()};p.consultations.unshift(saved);p.history.unshift({id:saved.id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' · '+c.term:''}`,snapshot:JSON.parse(JSON.stringify(saved))});persist();activeConsultDraft=null;renderDossier();renderHistory();showToast('Consultation enregistrée');setTimeout(resetConsult,100)
+}
+function consultationHtml(c,p){let out=`<h2>${c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Consultation'}</h2><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p><p><b>Date :</b> ${fmtDate(c.date)}${c.term?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>`;if(c.consultType==='obstetrique')out+=`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p><p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p><p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`;if(c.notes)out+=`<p><b>Notes :</b> ${esc(c.notes)}</p>`;return out}
+function printConsult(){const p=active();printHtmlDocument('Compte rendu de consultation',consultationHtml(consultObject(),p)+signatureBlock())}
+function leaveConsultForRx(){activeConsultDraft=consultObject();go('rx');showToast('Consultation conservée pendant l’ordonnance')}
+function returnToConsult(){go('consult');if(activeConsultDraft){const c=activeConsultDraft;$('consultType').value=c.consultType;$('csDate').value=c.date;$('motif').value=c.motif;$('csTerm').value=c.term;['ta','poids','hu','bcf','bu','notes'].forEach(id=>$(id).value=c[id]||'');$('oedemes').value=c.oedemes||'Non';document.querySelectorAll('#interChecks input').forEach(x=>x.checked=c.inter.includes(x.value));document.querySelectorAll('#catChecks input').forEach(x=>x.checked=c.cat.includes(x.value));updateConsultMode()}}
+
+const RX_TEMPLATES={
+ debut:['NFS - plaquettes','Groupe sanguin ABO, Rhésus, Kell (si non documenté)','Recherche d’agglutinines irrégulières (RAI)','Sérologie toxoplasmose','Sérologie rubéole','Sérologie syphilis','Antigène HBs','Sérologie VIH 1 et 2','Examens urinaires selon contexte clinique'],
+ hgpo:['HGPO 75 g de glucose','Glycémie veineuse à jeun','Glycémie veineuse à 1 heure après charge','Glycémie veineuse à 2 heures après charge','À réaliser entre 24 et 28 SA selon indication'],
+ dpni:['Dépistage prénatal non invasif par analyse de l’ADN libre circulant dans le sang maternel','Dépistage des trisomies selon indication et stratégie de dépistage en vigueur'],
+ six:['NFS - plaquettes','RAI selon groupe sanguin et situation','Examens complémentaires selon le dossier clinique'],
+ vitd:['Vitamine D — spécialité, posologie et durée à renseigner'],
+ fer:['Supplémentation martiale — spécialité, dosage et durée à renseigner']
+};
+function addRxLine(text=''){const row=document.createElement('div');row.className='file-row';const i=document.createElement('input');i.value=text;const b=document.createElement('button');b.type='button';b.className='btn danger';b.textContent='×';b.onclick=()=>row.remove();row.append(i,b);$('rxLines').appendChild(row)}
+function applyRxTemplate(){$('rxLines').innerHTML='';(RX_TEMPLATES[$('rxTemplate').value]||[]).forEach(addRxLine);if(!$('rxLines').children.length)addRxLine()}
+function prescriptionHtml(rec,p){return `<div class="barcode-wrap"><b>PRESCRIPTEUR : ${CABINET.name}</b><br>N° RPPS : <b>${CABINET.rpps}</b><br><svg class="rppsBarcode"></svg></div><h3>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h3>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}<div style="margin-top:28px">${rec.lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>${signatureBlock()}`}
+function savePrescription(title,lines,extra={}){const p=active(),rec={id:uid('rx'),recordType:'prescription',title,date:today(),lines:[...lines],createdAt:new Date().toISOString(),...extra};p.prescriptions.unshift(rec);p.history.unshift({id:rec.id,recordType:'prescription',type:title,date:rec.date,summary:rec.lines.join(' ; '),snapshot:JSON.parse(JSON.stringify(rec))});persist();renderHistory();renderDossier();showToast('Ordonnance enregistrée au dossier');return rec}
+function printRx(){const lines=[...$('rxLines').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);if(!lines.length){showToast('Ordonnance vide');return}const rec=savePrescription('Ordonnance',lines);printHtmlDocument('Ordonnance',prescriptionHtml(rec,active()))}
+
+function ensureEchos(p=active()){p.echos=p.echos||{};p.extraEchos=p.extraEchos||[];return p}
+function renderEchoRegistry(){$('echoRegistry').innerHTML='';db.echographists.forEach(e=>{const o=document.createElement('option');o.value=e.name;$('echoRegistry').appendChild(o)})}
+function fillEchoApproval(){const e=db.echographists.find(x=>norm(x.name)===norm($('t1EchoName').value));if(e)$('t1EchoApproval').value=e.approval||''}
+function registerEcho(name,approval){if(!name)return;let e=db.echographists.find(x=>norm(x.name)===norm(name));if(e)e.approval=approval||e.approval;else db.echographists.push({name,approval});persist();renderEchoRegistry()}
+function loadEchoForm(){
+ const p=ensureEchos(),t=p.echos.t1||{},t2=p.echos.t2||{},t3=p.echos.t3||{},ddg=p.pregnancy?.ddg||'';
+ $('t1Date').value=t.date||'';$('t1Ddg').value=t.ddg||ddg;$('t1EchoName').value=t.echoName||'';$('t1EchoApproval').value=t.echoApproval||'';$('t1Cn').value=t.cn||'';$('t1Lcc').value=t.lcc||'';$('t1Weight').value=t.weight||'';
+ $('t2Date').value=t2.date||'';$('t2Normal').value=t2.normal||'';$('t2Comments').value=t2.comments||'';$('t3Date').value=t3.date||'';$('t3Normal').value=t3.normal||'';$('t3Comments').value=t3.comments||'';
+ renderEchoRegistry();updateT1Window();$('extraEchoDate').value=$('extraEchoDate').value||today();updateExtraEchoTerm();renderExtraEchoList()
+}
+function currentT1(){return {date:parseDateAny($('t1Date').value),ddg:parseDateAny($('t1Ddg').value)||active()?.pregnancy?.ddg||'',echoName:$('t1EchoName').value.trim(),echoApproval:$('t1EchoApproval').value.trim(),cn:$('t1Cn').value.trim(),lcc:$('t1Lcc').value.trim(),weight:$('t1Weight').value.trim()}}
+function updateT1Window(){const t=currentT1(),w=markerWindow(t.ddg);$('t1Window').innerHTML=w?`<b>Marqueurs sériques du 1er trimestre</b><br>du ${fmtDate(w.start)} au ${fmtDate(w.end)}${t.date?'<br>Terme à la T1 : '+termFrom(t.ddg,t.date):''}`:'Renseigne la DDG pour calculer les dates des marqueurs sériques.'}
+function saveT1(){const p=ensureEchos(),t=currentT1();if(!t.ddg||!t.date){showToast('Renseigne la date T1 et la DDG');return}p.echos.t1=t;registerEcho(t.echoName,t.echoApproval);p.history.unshift({id:uid('hist'),recordType:'echo_t1',type:'Échographie T1',date:t.date,summary:`CN ${t.cn||'—'} mm · LCC ${t.lcc||'—'} mm`});persist();renderDossier();showToast('Échographie T1 enregistrée')}
+function saveEchoSimple(which){const p=ensureEchos(),isT2=which==='t2';const rec={date:$(isT2?'t2Date':'t3Date').value,normal:$(isT2?'t2Normal':'t3Normal').value,comments:$(isT2?'t2Comments':'t3Comments').value.trim()};p.echos[which]=rec;p.history.unshift({id:uid('hist'),recordType:'echo',type:'Échographie '+which.toUpperCase(),date:rec.date,summary:rec.comments||'Échographie enregistrée'});persist();renderDossier();showToast(`Échographie ${which.toUpperCase()} enregistrée`)}
+function updateExtraEchoTerm(){const ddg=active()?.pregnancy?.ddg;$('extraEchoTerm').value=ddg&&$('extraEchoDate').value?termFrom(ddg,$('extraEchoDate').value):''}
+function addExtraEcho(){const p=ensureEchos(),r={id:uid('echo'),date:$('extraEchoDate').value,term:$('extraEchoTerm').value,reason:$('extraEchoReason').value.trim(),conclusion:$('extraEchoConclusion').value.trim()};p.extraEchos.unshift(r);p.history.unshift({id:r.id,recordType:'echo_extra',type:'Échographie supplémentaire',date:r.date,summary:`${r.reason}${r.term?' · '+r.term:''}`});persist();renderExtraEchoList();renderDossier();showToast('Échographie supplémentaire enregistrée')}
+function renderExtraEchoList(){$('extraEchoList').innerHTML='';(active()?.extraEchos||[]).forEach(x=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${fmtDate(x.date)}${x.term?' · '+esc(x.term):''}</strong><small>${esc(x.reason||'')}${x.conclusion?' — '+esc(x.conclusion):''}</small>`;$('extraEchoList').appendChild(d)})}
+function printT1Markers(){const t=currentT1();if(!t.ddg){showToast('Renseigne la DDG');return}const w=markerWindow(t.ddg),line=`Marqueurs sériques maternels du 1er trimestre (PAPP-A et sous-unité β libre de l’hCG), prélèvement entre le ${fmtDate(w.start)} et le ${fmtDate(w.end)}.`;const rec=savePrescription('Ordonnance marqueurs sériques T1',[line],{kind:'t1_markers'});printHtmlDocument('Ordonnance',prescriptionHtml(rec,active()))}
+function consentCopy(label,t,compact=false){
+ const p=active(),w=markerWindow(t.ddg),term=t.date?termFrom(t.ddg,t.date):'—';
+ return `<div class="${compact?'consent-compact':''} avoid-break"><h2 style="text-align:center">ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b><br>${esc(label)}</p><h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d'agrément :</b> ${esc(t.echoApproval||'—')}</p><h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp; <b>Adresse :</b> ${esc(p.adresse||'—')}</p><h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3><p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br><b>Date de l'échographie T1 :</b> ${t.date?fmtDate(t.date):'—'} &nbsp; <b>Terme à l'échographie T1 :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p><h3>INFORMATION ET CONSENTEMENT</h3><p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p><p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d'estimer un risque mais ne permet pas à lui seul d'établir un diagnostic.</p><p>J'ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p><p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p><div style="display:flex;justify-content:space-between;margin-top:22px"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>${CABINET.profession}<br><br>Signature / tampon</div></div></div>`
+}
+function printT1Consent(){
+ const t=currentT1();if(!t.ddg||!t.date){showToast('Renseigne la DDG et la date T1');return}
+ const w=markerWindow(t.ddg),p=active();
+ const lab=`<div style="border-top:1px solid #888;margin-top:6mm;padding-top:4mm"><h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br><b>DDG :</b> ${fmtDate(t.ddg)} — <b>Date T1 :</b> ${fmtDate(t.date)} — <b>Terme à la T1 :</b> ${termFrom(t.ddg,t.date)}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>Agrément :</b> ${esc(t.echoApproval||'—')}<br><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></div>`;
+ const body=`<div style="font-size:11.5px;line-height:1.28">${consentCopy('Exemplaire patiente',t,false)}${lab}</div><div class="page-break two-consents">${consentCopy('Exemplaire prescripteur',t,true)}${consentCopy('Exemplaire laboratoire',t,true)}</div>`;
+ printHtmlDocument('Consentement — dépistage de la trisomie 21',body)
+}
+
+function openBilanDb(){return new Promise((res,rej)=>{const q=indexedDB.open(BILAN_DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(BILAN_STORE))q.result.createObjectStore(BILAN_STORE,{keyPath:'id'})};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function storeBilanPdf(ev){const file=ev.target.files?.[0],p=active();if(!file||!p)return;const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).put({id:uid('pdf'),patientId:p.id,name:file.name,date:today(),blob:file});await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error)});ev.target.value='';renderBilans();renderDossier();showToast('PDF ajouté au dossier')}
+async function listBilans(){const p=active();if(!p)return[];const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readonly'),req=tx.objectStore(BILAN_STORE).getAll();const all=await new Promise((r,j)=>{req.onsuccess=()=>r(req.result||[]);req.onerror=()=>j(req.error)});return all.filter(x=>String(x.patientId)===String(p.id))}
+async function countBilans(){return (await listBilans()).length}
+async function renderBilans(){const el=$('bilanList');el.innerHTML='';const all=await listBilans();if(!all.length){el.innerHTML='<div class="hint">Aucun PDF dans ce dossier.</div>';return}all.forEach(x=>{const row=document.createElement('div');row.className='entry';row.innerHTML=`<strong>${esc(x.name)}</strong><small>${fmtDate(x.date)}</small>`;const acts=document.createElement('div');acts.className='actions';const open=document.createElement('button');open.className='btn secondary';open.textContent='Ouvrir';open.onclick=()=>window.open(URL.createObjectURL(x.blob),'_blank');const del=document.createElement('button');del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>deleteBilan(x.id);acts.append(open,del);row.appendChild(acts);el.appendChild(row)})}
+async function deleteBilan(id){const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);await new Promise(r=>tx.oncomplete=r);renderBilans();renderDossier();showToast('PDF supprimé')}
+
+function renderHistory(){const p=active(),el=$('historyList');el.innerHTML='';if(!p?.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}(p.history||[]).forEach((h,i)=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);el.appendChild(d)})}
+function openHistoryRecord(i){const p=active(),h=p.history[i];if(!h)return;if(h.recordType==='consultation'){const c=h.snapshot||p.consultations.find(x=>x.id===h.id);openRecordModal(h.type,consultationHtml(c,p)+signatureBlock());return}if(h.recordType==='prescription'){const r=h.snapshot||p.prescriptions.find(x=>x.id===h.id);openRecordModal(r.title,prescriptionHtml(r,p));return}if(h.recordType==='echo_t1'){const t=p.echos.t1||{};openRecordModal('Échographie T1',`<h2>Échographie du premier trimestre</h2><p><b>Date :</b> ${fmtDate(t.date)} — <b>Terme :</b> ${termFrom(t.ddg,t.date)}</p><p><b>Échographiste :</b> ${esc(t.echoName||'—')} — Agrément ${esc(t.echoApproval||'—')}</p><p><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg</p>`);return}openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`)}
+function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=body;$('recordTitle').textContent=title;$('recordBody').innerHTML=body;renderBarcodes($('recordBody'));$('recordModal').classList.add('show')}
+function closeRecordModal(){$('recordModal').classList.remove('show')}
+function printOpenedRecord(){closeRecordModal();setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80)}
+function printFullHistory(){
+ const p=active();let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob):''}${p.adresse?'<br>'+esc(p.adresse):''}${p.tel?'<br>Tél. '+esc(p.tel):''}</p>`;
+ if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${fmtDate(calcDpa(p.pregnancy.ddg))} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p>`;
+ body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
+ if(p.pregnancyHistory?.length){body+='<h3>Grossesses antérieures</h3>';p.pregnancyHistory.forEach(x=>body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.healthy?' — Enfant en bonne santé : '+esc(x.healthy):''}${x.childComment?'<br>'+esc(x.childComment):''}${x.complication?'<br>'+esc(x.complication):''}</p>`)}
+ const e=p.echos||{};body+='<h2>Résumé des échographies</h2>';if(e.t1)body+=`<p><b>T1 :</b> ${fmtDate(e.t1.date)} — ${termFrom(e.t1.ddg,e.t1.date)}<br>Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>CN : ${esc(e.t1.cn||'—')} mm — LCC : ${esc(e.t1.lcc||'—')} mm — Poids : ${esc(e.t1.weight||'—')} kg</p>`;if(e.t2)body+=`<p><b>T2 :</b> ${fmtDate(e.t2.date)} — habituelle : ${esc(e.t2.normal||'—')}${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;if(e.t3)body+=`<p><b>T3 :</b> ${fmtDate(e.t3.date)} — habituelle : ${esc(e.t3.normal||'—')}${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;(p.extraEchos||[]).forEach(x=>body+=`<p><b>Échographie supplémentaire :</b> ${fmtDate(x.date)}${x.term?' — '+esc(x.term):''}${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`);
+ body+='<h2>Consultations</h2>';(p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(c=>body+=`<div class="avoid-break" style="border-top:1px solid #ccc;padding-top:8px;margin-top:10px">${consultationHtml(c,p)}</div>`);
+ printHtmlDocument('Dossier de suivi à transmettre à la maternité',body)
+}
+
+function documentHeader(title){return `<div style="font-size:12px;line-height:1.35"><b>Cabinet de sage-femme</b><br>${CABINET.name}<br>${CABINET.address}<br>${CABINET.city}<br>${CABINET.phone}</div><hr style="margin:8mm 0"><h1 style="font-size:20px">${esc(title)}</h1>`}
+function signatureBlock(){return `<p style="text-align:right;margin-top:45px"><strong>${CABINET.name}</strong><br>${CABINET.profession}<br><br>Signature :</p>`}
+function renderBarcodes(root=document){try{if(window.JsBarcode)root.querySelectorAll('.rppsBarcode').forEach(svg=>JsBarcode(svg,CABINET.rpps,{format:'CODE128',displayValue:true,fontSize:13,height:40,margin:0,width:1.5}))}catch(e){console.error(e)}}
+function printHtmlDocument(title,body){$('printDoc').innerHTML=documentHeader(title)+body;renderBarcodes($('printDoc'));setTimeout(()=>window.print(),180)}
+
+function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertNote.text)return;$('postitText').textContent=p.alertNote.text;$('postitModal').classList.add('show')}
+function closePostit(){$('postitModal').classList.remove('show')}
+function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
+
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.0',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
+
+function init(){
+ updateLocalCount();renderActive();renderHomePatients();addRxLine();$('csDate').value=today();$('extraEchoDate').value=today();renderEchoRegistry();
+ if(active()){renderDossier()}
+}
+init();
+</script>
 </body>
 </html>
