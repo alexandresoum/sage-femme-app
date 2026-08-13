@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.21 locale</title>
+<title>Cabinet Sage-Femme — V3.1 sécurisée · installable</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -167,9 +167,50 @@ textarea{resize:vertical}
   gap:12px;
 }
 
+
+.security-gate{position:fixed;inset:0;z-index:5000;background:#f4f6fa;display:flex;align-items:center;justify-content:center;padding:24px}
+.security-gate.unlocked{display:none}
+.security-card{width:min(460px,95vw);background:#fff;border:1px solid #e0e4ec;border-radius:22px;box-shadow:0 24px 80px rgba(24,39,75,.16);padding:32px}
+.security-logo{font-size:42px;text-align:center}.security-card h1{text-align:center;margin:8px 0 0;font-size:24px}
+.security-subtitle{text-align:center;color:#667085;font-weight:700;margin:6px 0 24px}.security-info{color:#475467;line-height:1.45}
+.security-warning{background:#fff7e6;border:1px solid #f3d58b;border-radius:12px;padding:12px;margin:14px 0;font-size:.9rem;line-height:1.4}
+.security-error{color:#b42318;margin-top:10px;font-weight:700;min-height:20px}.security-foot{margin-top:22px;padding-top:16px;border-top:1px solid #eaecf0;color:#667085;font-size:.82rem;text-align:center}
+.security-main-btn{width:100%}.security-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px}
+.security-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#ecfdf3;color:#067647;font-weight:800;font-size:.82rem}
 </style>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0f2a56">
+<meta name="application-name" content="Cabinet Sage-Femme">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cabinet SF">
+<link rel="apple-touch-icon" href="./icon-192.png">
+
 </head>
 <body>
+<div id="securityGate" class="security-gate">
+  <div class="security-card">
+    <div class="security-logo">🔐</div>
+    <h1>Cabinet de sage-femme</h1>
+    <div class="security-subtitle">V3 locale sécurisée</div>
+    <div id="securitySetup" style="display:none">
+      <p id="setupInfo" class="security-info"></p>
+      <div class="field"><label>Nouveau mot de passe</label><input id="setupPassword" type="password" autocomplete="new-password" placeholder="12 caractères minimum"></div>
+      <div class="field"><label>Confirmer</label><input id="setupPassword2" type="password" autocomplete="new-password"></div>
+      <div class="security-warning">⚠️ Ce mot de passe n'est enregistré nulle part. S'il est perdu, la base chiffrée ne pourra pas être déverrouillée.</div>
+      <button class="btn primary security-main-btn" onclick="createSecureVault()">Créer la base sécurisée</button>
+    </div>
+    <div id="securityUnlock" style="display:none">
+      <p class="security-info">Saisis le mot de passe du cabinet pour accéder aux dossiers.</p>
+      <div class="field"><label>Mot de passe</label><input id="unlockPassword" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')unlockSecureVault()"></div>
+      <button class="btn primary security-main-btn" onclick="unlockSecureVault()">Déverrouiller</button>
+      <div id="unlockError" class="security-error"></div>
+    </div>
+    <div class="security-foot">Base patients et PDF ajoutés chiffrés localement sur cet appareil.</div>
+  </div>
+</div>
+
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
@@ -192,10 +233,14 @@ textarea{resize:vertical}
       <button data-section="bilans" class="clinical">📎 Bilans</button>
       <button data-section="history" class="clinical">📁 Historique</button>
     </nav>
-    <div class="disclaimer">Les données restent dans le navigateur de cet appareil. Pour une utilisation réelle avec données de santé, une sécurisation et une stratégie de sauvegarde adaptées sont nécessaires.</div>
+    <div class="disclaimer">V3 locale : base chiffrée, verrouillage automatique et sauvegardes chiffrées. L’ordinateur lui-même doit également rester protégé.</div>
   </aside>
 
   <main class="main">
+    <div class="security-toolbar">
+      <span class="security-badge">🔐 Base chiffrée</span>
+      <button class="btn secondary" type="button" onclick="lockApp(true)">Verrouiller</button>
+    </div>
     <h1 id="pageTitle" class="page-title">Accueil</h1>
     <div id="patientTop" class="patient-banner">
       <div class="icon">👤</div>
@@ -654,7 +699,10 @@ textarea{resize:vertical}
 <script>
 'use strict';
 
-const KEY='sf_local_v1';
+const LEGACY_KEY='sf_local_v1';
+const SECURE_KEY='sf_secure_v3';
+const SECURE_FORMAT='sf-secure-v1';
+const AUTO_LOCK_MS=15*60*1000;
 const CABINET={name:'Mme Clarisse SOUM',profession:'Sage-femme',address:'1 rue du Moulin Rouge',city:'85000 La Roche-sur-Yon',phone:'02 51 36 36 77',rpps:'10004054820'};
 const BILAN_DB='sf_bilans_v2',BILAN_STORE='bilans';
 const $=id=>document.getElementById(id);
@@ -775,20 +823,54 @@ function migratePatient(raw,index){
  }
  return p;
 }
-function loadDb(){
- let raw={patients:[],activeId:null,echographists:[]};
- try{raw=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
+function emptyDb(){return normalizeDb({patients:[],activeId:null,echographists:[],rxTemplates:[]})}
+function normalizeDb(raw){
+ raw=(raw&&typeof raw==='object')?raw:{};
  raw.patients=Array.isArray(raw.patients)?raw.patients.map(migratePatient):[];
  raw.echographists=Array.isArray(raw.echographists)?raw.echographists:[];
  raw.rxTemplates=Array.isArray(raw.rxTemplates)?raw.rxTemplates:[];
  if(!raw.echographists.some(e=>norm(e.name)==='soum alexandre'))raw.echographists.push({name:'soum alexandre',approval:'8501072354301'});
- localStorage.setItem(KEY,JSON.stringify(raw));
- return raw;
+ return raw
 }
-let db=loadDb();
-// V2.1 : la migration enrichit les anciens dossiers puis les resauvegarde immédiatement.
-localStorage.setItem(KEY,JSON.stringify(db));
-function persist(){localStorage.setItem(KEY,JSON.stringify(db))}
+let db=normalizeDb({patients:[],activeId:null,echographists:[],rxTemplates:[]}),secureKey=null,secureSalt=null,appUnlocked=false,persistQueue=Promise.resolve(),autoLockTimer=null;
+function bytesToB64(bytes){let s='',a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);for(let i=0;i<a.length;i+=32768)s+=String.fromCharCode(...a.subarray(i,i+32768));return btoa(s)}
+function b64ToBytes(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+async function deriveVaultKey(password,salt){
+ const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+ return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])
+}
+async function encryptWithKey(key,bytes){const iv=crypto.getRandomValues(new Uint8Array(12));const c=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,bytes);return{iv:bytesToB64(iv),data:bytesToB64(new Uint8Array(c))}}
+async function decryptWithKey(key,iv,data){return crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(iv)},key,b64ToBytes(data))}
+async function securePersistNow(){
+ if(!secureKey||!appUnlocked)return;
+ const enc=await encryptWithKey(secureKey,new TextEncoder().encode(JSON.stringify(db)));
+ localStorage.setItem(SECURE_KEY,JSON.stringify({format:SECURE_FORMAT,version:3,salt:bytesToB64(secureSalt),iv:enc.iv,data:enc.data,updatedAt:new Date().toISOString()}))
+}
+function persist(){if(!secureKey||!appUnlocked)return;persistQueue=persistQueue.then(()=>securePersistNow()).catch(console.error)}
+function legacyDb(){try{return normalizeDb(JSON.parse(localStorage.getItem(LEGACY_KEY)||'{}'))}catch(e){return emptyDb()}}
+async function decryptSecurePayload(payload,password){
+ if(!payload||payload.format!==SECURE_FORMAT)throw new Error('format');
+ const salt=b64ToBytes(payload.salt),key=await deriveVaultKey(password,salt),plain=await decryptWithKey(key,payload.iv,payload.data);
+ return{db:normalizeDb(JSON.parse(new TextDecoder().decode(plain))),key,salt}
+}
+function resetAutoLock(){if(!appUnlocked)return;clearTimeout(autoLockTimer);autoLockTimer=setTimeout(()=>lockApp(false),AUTO_LOCK_MS)}
+function installActivityWatch(){['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,resetAutoLock,{passive:true}))}
+async function createSecureVault(){
+ const p1=$('setupPassword').value,p2=$('setupPassword2').value;if(p1.length<12){alert('12 caractères minimum.');return}if(p1!==p2){alert('Les mots de passe ne correspondent pas.');return}
+ const hadLegacy=!!localStorage.getItem(LEGACY_KEY);db=hadLegacy?legacyDb():emptyDb();secureSalt=crypto.getRandomValues(new Uint8Array(16));secureKey=await deriveVaultKey(p1,secureSalt);appUnlocked=true;
+ await securePersistNow();if(hadLegacy)localStorage.removeItem(LEGACY_KEY);await migrateLegacyBilans();$('setupPassword').value='';$('setupPassword2').value='';finishUnlock();showToast(`${db.patients.length} dossier(s) chiffré(s)`)
+}
+async function unlockSecureVault(){
+ $('unlockError').textContent='';try{const u=await decryptSecurePayload(JSON.parse(localStorage.getItem(SECURE_KEY)||'null'),$('unlockPassword').value);db=u.db;secureKey=u.key;secureSalt=u.salt;appUnlocked=true;$('unlockPassword').value='';await migrateLegacyBilans();finishUnlock()}
+ catch(e){$('unlockError').textContent='Mot de passe incorrect ou base illisible.'}
+}
+function finishUnlock(){$('securityGate').classList.add('unlocked');initUnlocked();resetAutoLock()}
+async function lockApp(manual=false){if(!appUnlocked)return;try{await persistQueue;await securePersistNow()}catch(e){}appUnlocked=false;secureKey=null;secureSalt=null;db=emptyDb();clearTimeout(autoLockTimer);document.querySelectorAll('.modal-backdrop.show').forEach(x=>x.classList.remove('show'));$('securityGate').classList.remove('unlocked');$('securitySetup').style.display='none';$('securityUnlock').style.display='block';$('unlockError').textContent=manual?'Application verrouillée.':'Verrouillage automatique après 15 minutes d’inactivité.'}
+function secureBoot(){
+ const secured=localStorage.getItem(SECURE_KEY),legacy=localStorage.getItem(LEGACY_KEY);
+ if(secured){$('securityUnlock').style.display='block';setTimeout(()=>$('unlockPassword').focus(),50)}
+ else{$('securitySetup').style.display='block';let n=0;if(legacy)try{n=(JSON.parse(legacy)?.patients||[]).length}catch(e){}$('setupInfo').textContent=legacy?`Une base V2 a été détectée (${n} dossier${n>1?'s':''}). Crée un mot de passe : elle sera chiffrée puis l’ancienne copie non chiffrée sera supprimée.`:'Crée un mot de passe pour cette base locale sécurisée.'}
+}
 function active(){return db.patients.find(p=>String(p.id)===String(db.activeId))||null}
 function activePregnancy(p=active()){return p?.pregnancies?.find(x=>x.status==='active')||null}
 function syncLegacyPregnancy(p=active()){if(!p)return;const a=activePregnancy(p);p.pregnancy=a?{ddr:a.ddr||'',theoreticalDdg:a.theoreticalDdg||'',ddg:a.ddg||'',datingMethod:a.datingMethod||'',embryoCount:a.embryoCount||'',donorAge:a.donorAge||'',fetusCount:a.fetusCount||1,chorionicity:a.chorionicity||''}:null;}
@@ -2025,10 +2107,26 @@ function printT1Consent(){
 }
 
 function openBilanDb(){return new Promise((res,rej)=>{const q=indexedDB.open(BILAN_DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(BILAN_STORE))q.result.createObjectStore(BILAN_STORE,{keyPath:'id'})};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
-async function storeBilanPdf(ev){const file=ev.target.files?.[0],p=active();if(!file||!p)return;const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).put({id:uid('pdf'),patientId:p.id,name:file.name,date:today(),blob:file});await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error)});ev.target.value='';renderBilans();renderDossier();showToast('PDF ajouté au dossier')}
+async function storeBilanPdf(ev){
+ const file=ev.target.files?.[0],p=active();if(!file||!p||!secureKey)return;
+ const enc=await encryptWithKey(secureKey,new Uint8Array(await file.arrayBuffer())),dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');
+ tx.objectStore(BILAN_STORE).put({id:uid('pdf'),patientId:p.id,name:file.name,date:today(),encrypted:true,iv:enc.iv,data:enc.data,type:file.type||'application/pdf'});
+ await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error)});ev.target.value='';renderBilans();renderDossier();showToast('PDF chiffré ajouté au dossier')
+}
 async function listBilans(){const p=active();if(!p)return[];const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readonly'),req=tx.objectStore(BILAN_STORE).getAll();const all=await new Promise((r,j)=>{req.onsuccess=()=>r(req.result||[]);req.onerror=()=>j(req.error)});return all.filter(x=>String(x.patientId)===String(p.id))}
 async function countBilans(){return (await listBilans()).length}
-async function renderBilans(){const el=$('bilanList');el.innerHTML='';const all=await listBilans();if(!all.length){el.innerHTML='<div class="hint">Aucun PDF dans ce dossier.</div>';return}all.forEach(x=>{const row=document.createElement('div');row.className='entry';row.innerHTML=`<strong>${esc(x.name)}</strong><small>${fmtDate(x.date)}</small>`;const acts=document.createElement('div');acts.className='actions';const open=document.createElement('button');open.className='btn secondary';open.textContent='Ouvrir';open.onclick=()=>window.open(URL.createObjectURL(x.blob),'_blank');const del=document.createElement('button');del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>deleteBilan(x.id);acts.append(open,del);row.appendChild(acts);el.appendChild(row)})}
+async function decryptBilanBlob(x){if(x.encrypted){const p=await decryptWithKey(secureKey,x.iv,x.data);return new Blob([p],{type:x.type||'application/pdf'})}return x.blob}
+async function openBilanRecord(x){try{const b=await decryptBilanBlob(x),u=URL.createObjectURL(b);window.open(u,'_blank');setTimeout(()=>URL.revokeObjectURL(u),60000)}catch(e){showToast('Impossible de déchiffrer ce PDF')}}
+async function migrateLegacyBilans(){
+ if(!secureKey)return;try{const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readonly'),req=tx.objectStore(BILAN_STORE).getAll();const all=await new Promise((r,j)=>{req.onsuccess=()=>r(req.result||[]);req.onerror=()=>j(req.error)});
+ for(const x of all.filter(x=>x.blob&&!x.encrypted)){const enc=await encryptWithKey(secureKey,new Uint8Array(await x.blob.arrayBuffer())),u={...x,encrypted:true,iv:enc.iv,data:enc.data,type:x.blob.type||'application/pdf'};delete u.blob;const wt=dbi.transaction(BILAN_STORE,'readwrite');wt.objectStore(BILAN_STORE).put(u);await new Promise((r,j)=>{wt.oncomplete=r;wt.onerror=()=>j(wt.error)})}}
+ catch(e){console.error(e)}
+}
+
+async function renderBilans(){
+ const el=$('bilanList');el.innerHTML='';const all=await listBilans();if(!all.length){el.innerHTML='<div class="hint">Aucun PDF dans ce dossier.</div>';return}
+ all.forEach(x=>{const row=document.createElement('div');row.className='entry';row.innerHTML=`<strong>${esc(x.name)}</strong><small>${fmtDate(x.date)} · 🔐</small>`;const acts=document.createElement('div');acts.className='actions';const open=document.createElement('button');open.className='btn secondary';open.textContent='Ouvrir';open.onclick=()=>openBilanRecord(x);const del=document.createElement('button');del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>deleteBilan(x.id);acts.append(open,del);row.appendChild(acts);el.appendChild(row)})
+}
 async function deleteBilan(id){const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);await new Promise(r=>tx.oncomplete=r);renderBilans();renderDossier();showToast('PDF supprimé')}
 
 function renderHistory(){const p=active(),el=$('historyList');el.innerHTML='';if(!p?.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}(p.history||[]).forEach((h,i)=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);el.appendChild(d)})}
@@ -2069,14 +2167,29 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.21',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
-async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
-
-function init(){
- updateLocalCount();renderActive();renderHomePatients();addRxLine();$('csDate').value=today();$('extraEchoDate').value=today();renderEchoRegistry();
- if(active()){renderDossier()}
+async function exportDatabase(){
+ await persistQueue;await securePersistNow();const secure=JSON.parse(localStorage.getItem(SECURE_KEY)||'null'),backup={app:'sage-femme-app',version:'3.1',format:SECURE_FORMAT,exportedAt:new Date().toISOString(),secure};
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-chiffree-sage-femme-'+today()+'.sfbackup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) sauvegardé(s) — fichier chiffré`)
 }
-init();
+async function importDatabase(ev){
+ const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text());
+ if(parsed?.format===SECURE_FORMAT&&parsed.secure){const pw=window.prompt('Mot de passe de la sauvegarde chiffrée :');if(!pw)throw new Error('cancel');const u=await decryptSecurePayload(parsed.secure,pw);db=u.db;await securePersistNow();updateLocalCount();renderHomePatients();renderActive();showToast(`${db.patients.length} dossier(s) restauré(s)`)}
+ else{const incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s) puis chiffré(s)`)}
+ }catch(e){if(e.message!=='cancel')showToast('Sauvegarde non reconnue ou mot de passe incorrect')}ev.target.value=''
+}
+
+function initUnlocked(){
+ updateLocalCount();renderActive();renderHomePatients();if(!$('rxLines').children.length)addRxLine();$('csDate').value=$('csDate').value||today();$('extraEchoDate').value=$('extraEchoDate').value||today();renderEchoRegistry();if(active())renderDossier()
+}
+installActivityWatch();secureBoot();
+
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker',err));
+  });
+}
+
 </script>
 </body>
 </html>
