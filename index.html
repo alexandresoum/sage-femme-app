@@ -61,7 +61,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
  .app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:12px}.brand{padding-bottom:8px}.nav{display:flex;overflow:auto;gap:6px}.nav button{white-space:nowrap;width:auto}.sidebar .foot{display:none}
  main{padding:16px}.span-4,.span-6,.span-8,.span-12{grid-column:span 12}.quick{grid-template-columns:1fr 1fr}.checks{grid-template-columns:1fr}.row,.row3{grid-template-columns:1fr}
 }
-@media print{
+@media print{.modal-backdrop,.toast{display:none!important}
  .sidebar,.top,.no-print,.notice{display:none!important}.app{display:block}main{padding:0}.card{box-shadow:none;border:0;padding:0}.section{display:none!important}#printArea{display:block!important}
 }
 #printArea{display:none}
@@ -201,7 +201,7 @@ body:not(.has-patient) #patientTop{display:none}
           </div>
           <div class="dossier-actions">
             <button onclick="go('pregnancy')">🤰<br>Grossesse / terme</button>
-            <button onclick="go('consult')">🩺<br>Nouvelle consultation</button>
+            <button onclick="startNewConsultation()">🩺<br>Nouvelle consultation</button>
             <button onclick="go('rx')">💊<br>Ordonnance</button>
             <button onclick="go('echos')">🖥<br>Échographies</button>
             <button onclick="go('bilans')">📎<br>Bilans PDF</button>
@@ -543,7 +543,11 @@ function documentHeader(title){return `<div class="print-head"><div><strong>Cabi
 function prescriberBarcodeBlock(){return `<div style="margin:18px 0"><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong><br>N° RPPS : <strong>10004054820</strong><br><svg class="rppsBarcode"></svg></div>`}
 function renderBarcodes(root=document){try{if(window.JsBarcode){root.querySelectorAll('.rppsBarcode').forEach(svg=>JsBarcode(svg,"10004054820",{format:"CODE128",displayValue:true,fontSize:13,height:40,margin:0,width:1.5}))}}catch(e){console.error(e)}}
 function printHtmlDocument(title,body){$('printDoc').innerHTML=documentHeader(title)+body;renderBarcodes($('printDoc'));setTimeout(()=>window.print(),180)}
-function printOpenedRecord(){if(openedRecordHtml)printHtmlDocument(openedRecordTitle,openedRecordHtml)}
+function printOpenedRecord(){
+ if(!openedRecordHtml)return;
+ closeRecordModal();
+ setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80);
+}
 function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
 function active(){ return db.patients.find(p=>p.id===db.activeId) || null; }
 function go(id){
@@ -565,7 +569,11 @@ function go(id){
  if(id==='dossier') renderDossier();
  if(id==='home') renderHomePatients();
 }
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.section));
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{
+ const id=b.dataset.section;
+ if(id==='consult')startNewConsultation();
+ else go(id);
+});
 
 let surgeryDraft=[];
 let pregnancyHistoryDraft=[];
@@ -911,6 +919,24 @@ function checkedText(container){
  const el=$(container); if(!el)return [];
  return [...el.querySelectorAll('input:checked')].map(x=>x.value);
 }
+
+function resetConsultationForm(){
+ if($('consultType'))$('consultType').value='obstetrique';
+ if($('csDate'))$('csDate').value=today();
+ if($('motif'))$('motif').value='Suivi de grossesse';
+ ['ta','poids','hu','bcf','bu','notes'].forEach(id=>{if($(id))$(id).value='';});
+ if($('oedemes'))$('oedemes').value='Non';
+ document.querySelectorAll('#interChecks input[type="checkbox"],#catChecks input[type="checkbox"]').forEach(x=>x.checked=false);
+ syncConsultTerm();
+ updateConsultMode();
+ updateConsultPreview();
+}
+function startNewConsultation(){
+ resetConsultationForm();
+ go('consult');
+ showToast('Nouvelle consultation prête');
+}
+
 function updateConsultMode(){
  const mode=$('consultType')?.value||'obstetrique';
  document.querySelectorAll('.obst-only').forEach(el=>el.style.display=mode==='obstetrique'?'':'none');
@@ -1168,31 +1194,65 @@ function printT1ConsentLab(){
  <b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br>
  <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></section>`;
 
+ const firstPage=`<div class="consent-page-one">
+   ${copy('Exemplaire patiente',true)}
+   <div class="lab-inline">
+     <h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3>
+     <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
+     <b>DDG :</b> ${fmtDate(ddg)} — <b>Date T1 :</b> ${fmtDate(t1.date)} — <b>Terme à la T1 :</b> ${esc(termT1)}<br>
+     <b>Échographiste :</b> ${esc(t1.echoName||'—')} — <b>Agrément :</b> ${esc(t1.echoApproval||'—')}<br>
+     <b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br>
+     <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p>
+   </div>
+ </div>`;
+
+ const secondPage=`<div class="two-copies-page">
+   ${copy('Exemplaire prescripteur',true)}
+   ${copy('Exemplaire laboratoire',true)}
+ </div>`;
+
  const body=`<style>
  @media print{
-   .consent-copy{break-after:page;page-break-after:always}
-   .two-copies-page{break-before:page;page-break-before:always}
-   .compact{font-size:9.4px;line-height:1.18;margin:0 0 8mm 0;padding-bottom:5mm;border-bottom:1px dashed #999}
-   .compact h2{font-size:15px;margin:3px 0} .compact h3{font-size:11px;margin:6px 0 2px}
-   .compact p{margin:3px 0} .lab-copy{break-before:page;page-break-before:always}
+   .consent-page-one{page-break-after:always;break-after:page}
+   .two-copies-page{page-break-before:auto;break-before:auto}
+   .consent-copy.compact{font-size:9px;line-height:1.12;margin:0;padding:0 0 4mm 0}
+   .consent-copy.compact h2{font-size:14px;margin:2px 0}
+   .consent-copy.compact h3{font-size:10.5px;margin:4px 0 2px}
+   .consent-copy.compact p{margin:2px 0}
+   .two-copies-page .consent-copy:first-child{border-bottom:1px dashed #999;margin-bottom:4mm;padding-bottom:4mm}
+   .lab-inline{margin-top:5mm;border-top:1px solid #777;padding-top:3mm;font-size:10px}
+   .lab-inline h3{font-size:12px;margin:0 0 2mm}
  }
- </style>
- ${copy('Exemplaire patiente')}
- <div class="two-copies-page">${copy('Exemplaire prescripteur',true)}${copy('Exemplaire laboratoire',true)}</div>
- ${lab}`;
+ </style>${firstPage}${secondPage}`;
  printHtmlDocument('Consentement — dépistage de la trisomie 21',body);
 }
 
 function openHistoryRecord(index){
  const p=active();if(!p)return;
  const h=(p.history||[])[index];if(!h)return;
+
  if(h.recordType==='consultation'){
    const c=h.snapshot || (p.consultations||[]).find(x=>x.id===h.id);
    if(c){
-     openRecordModal(h.type||'Consultation',consultationHtml(c,p));
+     const title=(c.consultType==='obstetrique'?'Compte rendu de consultation obstétrique':c.consultType==='gynecologie'?'Compte rendu de consultation gynécologique':'Compte rendu de consultation');
+     openRecordModal(title,consultationHtml(c,p)+`<p style="text-align:right;margin-top:45px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`);
      return;
    }
  }
+
+ // Echo T1: reopen a meaningful summary if available
+ if((h.type||'').includes('T1') && p.echos?.t1){
+   const e=p.echos.t1;
+   const term=e.ddg&&e.date?termFrom(e.ddg,e.date):'';
+   openRecordModal('Compte rendu — Échographie T1',
+     `<h2>Échographie du premier trimestre</h2>
+      <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p>
+      <p><b>Date :</b> ${e.date?fmtDate(e.date):'—'}${term?' — <b>Terme :</b> '+esc(term):''}</p>
+      <p><b>Échographiste :</b> ${esc(e.echoName||'—')} — <b>N° agrément :</b> ${esc(e.echoApproval||'—')}</p>
+      <p><b>CN :</b> ${esc(e.cn||'—')} mm — <b>LCC :</b> ${esc(e.lcc||'—')} mm — <b>Poids :</b> ${esc(e.weight||'—')} kg</p>`);
+   return;
+ }
+
  openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`);
 }
 function renderHistory(){
@@ -1245,10 +1305,66 @@ async function deleteBilan(id){if(!confirm('Supprimer ce PDF du dossier local ?'
 
 function printFullHistory(){
  const p=active();if(!p)return;
- let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse)+'<br>':''}${p.tel?'Tél. '+esc(p.tel):''}</p>`;
- if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p>DDG : ${fmtDate(p.pregnancy.ddg)} — DPA : ${calcDpaText(p.pregnancy.ddg)} — Terme actuel : ${termFrom(p.pregnancy.ddg)}</p>`;
- body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p><h2>Consultations</h2>`;
- (p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(c=>body+='<div style="border-top:1px solid #ccc;padding-top:10px;margin-top:12px">'+consultationHtml(c,p)+'</div>');
+
+ let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2>
+ <p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse)+'<br>':''}${p.tel?'Tél. '+esc(p.tel):''}</p>`;
+
+ if(p.pregnancy?.ddg){
+   body+=`<h2>Grossesse en cours</h2>
+   <p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${calcDpaText(p.pregnancy.ddg)} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p>`;
+ }
+
+ body+=`<h2>Antécédents</h2>
+ <p><b>Allergies :</b> ${esc(p.allergies||'—')}<br>
+ <b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br>
+ <b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br>
+ <b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br>
+ <b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br>
+ <b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
+
+ if((p.pregnancyHistory||[]).length){
+   body+='<h3>Grossesses antérieures</h3>';
+   p.pregnancyHistory.forEach(x=>{
+     body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.complication?'<br>'+esc(x.complication):''}</p>`;
+   });
+ }
+
+ // Ultrasound summary
+ const e=p.echos||{};
+ if(e.t1 || e.t2 || e.t3 || (p.extraEchos||[]).length){
+   body+='<h2>Résumé des échographies</h2>';
+
+   if(e.t1){
+     const t1term=e.t1.ddg&&e.t1.date?termFrom(e.t1.ddg,e.t1.date):'';
+     body+=`<p><b>T1 :</b> ${e.t1.date?fmtDate(e.t1.date):'—'}${t1term?' — '+esc(t1term):''}<br>
+     Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>
+     CN : ${esc(e.t1.cn||'—')} mm — LCC : ${esc(e.t1.lcc||'—')} mm — Poids : ${esc(e.t1.weight||'—')} kg</p>`;
+   }
+
+   if(e.t2){
+     body+=`<p><b>T2 :</b> ${e.t2.date?fmtDate(e.t2.date):'—'} — Échographie habituelle : ${esc(e.t2.normal||'—')}
+     ${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;
+   }
+
+   if(e.t3){
+     body+=`<p><b>T3 :</b> ${e.t3.date?fmtDate(e.t3.date):'—'} — Échographie habituelle : ${esc(e.t3.normal||'—')}
+     ${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;
+   }
+
+   (p.extraEchos||[]).forEach(x=>{
+     body+=`<p><b>Échographie supplémentaire :</b> ${x.date?fmtDate(x.date):'—'}${x.term?' — '+esc(x.term):''}
+     ${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}
+     ${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`;
+   });
+ }
+
+ body+='<h2>Consultations</h2>';
+ const list=(p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+ if(!list.length)body+='<p>Aucune consultation enregistrée.</p>';
+ else list.forEach(c=>{
+   body+='<div style="border-top:1px solid #ccc;padding-top:10px;margin-top:12px">'+consultationHtml(c,p)+'</div>';
+ });
+
  printHtmlDocument('Dossier de suivi à transmettre à la maternité',body);
 }
 function exportBackup(){
