@@ -549,6 +549,38 @@ const KEY='sf_local_v1';
 let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null,"echographists":[]}');
 db.echographists=db.echographists||[];
 db.patients=db.patients||[];
+
+function migratePatients(){
+ let changed=false;
+ db.patients=(db.patients||[]).map((raw,index)=>{
+   const p={...raw};
+
+   // Compatibilité avec d'anciennes structures de dossier.
+   if(!p.nom) p.nom=p.lastName||p.lastname||p.name||p.nomPatiente||'';
+   if(!p.prenom) p.prenom=p.firstName||p.firstname||p.givenName||p.prenomPatiente||'';
+   if(!p.dob) p.dob=p.birthDate||p.dateNaissance||p.ddn||'';
+
+   // Si un ancien champ "name" contenait "NOM Prénom", on tente de le scinder.
+   if((!p.prenom || !p.nom) && typeof raw.name==='string' && raw.name.trim()){
+     const parts=raw.name.trim().split(/\s+/);
+     if(!p.nom && parts.length) p.nom=parts.shift()||'';
+     if(!p.prenom && parts.length) p.prenom=parts.join(' ');
+   }
+
+   p.nom=String(p.nom||'').trim();
+   p.prenom=String(p.prenom||'').trim();
+
+   if(!p.id){
+     p.id='legacy_'+Date.now()+'_'+index+'_'+Math.random().toString(16).slice(2);
+     changed=true;
+   }
+   if(p !== raw || p.nom!==raw.nom || p.prenom!==raw.prenom || p.dob!==raw.dob) changed=true;
+   return p;
+ });
+ if(changed) localStorage.setItem(KEY,JSON.stringify(db));
+}
+migratePatients();
+
 let activeConsultDraft=null;
 let returningToConsultation=false;
 const $=id=>document.getElementById(id);
@@ -888,16 +920,17 @@ function disablePostit(){
 }
 
 function selectPatient(id){
- const p=db.patients.find(x=>x.id===id);
+ const p=(db.patients||[]).find(x=>String(x.id)===String(id));
  if(!p){showToast('Dossier introuvable');return}
- db.activeId=id;
+ db.activeId=p.id;
  localStorage.setItem(KEY,JSON.stringify(db));
  loadPatient();
  renderActive();
  renderHistory();
  renderDossier();
  go('dossier');
- showToast('Dossier patiente ouvert');setTimeout(maybeShowPostit,180);
+ showToast('Dossier patiente ouvert');
+ setTimeout(maybeShowPostit,180);
 }
 function loadPatient(){
  const p=active();if(!p)return;
@@ -930,66 +963,87 @@ function exitPatient(){
 }
 function norm(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 function patientMatchScore(p,qn,qp,qd){
- let score=0, used=0;
- const n=norm(p.nom), pr=norm(p.prenom);
+ let score=0,used=0;
+ const n=norm(p.nom||p.lastName||p.name||'');
+ const pr=norm(p.prenom||p.firstName||p.givenName||'');
+ const dob=String(p.dob||p.birthDate||p.dateNaissance||p.ddn||'');
+
+ function textScore(value,query,exactPts,prefixPts,containsPts){
+   if(!query)return 0;
+   if(value===query)return exactPts;
+   if(value.startsWith(query))return prefixPts;
+   if(value.includes(query))return containsPts;
+   if(query.length>=3 && value.startsWith(query.slice(0,3)))return Math.max(10,containsPts-5);
+   if(value.length>=3 && query.includes(value.slice(0,3)))return 8;
+   return -1;
+ }
+
  if(qn){
    used++;
-   if(n===qn) score+=60;
-   else if(n.startsWith(qn)) score+=45;
-   else if(qn.length>=3 && n.startsWith(qn.slice(0,3))) score+=25;
-   else return -1;
+   const s=textScore(n,qn,70,55,35);
+   if(s<0)return -1;score+=s;
  }
  if(qp){
    used++;
-   if(pr===qp) score+=50;
-   else if(pr.startsWith(qp)) score+=35;
-   else if(qp.length>=3 && pr.startsWith(qp.slice(0,3))) score+=20;
-   else return -1;
+   const s=textScore(pr,qp,60,45,30);
+   if(s<0)return -1;score+=s;
  }
  if(qd){
    used++;
-   if(p.dob===qd) score+=70; else return -1;
+   if(dob===qd)score+=80;
+   else return -1;
  }
- return used?score:1;
+ return used?score:0;
 }
 function renderHomePatients(){
- const el=$('homePatientResults'); if(!el)return;
- const qn=norm($('searchNom')?.value), qp=norm($('searchPrenom')?.value), qd=$('searchDob')?.value||'';
+ const el=$('homePatientResults');if(!el)return;
+ let qn=norm($('searchNom')?.value),qp=norm($('searchPrenom')?.value),qd=$('searchDob')?.value||'';
 
  if(!qn&&!qp&&!qd){
    el.innerHTML='<div class="hint">Saisis un nom, un prénom ou une date de naissance pour rechercher une patiente.</div>';
    return;
  }
 
- const ranked=(db.patients||[])
+ let ranked=(db.patients||[])
    .map(p=>({p,score:patientMatchScore(p,qn,qp,qd)}))
-   .filter(x=>x.score>=0)
-   .sort((a,b)=>b.score-a.score);
+   .filter(x=>x.score>=0);
 
+ // Si rien n'est trouvé et qu'un seul champ contient plusieurs mots,
+ // on tente automatiquement une recherche globale "nom + prénom".
+ if(!ranked.length && qn && !qp){
+   const tokens=qn.split(/\s+/).filter(Boolean);
+   if(tokens.length>1){
+     ranked=(db.patients||[]).map(p=>{
+       const hay=norm(`${p.nom||''} ${p.prenom||''} ${p.name||''}`);
+       let score=0;
+       for(const token of tokens){
+         if(hay.includes(token)) score+=30;
+         else if(token.length>=3 && hay.includes(token.slice(0,3))) score+=15;
+         else return {p,score:-1};
+       }
+       return {p,score};
+     }).filter(x=>x.score>=0);
+   }
+ }
+
+ ranked.sort((a,b)=>b.score-a.score);
  el.innerHTML='';
+
  if(!ranked.length){
-   el.innerHTML='<div class="notice">Aucun dossier correspondant. Les informations saisies seront reprises si tu crées une nouvelle patiente.</div>';
+   el.innerHTML='<div class="notice">Aucun dossier correspondant. Essaie avec les 3 premières lettres du nom ou seulement la date de naissance.</div>';
    return;
  }
 
  ranked.slice(0,30).forEach(({p})=>{
-   const row=document.createElement('div');
-   row.className='search-result';
-
+   const row=document.createElement('div');row.className='search-result';
    const term=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
    const info=document.createElement('div');
-   info.innerHTML=`<div class="search-result-name">${esc(p.nom)} ${esc(p.prenom)}</div>
+   info.innerHTML=`<div class="search-result-name">${esc(p.nom||'')} ${esc(p.prenom||'')}</div>
      <div class="search-result-meta">${p.dob?'Née le '+fmtDate(p.dob):'Date de naissance non renseignée'}${term?' · '+term:''}</div>`;
-
    const btn=document.createElement('button');
-   btn.type='button';
-   btn.className='btn primary';
-   btn.textContent='Ouvrir le dossier';
+   btn.type='button';btn.className='btn primary';btn.textContent='Ouvrir le dossier';
    btn.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();selectPatient(p.id)};
-
-   row.appendChild(info);
-   row.appendChild(btn);
-   el.appendChild(row);
+   row.appendChild(info);row.appendChild(btn);el.appendChild(row);
  });
 }
 function renderDossier(){
