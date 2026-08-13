@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.3 locale</title>
+<title>Cabinet Sage-Femme — V2.5 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -155,7 +155,25 @@ textarea{resize:vertical}
             <div class="field"><label>Téléphone</label><input id="tel"></div>
             <div class="field"><label>Email</label><input id="email"></div>
           </div>
-          <div class="field"><label>Adresse</label><textarea id="adresse" rows="2"></textarea></div>
+          <h3>Adresse</h3>
+          <div class="row">
+            <div class="field"><label>N° et voie</label><input id="adresseVoie" placeholder="Ex. 12 rue des Lilas"></div>
+            <div class="field"><label>Complément d'adresse</label><input id="adresseComplement" placeholder="Bâtiment, appartement, lieu-dit…"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Code postal</label><input id="codePostal" inputmode="numeric" maxlength="5" placeholder="85000"></div>
+            <div class="field"><label>Ville</label><input id="ville" placeholder="La Roche-sur-Yon"></div>
+          </div>
+          <div class="hint">L'adresse reste stockée localement dans le navigateur. Un autocompléteur d'adresses pourra être ajouté plus tard si tu souhaites utiliser un service externe.</div>
+
+          <h3>Coparent</h3>
+          <div class="row3">
+            <div class="field"><label>Nom</label><input id="coparentNom"></div>
+            <div class="field"><label>Prénom</label><input id="coparentPrenom"></div>
+            <div class="field"><label>Téléphone</label><input id="coparentTel"></div>
+          </div>
+          <div class="field"><label>Commentaire coparent</label><textarea id="coparentCommentaire" rows="2" placeholder="Information utile concernant le coparent…"></textarea></div>
+
           <div class="field"><label>Groupe sanguin</label><input id="groupe"></div>
 
           <h3>Données anthropométriques</h3>
@@ -512,6 +530,21 @@ function migratePatient(raw,index){
  p.tel=p.tel||deepFind(p,['telephone','téléphone','phone','mobile','portable','numeroTelephone','numTel'])||'';
  p.email=p.email||deepFind(p,['mail','courriel','emailAddress'])||'';
  p.adresse=p.adresse||deepFind(p,['address','adressePostale','streetAddress','domicile'])||'';
+ p.adresseVoie=p.adresseVoie||deepFind(p,['adresseVoie','voie','street','streetAddress'])||'';
+ p.adresseComplement=p.adresseComplement||deepFind(p,['adresseComplement','complementAdresse','address2','apartment'])||'';
+ p.codePostal=p.codePostal||deepFind(p,['codePostal','postalCode','zip','zipcode'])||'';
+ p.ville=p.ville||deepFind(p,['ville','city','locality'])||'';
+ if(!p.adresseVoie && p.adresse){
+   // L'ancienne adresse complète est conservée dans le champ voie pour ne rien perdre.
+   p.adresseVoie=String(p.adresse).trim();
+ }
+ p.coparent=(p.coparent&&typeof p.coparent==='object')?p.coparent:{
+   nom:deepFind(p,['coparentNom','coParentNom','conjointNom','partnerLastName'])||'',
+   prenom:deepFind(p,['coparentPrenom','coParentPrenom','conjointPrenom','partnerFirstName'])||'',
+   tel:deepFind(p,['coparentTel','coParentTel','conjointTel','partnerPhone'])||'',
+   commentaire:deepFind(p,['coparentCommentaire','coParentCommentaire','conjointCommentaire','partnerComment'])||''
+ };
+ p.coparent.commentaire=p.coparent.commentaire||deepFind(p,['coparentCommentaire','coParentCommentaire','conjointCommentaire','partnerComment'])||'';
  p.groupe=p.groupe||deepFind(p,['groupeSanguin','bloodGroup','bloodgroup'])||'';
  p.taille=p.taille||deepFind(p,['taille','height','heightCm','tailleCm'])||'';
  p.poidsReference=p.poidsReference||deepFind(p,['poidsReference','poidsHabituel','poidsInitial','prePregnancyWeight','weight','poids'])||'';
@@ -584,6 +617,18 @@ function updateWeightGain(){
  const diff=current-ref;
  el.innerHTML=`Poids de référence : ${ref.toFixed(1)} kg — <b>prise de poids : ${diff>0?'+':''}${diff.toFixed(1)} kg</b>`;
 }
+
+function patientAddressText(p){
+ if(!p)return '';
+ const parts=[];
+ if(p.adresseVoie)parts.push(String(p.adresseVoie).trim());
+ if(p.adresseComplement)parts.push(String(p.adresseComplement).trim());
+ const city=[p.codePostal||'',p.ville||''].filter(Boolean).join(' ').trim();
+ if(city)parts.push(city);
+ if(!parts.length && p.adresse)parts.push(String(p.adresse).trim());
+ return parts.filter(Boolean).join('\n');
+}
+
 function renderActive(){
  const p=active(),term=p?.pregnancy?.ddg?termFrom(p.pregnancy.ddg):'';
  $('sidebarPatientName').textContent=p?`${p.nom} ${p.prenom}`.trim():'Aucune patiente';
@@ -655,12 +700,16 @@ function startNewPatientFromSearch(){
  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$('patientEdit').classList.add('active');$('pageTitle').textContent='Informations patiente';
 }
 function clearPatientForm(){
- ['nom','prenom','dob','tel','email','adresse','groupe','taille','poidsReference','imc','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux','alertNote'].forEach(id=>$(id).value='');
+ ['nom','prenom','dob','tel','email','adresseVoie','adresseComplement','codePostal','ville','coparentNom','coparentPrenom','coparentTel','coparentCommentaire','groupe','taille','poidsReference','imc','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux','alertNote'].forEach(id=>$(id).value='');
  $('alertEnabled').checked=false;surgeryDraft=[];pregHistoryDraft=[];renderSurgeryList();renderPregHistory()
 }
 function loadPatientForm(p=active()){
  if(!p)return;
- ['nom','prenom','dob','tel','email','adresse','groupe','taille','poidsReference','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux'].forEach(id=>$(id).value=p[id]||'');
+ ['nom','prenom','dob','tel','email','adresseVoie','adresseComplement','codePostal','ville','groupe','taille','poidsReference','allergies','atcdMedicaux','gestite','parite','atcdObst','atcdGyneco','atcdFamiliaux'].forEach(id=>$(id).value=p[id]||'');
+ $('coparentNom').value=p.coparent?.nom||'';
+ $('coparentPrenom').value=p.coparent?.prenom||'';
+ $('coparentTel').value=p.coparent?.tel||'';
+ $('coparentCommentaire').value=p.coparent?.commentaire||'';
  updatePatientBmi();
  $('alertNote').value=p.alertNote?.text||'';
  $('alertEnabled').checked=!!p.alertNote?.enabled;
@@ -672,20 +721,54 @@ function loadPatientForm(p=active()){
 function savePatient(){
  const nom=$('nom').value.trim().toUpperCase(),prenom=$('prenom').value.trim(),dob=parseDateAny($('dob').value);
  if(!nom||!prenom||!dob){showToast('Nom, prénom et date de naissance sont nécessaires');return}
+
  let p=active(),isNew=!p;
  if(!p)p=migratePatient({id:uid('pat')});
+
+ const adresseVoie=$('adresseVoie').value.trim();
+ const adresseComplement=$('adresseComplement').value.trim();
+ const codePostal=$('codePostal').value.trim();
+ const ville=$('ville').value.trim();
+
  Object.assign(p,{
    nom,prenom,dob,
-   tel:$('tel').value.trim(),email:$('email').value.trim(),adresse:$('adresse').value.trim(),groupe:$('groupe').value.trim(),
-   taille:$('taille').value.trim(),poidsReference:$('poidsReference').value.trim(),
-   allergies:$('allergies').value.trim(),atcdMedicaux:$('atcdMedicaux').value.trim(),
-   atcdChirurgicaux:[...surgeryDraft],gestite:$('gestite').value.trim(),parite:$('parite').value.trim(),
-   pregnancyHistory:JSON.parse(JSON.stringify(pregHistoryDraft)),atcdObst:$('atcdObst').value.trim(),
-   atcdGyneco:$('atcdGyneco').value.trim(),atcdFamiliaux:$('atcdFamiliaux').value.trim(),
+   tel:$('tel').value.trim(),
+   email:$('email').value.trim(),
+   adresseVoie,
+   adresseComplement,
+   codePostal,
+   ville,
+   // Compatibilité avec les anciennes fonctions/exports :
+   adresse:[adresseVoie,adresseComplement,[codePostal,ville].filter(Boolean).join(' ')].filter(Boolean).join('\n'),
+   coparent:{
+     nom:$('coparentNom').value.trim().toUpperCase(),
+     prenom:$('coparentPrenom').value.trim(),
+     tel:$('coparentTel').value.trim(),
+     commentaire:$('coparentCommentaire').value.trim()
+   },
+   groupe:$('groupe').value.trim(),
+   taille:$('taille').value.trim(),
+   poidsReference:$('poidsReference').value.trim(),
+   allergies:$('allergies').value.trim(),
+   atcdMedicaux:$('atcdMedicaux').value.trim(),
+   atcdChirurgicaux:[...surgeryDraft],
+   gestite:$('gestite').value.trim(),
+   parite:$('parite').value.trim(),
+   pregnancyHistory:JSON.parse(JSON.stringify(pregHistoryDraft)),
+   atcdObst:$('atcdObst').value.trim(),
+   atcdGyneco:$('atcdGyneco').value.trim(),
+   atcdFamiliaux:$('atcdFamiliaux').value.trim(),
    alertNote:{text:$('alertNote').value.trim(),enabled:$('alertEnabled').checked}
  });
+
  if(isNew)db.patients.unshift(p);
- db.activeId=p.id;persist();updateLocalCount();renderActive();renderDossier();go('dossier');showToast('Dossier patiente enregistré');
+ db.activeId=p.id;
+ persist();
+ updateLocalCount();
+ renderActive();
+ renderDossier();
+ go('dossier');
+ showToast('Dossier patiente enregistré');
 }
 function addSurgery(){const v=$('surgeryInput').value.trim();if(!v)return;surgeryDraft.push(v);$('surgeryInput').value='';renderSurgeryList();showToast('Antécédent chirurgical ajouté')}
 function renderSurgeryList(){
@@ -740,9 +823,13 @@ function renderDossier(){
    : 'Aucune grossesse enregistrée.';
 
  const contact=[];
- if(p.adresse)contact.push(`<div><b>Adresse :</b><br>${esc(p.adresse).replace(/\n/g,'<br>')}</div>`);
+ const addr=patientAddressText(p);
+ if(addr)contact.push(`<div><b>Adresse :</b><br>${esc(addr).replace(/\n/g,'<br>')}</div>`);
  if(p.tel)contact.push(`<div><b>Téléphone :</b> ${esc(p.tel)}</div>`);
  if(p.email)contact.push(`<div><b>Email :</b> ${esc(p.email)}</div>`);
+ if(p.coparent && (p.coparent.nom||p.coparent.prenom||p.coparent.tel||p.coparent.commentaire)){
+   contact.push(`<div><b>Coparent :</b><br>${esc([p.coparent.nom,p.coparent.prenom].filter(Boolean).join(' '))}${p.coparent.tel?'<br>Tél. '+esc(p.coparent.tel):''}${p.coparent.commentaire?'<br><b>Commentaire :</b> '+esc(p.coparent.commentaire):''}</div>`);
+ }
  if(p.groupe)contact.push(`<div><b>Groupe sanguin :</b> ${esc(p.groupe)}</div>`);
  if(p.taille)contact.push(`<div><b>Taille :</b> ${esc(p.taille)} cm</div>`);
  if(p.poidsReference)contact.push(`<div><b>Poids de référence :</b> ${esc(p.poidsReference)} kg</div>`);
@@ -937,7 +1024,7 @@ const RX_TEMPLATES={
 };
 function addRxLine(text=''){const row=document.createElement('div');row.className='file-row';const i=document.createElement('input');i.value=text;const b=document.createElement('button');b.type='button';b.className='btn danger';b.textContent='×';b.onclick=()=>row.remove();row.append(i,b);$('rxLines').appendChild(row)}
 function applyRxTemplate(){$('rxLines').innerHTML='';(RX_TEMPLATES[$('rxTemplate').value]||[]).forEach(addRxLine);if(!$('rxLines').children.length)addRxLine()}
-function prescriptionHtml(rec,p){return `<div class="barcode-wrap"><b>PRESCRIPTEUR : ${CABINET.name}</b><br>N° RPPS : <b>${CABINET.rpps}</b><br><svg class="rppsBarcode"></svg></div><h3>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h3>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}<div style="margin-top:28px">${rec.lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>${signatureBlock()}`}
+function prescriptionHtml(rec,p){return `<div class="barcode-wrap"><b>PRESCRIPTEUR : ${CABINET.name}</b><br>N° RPPS : <b>${CABINET.rpps}</b><br><svg class="rppsBarcode"></svg></div><h3>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h3>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${patientAddressText(p)?'<p>'+esc(patientAddressText(p)).replace(/\n/g,'<br>')+'</p>':''}<div style="margin-top:28px">${rec.lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>${signatureBlock()}`}
 function savePrescription(title,lines,extra={}){const p=active(),rec={id:uid('rx'),recordType:'prescription',title,date:today(),lines:[...lines],createdAt:new Date().toISOString(),...extra};p.prescriptions.unshift(rec);p.history.unshift({id:rec.id,recordType:'prescription',type:title,date:rec.date,summary:rec.lines.join(' ; '),snapshot:JSON.parse(JSON.stringify(rec))});persist();renderHistory();renderDossier();showToast('Ordonnance enregistrée au dossier');return rec}
 function printRx(){const lines=[...$('rxLines').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);if(!lines.length){showToast('Ordonnance vide');return}const rec=savePrescription('Ordonnance',lines);printHtmlDocument('Ordonnance',prescriptionHtml(rec,active()))}
 
@@ -961,7 +1048,7 @@ function renderExtraEchoList(){$('extraEchoList').innerHTML='';(active()?.extraE
 function printT1Markers(){const t=currentT1();if(!t.ddg){showToast('Renseigne la DDG');return}const w=markerWindow(t.ddg),line=`Marqueurs sériques maternels du 1er trimestre (PAPP-A et sous-unité β libre de l’hCG), prélèvement entre le ${fmtDate(w.start)} et le ${fmtDate(w.end)}.`;const rec=savePrescription('Ordonnance marqueurs sériques T1',[line],{kind:'t1_markers'});printHtmlDocument('Ordonnance',prescriptionHtml(rec,active()))}
 function consentCopy(label,t,compact=false){
  const p=active(),w=markerWindow(t.ddg),term=t.date?termFrom(t.ddg,t.date):'—';
- return `<div class="${compact?'consent-compact':''} avoid-break"><h2 style="text-align:center">ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b><br>${esc(label)}</p><h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d'agrément :</b> ${esc(t.echoApproval||'—')}</p><h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp; <b>Adresse :</b> ${esc(p.adresse||'—')}</p><h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3><p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br><b>Date de l'échographie T1 :</b> ${t.date?fmtDate(t.date):'—'} &nbsp; <b>Terme à l'échographie T1 :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p><h3>INFORMATION ET CONSENTEMENT</h3><p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p><p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d'estimer un risque mais ne permet pas à lui seul d'établir un diagnostic.</p><p>J'ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p><p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p><div style="display:flex;justify-content:space-between;margin-top:22px"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>${CABINET.profession}<br><br>Signature / tampon</div></div></div>`
+ return `<div class="${compact?'consent-compact':''} avoid-break"><h2 style="text-align:center">ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b><br>${esc(label)}</p><h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d'agrément :</b> ${esc(t.echoApproval||'—')}</p><h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp; <b>Adresse :</b> ${esc(patientAddressText(p)||'—')}</p><h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3><p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br><b>Date de l'échographie T1 :</b> ${t.date?fmtDate(t.date):'—'} &nbsp; <b>Terme à l'échographie T1 :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p><h3>INFORMATION ET CONSENTEMENT</h3><p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p><p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d'estimer un risque mais ne permet pas à lui seul d'établir un diagnostic.</p><p>J'ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p><p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p><div style="display:flex;justify-content:space-between;margin-top:22px"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>${CABINET.profession}<br><br>Signature / tampon</div></div></div>`
 }
 
 function printConsentDocument(body){
@@ -990,7 +1077,8 @@ function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=bo
 function closeRecordModal(){$('recordModal').classList.remove('show')}
 function printOpenedRecord(){closeRecordModal();setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80)}
 function printFullHistory(){
- const p=active();let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob):''}${p.adresse?'<br>'+esc(p.adresse):''}${p.tel?'<br>Tél. '+esc(p.tel):''}</p>`;
+ const p=active();let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob):''}${patientAddressText(p)?'<br>'+esc(patientAddressText(p)).replace(/\n/g,'<br>'):''}${p.tel?'<br>Tél. '+esc(p.tel):''}</p>`;
+ if(p.coparent && (p.coparent.nom||p.coparent.prenom||p.coparent.tel||p.coparent.commentaire))body+=`<p><b>Coparent :</b> ${esc([p.coparent.nom,p.coparent.prenom].filter(Boolean).join(' '))}${p.coparent.tel?' — '+esc(p.coparent.tel):''}${p.coparent.commentaire?'<br><b>Commentaire :</b> '+esc(p.coparent.commentaire):''}</p>`;
  if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${fmtDate(calcDpa(p.pregnancy.ddg))} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p>`;
  body+=`<h2>Données anthropométriques</h2><p><b>Taille :</b> ${p.taille?esc(p.taille)+' cm':'—'}<br><b>Poids de référence :</b> ${p.poidsReference?esc(p.poidsReference)+' kg':'—'}<br><b>IMC :</b> ${calcBmi(p.poidsReference,p.taille)||'—'}</p>`; body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
  if(p.pregnancyHistory?.length){body+='<h3>Grossesses antérieures</h3>';p.pregnancyHistory.forEach(x=>body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.healthy?' — Enfant en bonne santé : '+esc(x.healthy):''}${x.childComment?'<br>'+esc(x.childComment):''}${x.complication?'<br>'+esc(x.complication):''}</p>`)}
@@ -1008,7 +1096,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.3',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.5',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
