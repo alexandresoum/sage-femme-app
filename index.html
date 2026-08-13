@@ -393,7 +393,7 @@ body:not(.has-patient) #patientTop{display:none}
           <div class="actions">
             <button class="btn primary" onclick="saveConsult()">Enregistrer la consultation</button>
             <button class="btn soft" onclick="printConsult()">Compte rendu / PDF</button>
-            <button class="btn secondary" onclick="go('rx')">Créer une ordonnance</button>
+            <button class="btn secondary" onclick="leaveConsultationForPrescription()">Créer une ordonnance</button>
           </div>
         </div>
 
@@ -418,7 +418,7 @@ body:not(.has-patient) #patientTop{display:none}
             </select>
           </div>
           <div class="rx-list" id="rxList"></div>
-          <div class="actions">
+          <div class="actions"><button id="returnConsultBtn" class="btn secondary" type="button" onclick="returnToActiveConsultation()" style="display:none">← Retour à la consultation</button>
             <button class="btn secondary" onclick="addRxLine()">+ Ajouter une ligne</button>
             <button class="btn soft" onclick="printRx()">Imprimer / PDF</button>
           </div>
@@ -524,6 +524,8 @@ const KEY='sf_local_v1';
 let db = JSON.parse(localStorage.getItem(KEY) || '{"patients":[],"activeId":null,"echographists":[]}');
 db.echographists=db.echographists||[];
 db.patients=db.patients||[];
+let activeConsultDraft=null;
+let returningToConsultation=false;
 const $=id=>document.getElementById(id);
 const today=()=>new Date().toISOString().slice(0,10);
 $('csDate').value=today();
@@ -565,7 +567,8 @@ function go(id){
  if(id==='consult') hydrateConsultTerm();
  if(id==='history') renderHistory();
  if(id==='echos') loadEchoForm();
- if(id==='bilans') renderBilans();showToast('PDF ajouté au dossier');
+ if(id==='bilans') renderBilans();
+ const back=$('returnConsultBtn'); if(back) back.style.display=(id==='rx'&&activeConsultDraft)?'inline-block':'none';showToast('PDF ajouté au dossier');
  if(id==='dossier') renderDossier();
  if(id==='home') renderHomePatients();
 }
@@ -937,6 +940,37 @@ function startNewConsultation(){
  showToast('Nouvelle consultation prête');
 }
 
+
+function captureConsultDraft(){
+ if(!$('consultType'))return null;
+ return consultationObject();
+}
+function restoreConsultDraft(d){
+ if(!d)return;
+ if($('consultType'))$('consultType').value=d.consultType||'obstetrique';
+ if($('csDate'))$('csDate').value=d.date||today();
+ if($('motif'))$('motif').value=d.motif||'';
+ if($('csTerm'))$('csTerm').value=d.term||'';
+ ['ta','poids','hu','bcf','bu','notes'].forEach(id=>{if($(id))$(id).value=d[id]||'';});
+ if($('oedemes'))$('oedemes').value=d.oedemes||'Non';
+ document.querySelectorAll('#interChecks input[type="checkbox"]').forEach(x=>x.checked=(d.inter||[]).includes(x.value));
+ document.querySelectorAll('#catChecks input[type="checkbox"]').forEach(x=>x.checked=(d.cat||[]).includes(x.value));
+ updateConsultMode();
+ updateConsultPreview();
+}
+function leaveConsultationForPrescription(){
+ activeConsultDraft=captureConsultDraft();
+ returningToConsultation=true;
+ go('rx');
+ showToast('Consultation conservée pendant l’ordonnance');
+}
+function returnToActiveConsultation(){
+ go('consult');
+ restoreConsultDraft(activeConsultDraft);
+ returningToConsultation=false;
+ showToast('Retour à la consultation active');
+}
+
 function updateConsultMode(){
  const mode=$('consultType')?.value||'obstetrique';
  document.querySelectorAll('.obst-only').forEach(el=>el.style.display=mode==='obstetrique'?'':'none');
@@ -1012,9 +1046,12 @@ function saveConsult(){
  });
 
  localStorage.setItem(KEY,JSON.stringify(db));
+ activeConsultDraft=null;
+ returningToConsultation=false;
  renderHistory();
  renderDossier();
  showToast('Consultation enregistrée');
+ setTimeout(()=>resetConsultationForm(),120);
 }
 function consultationHtml(c,p){
  const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
@@ -1051,11 +1088,47 @@ function addRxLineText(text=''){
  div.innerHTML=`<input type="text" value="${attr(text)}" placeholder="Prescription"><button class="btn danger" onclick="this.parentElement.remove()">×</button>`;
  $('rxList').appendChild(div);
 }
+
+function savePrescriptionRecord(title,lines,extra={}){
+ const p=active(); if(!p)return null;
+ p.prescriptions=p.prescriptions||[];
+ p.history=p.history||[];
+ const id=crypto.randomUUID?crypto.randomUUID():'rx_'+Date.now()+'_'+Math.random().toString(16).slice(2);
+ const rec={
+   id,
+   recordType:'prescription',
+   title:title||'Ordonnance',
+   date:today(),
+   lines:[...(lines||[])],
+   createdAt:new Date().toISOString(),
+   ...extra
+ };
+ p.prescriptions.unshift(rec);
+ p.history.unshift({
+   id,
+   recordType:'prescription',
+   type:rec.title,
+   date:rec.date,
+   summary:(rec.lines||[]).join(' ; '),
+   snapshot:JSON.parse(JSON.stringify(rec))
+ });
+ localStorage.setItem(KEY,JSON.stringify(db));
+ renderHistory(); renderDossier();
+ showToast('Ordonnance enregistrée au dossier');
+ return rec;
+}
+function prescriptionHtml(rec,p){
+ return prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}
+ <div style="margin-top:30px">${(rec.lines||[]).map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
+ <br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
+}
+
 function printRx(){
- const p=active();if(!p){alert('Sélectionne une patiente.');return}
+ const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
  const lines=[...$('rxList').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
- const body=prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}<div style="margin-top:30px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div><br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
- printHtmlDocument('Ordonnance',body);
+ if(!lines.length){showToast('Ordonnance vide');return}
+ const rec=savePrescriptionRecord('Ordonnance',lines);
+ printHtmlDocument('Ordonnance',prescriptionHtml(rec,p));
 }
 
 function ensureEchoData(){
@@ -1135,13 +1208,13 @@ function renderExtraEchos(){
  if(!(p.extraEchos||[]).length)el.innerHTML='<div class="hint">Aucune échographie supplémentaire.</div>';
 }
 function printT1Markers(){
- const p=active();if(!p)return;const t1=p.echos?.t1||{},ddg=t1.ddg||p.pregnancy?.ddg;if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
+ const p=active();if(!p)return;
+ const t1=p.echos?.t1||{},ddg=t1.ddg||p.pregnancy?.ddg;
+ if(!ddg){showToast('Renseigne et enregistre la DDG/T1');return}
  const w=markerWindow(ddg);
- const body=prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse):''}</p>
- <p>Date de début de grossesse : <strong>${fmtDate(ddg)}</strong><br>DPA : <strong>${calcDpaText(ddg)}</strong></p>
- <h2>Prescription — marqueurs sériques maternels de la trisomie 21</h2><p>Faire pratiquer un prélèvement sanguin pour le dosage des marqueurs sériques du premier trimestre (PAPP-A et sous-unité β libre de l’hCG), entre le <strong>${fmtDate(w.start)}</strong> et le <strong>${fmtDate(w.end)}</strong>.</p>
- <p style="text-align:right;margin-top:60px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
- printHtmlDocument('Ordonnance',body);
+ const line=`Marqueurs sériques maternels du 1er trimestre (PAPP-A et sous-unité β libre de l’hCG), prélèvement entre le ${fmtDate(w.start)} et le ${fmtDate(w.end)}.`;
+ const rec=savePrescriptionRecord('Ordonnance marqueurs sériques T1',[line],{kind:'t1_markers',ddg,window:w});
+ printHtmlDocument('Ordonnance',prescriptionHtml(rec,p));
 }
 function printT1ConsentLab(){
  const p=active();if(!p)return;
@@ -1195,7 +1268,7 @@ function printT1ConsentLab(){
  <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></section>`;
 
  const firstPage=`<div class="consent-page-one">
-   ${copy('Exemplaire patiente',true)}
+   ${copy('Exemplaire patiente',false)}
    <div class="lab-inline">
      <h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3>
      <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
@@ -1213,7 +1286,12 @@ function printT1ConsentLab(){
 
  const body=`<style>
  @media print{
-   .consent-page-one{page-break-after:always;break-after:page}
+   .consent-page-one{page-break-after:always;break-after:page;font-size:11.5px;line-height:1.28}
+   .consent-page-one .consent-copy h2{font-size:18px;margin:4px 0}
+   .consent-page-one .consent-copy h3{font-size:12.5px;margin:7px 0 3px}
+   .consent-page-one .consent-copy p{margin:4px 0}
+   .consent-page-one .lab-inline{font-size:10.5px}
+   .consent-page-one .lab-inline h3{font-size:12.5px}
    .two-copies-page{page-break-before:auto;break-before:auto}
    .consent-copy.compact{font-size:9px;line-height:1.12;margin:0;padding:0 0 4mm 0}
    .consent-copy.compact h2{font-size:14px;margin:2px 0}
@@ -1240,7 +1318,14 @@ function openHistoryRecord(index){
    }
  }
 
- // Echo T1: reopen a meaningful summary if available
+ if(h.recordType==='prescription'){
+   const rec=h.snapshot || (p.prescriptions||[]).find(x=>x.id===h.id);
+   if(rec){
+     openRecordModal(rec.title||'Ordonnance',prescriptionHtml(rec,p));
+     return;
+   }
+ }
+
  if((h.type||'').includes('T1') && p.echos?.t1){
    const e=p.echos.t1;
    const term=e.ddg&&e.date?termFrom(e.ddg,e.date):'';
