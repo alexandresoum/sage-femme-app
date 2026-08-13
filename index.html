@@ -278,7 +278,7 @@ body:not(.has-patient) #patientTop{display:none}
               <option value="Amygdalectomie"><option value="Hernie inguinale"><option value="Arthroscopie">
               <option value="Coelioscopie"><option value="Hystéroscopie"><option value="Curetage / aspiration">
             </datalist>
-            <div class="actions"><button class="btn secondary" onclick="addSurgery()">+ Ajouter</button></div>
+            <div class="actions"><button class="btn secondary" type="button" onclick="addSurgery()">+ Ajouter</button></div>
             <div id="surgeryChips" style="margin-top:8px"></div>
           </div>
 
@@ -430,9 +430,9 @@ body:not(.has-patient) #patientTop{display:none}
           </div>
           </div><div class="field" style="margin-top:12px"><label>Notes libres</label><textarea id="notes" rows="4"></textarea></div>
           <div class="actions">
-            <button class="btn primary" onclick="saveConsult()">Enregistrer la consultation</button>
-            <button class="btn soft" onclick="printConsult()">Compte rendu / PDF</button>
-            <button class="btn secondary" onclick="leaveConsultationForPrescription()">Créer une ordonnance</button>
+            <button class="btn primary" type="button" onclick="saveConsult()">Enregistrer la consultation</button>
+            <button class="btn soft" type="button" onclick="printConsult()">Compte rendu / PDF</button>
+            <button class="btn secondary" type="button" onclick="leaveConsultationForPrescription()">Créer une ordonnance</button>
           </div>
         </div>
 
@@ -459,7 +459,7 @@ body:not(.has-patient) #patientTop{display:none}
           <div class="rx-list" id="rxList"></div>
           <div class="actions"><button id="returnConsultBtn" class="btn secondary" type="button" onclick="returnToActiveConsultation()" style="display:none">← Retour à la consultation</button>
             <button class="btn secondary" onclick="addRxLine()">+ Ajouter une ligne</button>
-            <button class="btn soft" onclick="printRx()">Imprimer / PDF</button>
+            <button class="btn soft" type="button" onclick="printRx()">Imprimer / PDF</button>
           </div>
           <div class="notice" style="margin-top:14px">Les modèles de prescriptions sont volontairement génériques dans cette V1. Ils devront être validés et personnalisés par la sage-femme avant toute utilisation réelle.</div>
         </div>
@@ -722,7 +722,7 @@ function go(id){
  if(id==='history') renderHistory();
  if(id==='echos') loadEchoForm();
  if(id==='bilans') renderBilans();
- const back=$('returnConsultBtn'); if(back) back.style.display=(id==='rx'&&activeConsultDraft)?'inline-block':'none';showToast('PDF ajouté au dossier');
+ const back=$('returnConsultBtn'); if(back) back.style.display=(id==='rx'&&activeConsultDraft)?'inline-block':'none';
  if(id==='dossier') renderDossier();
  if(id==='home') renderHomePatients();
 }
@@ -790,116 +790,70 @@ function savePatient(){
  showToast('Dossier patiente enregistré');
 }
 function addSurgery(){
- const el=$('atcdChirInput');
- const v=el?.value.trim()||'';
- if(!v)return;
- if(!surgeryDraft.some(x=>norm(x)===norm(v))) surgeryDraft.push(v);
- el.value='';
- renderSurgeryChips();
- showToast('Antécédent chirurgical ajouté');
+ const el=$('atcdChirInput');const v=el?.value.trim()||'';if(!v)return;
+ if(!surgeryDraft.some(x=>norm(x)===norm(v)))surgeryDraft.push(v);
+ el.value='';renderSurgeryChips();persistAntecedentDrafts();showToast('Antécédent chirurgical ajouté');
 }
 function addSurgeryOnEnter(e){if(e.key==='Enter'){e.preventDefault();addSurgery()}}
 function removeSurgery(i){
- surgeryDraft.splice(i,1);
- renderSurgeryChips();
- showToast('Antécédent chirurgical supprimé');
+ surgeryDraft.splice(i,1);renderSurgeryChips();persistAntecedentDrafts();showToast('Antécédent chirurgical supprimé');
 }
 function renderSurgeryChips(){
- const el=$('surgeryChips'); if(!el)return;
+ const el=$('surgeryChips');if(!el)return;
  el.innerHTML='';
- if(!surgeryDraft.length){
-   el.innerHTML='<div class="hint">Aucun antécédent chirurgical renseigné.</div>';
-   return;
- }
- surgeryDraft.forEach((x,i)=>{
-   const row=document.createElement('div');
-   row.className='file-row';
-   row.innerHTML=`<input value="${attr(x)}" style="flex:1" onchange="editSurgery(${i},this.value)">
-     <button class="btn danger" type="button" onclick="removeSurgery(${i})">Supprimer</button>`;
-   el.appendChild(row);
+ if(!surgeryDraft.length){el.innerHTML='<div class="hint">Aucun antécédent chirurgical renseigné.</div>';return}
+ surgeryDraft.forEach((value,i)=>{
+   const row=document.createElement('div');row.className='file-row';
+   const input=document.createElement('input');input.value=value||'';input.style.flex='1';
+   input.onchange=()=>editSurgery(i,input.value);
+   const del=document.createElement('button');del.type='button';del.className='btn danger';del.textContent='Supprimer';del.onclick=()=>removeSurgery(i);
+   row.appendChild(input);row.appendChild(del);el.appendChild(row);
  });
 }
 function editSurgery(i,value){
- surgeryDraft[i]=(value||'').trim();
- renderSurgeryChips();
+ surgeryDraft[i]=(value||'').trim();persistAntecedentDrafts();
 }
+
+function persistAntecedentDrafts(){
+ const p=active();if(!p)return;
+ p.atcdChirurgicaux=[...surgeryDraft];
+ p.pregnancyHistory=JSON.parse(JSON.stringify(pregnancyHistoryDraft));
+ localStorage.setItem(KEY,JSON.stringify(db));
+}
+function editPregnancyHistoryPopup(i){
+ const x=pregnancyHistoryDraft[i];if(!x)return;
+ const outcome=prompt('Issue de la grossesse',x.outcome||'');if(outcome===null)return;
+ const term=prompt('Terme',x.term||'');if(term===null)return;
+ const complication=prompt('Complications / commentaires',x.complication||'');if(complication===null)return;
+ x.outcome=outcome.trim();x.term=term.trim();x.complication=complication.trim();
+ persistAntecedentDrafts();renderPregnancyHistory();showToast('Grossesse antérieure modifiée');
+}
+
 function addPregnancyHistory(){
- const outcome=$('pregOutcome').value;
- if(!outcome){alert('Choisis l’issue de la grossesse.');return}
+ const outcome=$('pregOutcome')?.value||'';if(!outcome){showToast('Choisis l’issue de la grossesse');return}
  const item={
-   id:(crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now()+'_'+Math.random().toString(16).slice(2)),
-   outcome,
-   date:$('pregDate').value,
-   term:$('pregTerm').value.trim(),
-   weight:$('pregWeight').value,
-   sex:$('pregSex').value,
-   delivery:$('pregDelivery').value,
-   healthy:$('pregHealthy')?.value||'',
-   childComment:$('pregChildComment')?.value.trim()||'',
-   complication:$('pregComplication').value.trim()
+   id:crypto.randomUUID?crypto.randomUUID():'preg_'+Date.now(),
+   outcome,date:$('pregDate')?.value||'',term:$('pregTerm')?.value.trim()||'',
+   weight:$('pregWeight')?.value||'',sex:$('pregSex')?.value||'',delivery:$('pregDelivery')?.value||'',
+   healthy:$('pregHealthy')?.value||'',childComment:$('pregChildComment')?.value.trim()||'',complication:$('pregComplication')?.value.trim()||''
  };
  pregnancyHistoryDraft.push(item);
- ['pregOutcome','pregDate','pregTerm','pregWeight','pregSex','pregDelivery','pregHealthy','pregChildComment','pregComplication'].forEach(id=>$(id).value='');
- renderPregnancyHistory();
-
- showToast('Grossesse antérieure ajoutée');
+ ['pregOutcome','pregDate','pregTerm','pregWeight','pregSex','pregDelivery','pregHealthy','pregChildComment','pregComplication'].forEach(id=>{if($(id))$(id).value=''});
+ renderPregnancyHistory();persistAntecedentDrafts();showToast('Grossesse antérieure ajoutée');
 }
 function removePregnancyHistory(i){
- pregnancyHistoryDraft.splice(i,1);
- renderPregnancyHistory();
- showToast('Grossesse antérieure supprimée');
+ pregnancyHistoryDraft.splice(i,1);renderPregnancyHistory();persistAntecedentDrafts();showToast('Grossesse antérieure supprimée');
 }
 function renderPregnancyHistory(){
- const el=$('pregnancyHistoryList'); if(!el)return;
+ const el=$('pregnancyHistoryList');if(!el)return;
  el.innerHTML='';
- if(!pregnancyHistoryDraft.length){
-   el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>';
-   return;
- }
-
+ if(!pregnancyHistoryDraft.length){el.innerHTML='<div class="hint">Aucune grossesse antérieure détaillée.</div>';return}
  pregnancyHistoryDraft.forEach((x,i)=>{
-   const row=document.createElement('div');
-   row.className='echo-card';
-
-   row.innerHTML=`
-   <div class="row3">
-     <div class="field"><label>Issue</label>
-       <select onchange="editPregnancyHistory(${i},'outcome',this.value)">
-         ${['Naissance vivante','FCS','GEU','IVG','IMG','MFIU'].map(v=>`<option ${x.outcome===v?'selected':''}>${v}</option>`).join('')}
-       </select>
-     </div>
-     <div class="field"><label>Date</label><input type="date" value="${attr(x.date||'')}" onchange="editPregnancyHistory(${i},'date',this.value)"></div>
-     <div class="field"><label>Terme</label><input value="${attr(x.term||'')}" onchange="editPregnancyHistory(${i},'term',this.value)"></div>
-   </div>
-
-   <div class="row3">
-     <div class="field"><label>Poids (g)</label><input type="number" value="${attr(x.weight||'')}" onchange="editPregnancyHistory(${i},'weight',this.value)"></div>
-     <div class="field"><label>Sexe</label>
-       <select onchange="editPregnancyHistory(${i},'sex',this.value)">
-         ${['','Fille','Garçon','Indéterminé / non applicable'].map(v=>`<option value="${attr(v)}" ${x.sex===v?'selected':''}>${v||'—'}</option>`).join('')}
-       </select>
-     </div>
-     <div class="field"><label>Voie d’accouchement</label>
-       <select onchange="editPregnancyHistory(${i},'delivery',this.value)">
-         ${['','Voie basse spontanée','Voie basse instrumentale','Césarienne programmée','Césarienne en urgence','Non applicable'].map(v=>`<option value="${attr(v)}" ${x.delivery===v?'selected':''}>${v||'—'}</option>`).join('')}
-       </select>
-     </div>
-   </div>
-
-   <div class="row">
-     <div class="field"><label>Enfant en bonne santé</label>
-       <select onchange="editPregnancyHistory(${i},'healthy',this.value)">
-         ${['','Oui','Non','Non applicable'].map(v=>`<option value="${attr(v)}" ${x.healthy===v?'selected':''}>${v||'—'}</option>`).join('')}
-       </select>
-     </div>
-     <div class="field"><label>Commentaire sur l’enfant</label><input value="${attr(x.childComment||'')}" onchange="editPregnancyHistory(${i},'childComment',this.value)"></div>
-   </div>
-
-   <div class="field"><label>Complications / commentaires grossesse</label>
-     <textarea rows="2" onchange="editPregnancyHistory(${i},'complication',this.value)">${esc(x.complication||'')}</textarea>
-   </div>
-
-   <div class="actions"><button class="btn danger" type="button" onclick="removePregnancyHistory(${i})">Supprimer cette grossesse</button></div>`;
+   const row=document.createElement('div');row.className='echo-card';
+   row.innerHTML=`<strong>${esc(x.outcome||'Grossesse')}</strong>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term):''}
+   <div class="file-meta">${x.weight?esc(x.weight)+' g · ':''}${esc(x.sex||'')}${x.delivery?' · '+esc(x.delivery):''}${x.healthy?' · Enfant en bonne santé : '+esc(x.healthy):''}</div>
+   ${x.childComment?'<div><b>Enfant :</b> '+esc(x.childComment)+'</div>':''}${x.complication?'<div>'+esc(x.complication)+'</div>':''}
+   <div class="actions"><button class="btn secondary" type="button" onclick="editPregnancyHistoryPopup(${i})">Modifier</button><button class="btn danger" type="button" onclick="removePregnancyHistory(${i})">Supprimer</button></div>`;
    el.appendChild(row);
  });
 }
@@ -1319,6 +1273,178 @@ function termFrom(ddg,date=new Date()){
  const w=Math.floor(pregnancyDays/7),days=pregnancyDays%7;
  return `${w} SA + ${days} j`;
 }
+
+function hydrateConsultTerm(){syncConsultTerm()}
+function syncConsultTerm(){
+ const p=active();
+ const ddg=p?.pregnancy?.ddg || $('ddg')?.value || '';
+ const csDate=$('csDate')?.value||today();
+ if($('csTerm'))$('csTerm').value=ddg?termFrom(ddg,csDate):'';
+ updateConsultPreview();
+}
+function checkedText(container){
+ const el=$(container);if(!el)return[];
+ return [...el.querySelectorAll('input:checked')].map(x=>x.value);
+}
+function updateConsultMode(){
+ const mode=$('consultType')?.value||'obstetrique';
+ document.querySelectorAll('.obst-only').forEach(el=>el.style.display=mode==='obstetrique'?'':'none');
+ if(mode==='obstetrique'){
+   syncConsultTerm();
+   if(!$('motif')?.value || $('motif').value==='Consultation gynécologique')$('motif').value='Suivi de grossesse';
+ }else if(mode==='gynecologie'){
+   if($('csTerm'))$('csTerm').value='';
+   if(!$('motif')?.value || ['Suivi mensuel de grossesse','Suivi de grossesse'].includes($('motif').value))$('motif').value='Consultation gynécologique';
+ }else{
+   if($('csTerm'))$('csTerm').value='';
+ }
+ updateConsultPreview();
+}
+function consultationObject(){
+ const mode=$('consultType')?.value||'obstetrique';
+ return {
+   type:'Consultation',
+   consultType:mode,
+   date:$('csDate')?.value||today(),
+   term:mode==='obstetrique'?($('csTerm')?.value||''):'',
+   motif:$('motif')?.value||'',
+   inter:mode==='obstetrique'?checkedText('interChecks'):[],
+   ta:mode==='obstetrique'?($('ta')?.value||''):'',
+   poids:mode==='obstetrique'?($('poids')?.value||''):'',
+   hu:mode==='obstetrique'?($('hu')?.value||''):'',
+   bcf:mode==='obstetrique'?($('bcf')?.value||''):'',
+   oedemes:mode==='obstetrique'?($('oedemes')?.value||''):'',
+   bu:mode==='obstetrique'?($('bu')?.value||''):'',
+   cat:mode==='obstetrique'?checkedText('catChecks'):[],
+   notes:$('notes')?.value||''
+ };
+}
+function updateConsultPreview(){
+ const el=$('consultPreview');if(!el)return;
+ const c=consultationObject();
+ const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
+ el.innerHTML=`<b>${esc(label)}</b><br><b>Motif :</b> ${esc(c.motif||'—')}${c.term?'<br><b>Terme :</b> '+esc(c.term):''}
+ ${c.consultType==='obstetrique'?`<br><br>${c.inter.length?'<b>Interrogatoire :</b> '+c.inter.map(esc).join(', '):'Aucun élément coché'}<br><br>
+ <b>TA :</b> ${esc(c.ta||'—')} &nbsp; <b>Poids :</b> ${esc(c.poids||'—')}<br>
+ <b>HU :</b> ${esc(c.hu||'—')} &nbsp; <b>BCF :</b> ${esc(c.bcf||'—')}<br>
+ ${c.cat.length?'<br><b>CAT :</b> '+c.cat.map(esc).join(', '):''}`:''}`;
+}
+function resetConsultationForm(){
+ if($('consultType'))$('consultType').value='obstetrique';
+ if($('csDate'))$('csDate').value=today();
+ if($('motif'))$('motif').value='Suivi de grossesse';
+ ['ta','poids','hu','bcf','bu','notes'].forEach(id=>{if($(id))$(id).value=''});
+ if($('oedemes'))$('oedemes').value='Non';
+ document.querySelectorAll('#interChecks input[type="checkbox"],#catChecks input[type="checkbox"]').forEach(x=>x.checked=false);
+ syncConsultTerm();updateConsultMode();updateConsultPreview();
+}
+function startNewConsultation(){
+ resetConsultationForm();
+ go('consult');
+ showToast('Nouvelle consultation prête');
+}
+function captureConsultDraft(){return $('consultType')?consultationObject():null}
+function restoreConsultDraft(d){
+ if(!d)return;
+ if($('consultType'))$('consultType').value=d.consultType||'obstetrique';
+ if($('csDate'))$('csDate').value=d.date||today();
+ if($('motif'))$('motif').value=d.motif||'';
+ if($('csTerm'))$('csTerm').value=d.term||'';
+ ['ta','poids','hu','bcf','bu','notes'].forEach(id=>{if($(id))$(id).value=d[id]||''});
+ if($('oedemes'))$('oedemes').value=d.oedemes||'Non';
+ document.querySelectorAll('#interChecks input[type="checkbox"]').forEach(x=>x.checked=(d.inter||[]).includes(x.value));
+ document.querySelectorAll('#catChecks input[type="checkbox"]').forEach(x=>x.checked=(d.cat||[]).includes(x.value));
+ updateConsultMode();updateConsultPreview();
+}
+function leaveConsultationForPrescription(){
+ activeConsultDraft=captureConsultDraft();
+ returningToConsultation=true;
+ go('rx');
+ showToast('Consultation conservée pendant l’ordonnance');
+}
+function returnToActiveConsultation(){
+ go('consult');
+ restoreConsultDraft(activeConsultDraft);
+ returningToConsultation=false;
+ showToast('Retour à la consultation active');
+}
+function saveConsult(){
+ const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
+ const c=consultationObject();
+ if(!c.motif.trim()){showToast('Renseigne le motif de consultation');return}
+ p.consultations=p.consultations||[];p.history=p.history||[];
+ const signature=JSON.stringify(c);
+ if(p.consultations.some(x=>x.signature===signature)){showToast('Cette consultation est déjà enregistrée');return}
+ const id=crypto.randomUUID?crypto.randomUUID():'cs_'+Date.now()+'_'+Math.random().toString(16).slice(2);
+ const saved={...c,id,savedAt:new Date().toISOString(),signature};
+ p.consultations.unshift(saved);
+ p.history.unshift({id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' — '+c.term:''}`,snapshot:JSON.parse(JSON.stringify(saved))});
+ localStorage.setItem(KEY,JSON.stringify(db));
+ activeConsultDraft=null;returningToConsultation=false;
+ renderHistory();renderDossier();showToast('Consultation enregistrée');
+ setTimeout(resetConsultationForm,100);
+}
+function consultationHtml(c,p){
+ const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
+ let out=`<h2>${esc(label)}</h2><p><b>Patiente :</b> ${esc(p.nom||'')} ${esc(p.prenom||'')}${p.dob?' — née le '+fmtDate(p.dob):''}</p>
+ <p><b>Date :</b> ${c.date?fmtDate(c.date):'—'}${c.term&&c.consultType==='obstetrique'?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>`;
+ if(c.consultType==='obstetrique'){
+   out+=`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p>
+   <p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p>
+   <p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`;
+ }
+ if(c.notes)out+=`<p><b>Notes :</b> ${esc(c.notes)}</p>`;
+ return out;
+}
+function printConsult(){
+ const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
+ const c=consultationObject();
+ printHtmlDocument('Compte rendu de consultation',consultationHtml(c,p)+`<p style="text-align:right;margin-top:50px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`);
+}
+const templates={
+ debut:['NFS - plaquettes','Groupe sanguin ABO, Rhésus, Kell (si non documenté)','Recherche d’agglutinines irrégulières (RAI)','Sérologie toxoplasmose','Sérologie rubéole','Sérologie syphilis','Antigène HBs','Sérologie VIH 1 et 2','Examens urinaires selon contexte clinique'],
+ hgpo:['HGPO 75 g de glucose','Glycémie veineuse à jeun','Glycémie veineuse à 1 heure après charge','Glycémie veineuse à 2 heures après charge','À réaliser entre 24 et 28 SA selon indication'],
+ dpni:['Dépistage prénatal non invasif par analyse de l’ADN libre circulant dans le sang maternel','Dépistage des trisomies selon indication et stratégie en vigueur'],
+ six:['NFS - plaquettes','RAI selon groupe sanguin et situation','Examens complémentaires selon le dossier clinique'],
+ vitd:['Vitamine D — posologie et spécialité à renseigner par la prescriptrice'],
+ fer:['Supplémentation martiale — spécialité, dosage et durée à renseigner par la prescriptrice']
+};
+function addRxLineText(text=''){
+ const div=document.createElement('div');div.className='rx-item';
+ const input=document.createElement('input');input.type='text';input.value=text||'';input.placeholder='Prescription';
+ const btn=document.createElement('button');btn.type='button';btn.className='btn danger';btn.textContent='×';btn.onclick=()=>div.remove();
+ div.appendChild(input);div.appendChild(btn);$('rxList')?.appendChild(div);
+}
+function addRxLine(){addRxLineText('')}
+function applyTemplate(){
+ const k=$('rxTemplate')?.value||'';
+ const list=$('rxList');if(!list)return;list.innerHTML='';
+ (templates[k]||[]).forEach(addRxLineText);
+}
+function savePrescriptionRecord(title,lines,extra){
+ const p=active();if(!p)return null;
+ p.prescriptions=p.prescriptions||[];p.history=p.history||[];
+ const id=crypto.randomUUID?crypto.randomUUID():'rx_'+Date.now()+'_'+Math.random().toString(16).slice(2);
+ const rec={id,recordType:'prescription',title:title||'Ordonnance',date:today(),lines:[...(lines||[])],createdAt:new Date().toISOString(),...(extra||{})};
+ p.prescriptions.unshift(rec);
+ p.history.unshift({id,recordType:'prescription',type:rec.title,date:rec.date,summary:rec.lines.join(' ; '),snapshot:JSON.parse(JSON.stringify(rec))});
+ localStorage.setItem(KEY,JSON.stringify(db));
+ renderHistory();renderDossier();showToast('Ordonnance enregistrée au dossier');
+ return rec;
+}
+function prescriptionHtml(rec,p){
+ return prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom||'')} ${esc(p.prenom||'')}</h2>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}
+ <div style="margin-top:30px">${(rec.lines||[]).map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
+ <br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
+}
+function printRx(){
+ const p=active();if(!p){showToast('Aucun dossier patiente ouvert');return}
+ const lines=[...($('rxList')?.querySelectorAll('input')||[])].map(i=>i.value.trim()).filter(Boolean);
+ if(!lines.length){showToast('Ordonnance vide');return}
+ const rec=savePrescriptionRecord('Ordonnance',lines,{});
+ printHtmlDocument('Ordonnance',prescriptionHtml(rec,p));
+}
+
 function savePregnancy(){
  const p=active();if(!p){showToast('Sélectionne ou crée une patiente');return}
  ensurePregnancyEpisodes(p);
@@ -1388,6 +1514,7 @@ async function importPatientDatabase(event){
 }
 
 try{renderAll()}catch(e){console.error('renderAll startup',e)}
+try{if($('rxList')&&!$('rxList').children.length)addRxLine()}catch(e){console.error(e)}
 try{updateLocalPatientCount()}catch(e){console.error(e)}
 try{addRxLine()}catch(e){console.error(e)}
 try{if($('consultType'))updateConsultMode()}catch(e){console.error(e)}
