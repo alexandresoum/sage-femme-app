@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.11 locale</title>
+<title>Cabinet Sage-Femme — V2.12 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -92,6 +92,27 @@ textarea{resize:vertical}
 .blood-group-emphasis{margin-top:22px;padding:18px 20px;border:2px solid #d7dce8;border-radius:16px;background:#f7f8fb}
 .blood-group-emphasis label{font-size:1.15rem;font-weight:800;margin-bottom:8px}
 .blood-group-emphasis input{font-size:1.35rem;font-weight:800;min-height:52px}
+
+
+.t1-fetus-measures{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px 16px;
+  margin:12px 0;
+}
+.t1-fetus-card{
+  border:1px solid #d8dce6;
+  border-radius:14px;
+  padding:12px;
+  background:#fafbfc;
+}
+.t1-fetus-card .fetus-title{
+  font-weight:800;
+  margin-bottom:8px;
+}
+@media(max-width:760px){
+  .t1-fetus-measures{grid-template-columns:1fr}
+}
 
 </style>
 </head>
@@ -417,9 +438,8 @@ textarea{resize:vertical}
             <div class="field"><label>N° d'agrément</label><input id="t1EchoApproval"></div>
           </div>
           <datalist id="echoRegistry"></datalist>
-          <div class="row3">
-            <div class="field"><label>CN (mm)</label><input id="t1Cn"></div>
-            <div class="field"><label>LCC (mm)</label><input id="t1Lcc"></div>
+          <div id="t1Measures"></div>
+          <div class="row">
             <div class="field"><label>Poids patiente (kg)</label><input id="t1Weight"></div>
           </div>
           <div id="t1Window" class="notice">Renseigne la DDG pour calculer les dates des marqueurs sériques.</div>
@@ -1108,15 +1128,106 @@ function ensureEchos(p=active()){p.echos=p.echos||{};p.extraEchos=p.extraEchos||
 function renderEchoRegistry(){$('echoRegistry').innerHTML='';db.echographists.forEach(e=>{const o=document.createElement('option');o.value=e.name;$('echoRegistry').appendChild(o)})}
 function fillEchoApproval(){const e=db.echographists.find(x=>norm(x.name)===norm($('t1EchoName').value));if(e)$('t1EchoApproval').value=e.approval||''}
 function registerEcho(name,approval){if(!name)return;let e=db.echographists.find(x=>norm(x.name)===norm(name));if(e)e.approval=approval||e.approval;else db.echographists.push({name,approval});persist();renderEchoRegistry()}
+
+function t1FetusCount(){
+ return Math.max(1,Math.min(4,Number(active()?.pregnancy?.fetusCount||activePregnancy(active())?.fetusCount||1)));
+}
+function splitLegacyT1Measure(v){
+ if(Array.isArray(v))return v.map(x=>String(x??'').trim());
+ if(v===undefined||v===null||v==='')return [];
+ return String(v).split(/\s*\/\s*|[;,]\s*/).map(x=>x.trim()).filter(Boolean);
+}
+function getT1MeasureValues(t,key){
+ const n=t1FetusCount();
+ const arr=Array.isArray(t?.[key+'Values'])?t[key+'Values'].map(x=>String(x??'').trim()):splitLegacyT1Measure(t?.[key]);
+ while(arr.length<n)arr.push('');
+ return arr.slice(0,n);
+}
+function renderT1MeasureFields(t={}){
+ const n=t1FetusCount(),cn=getT1MeasureValues(t,'cn'),lcc=getT1MeasureValues(t,'lcc');
+ let h='<div class="t1-fetus-measures">';
+ for(let i=0;i<n;i++){
+   const j=i+1,label=n>1?`J${j}`:'';
+   h+=`<div class="t1-fetus-card"><div class="fetus-title">${n>1?'Fœtus '+j:'Mesures T1'}</div>
+     <div class="row">
+       <div class="field"><label>CN${label?' '+label:''} (mm)</label><input id="t1Cn${j}" value="${esc(cn[i]||'')}"></div>
+       <div class="field"><label>LCC${label?' '+label:''} (mm)</label><input id="t1Lcc${j}" value="${esc(lcc[i]||'')}"></div>
+     </div></div>`;
+ }
+ h+='</div>';
+ $('t1Measures').innerHTML=h;
+}
+function collectT1MeasureValues(prefix){
+ const n=t1FetusCount(),out=[];
+ for(let i=1;i<=n;i++)out.push(($(`${prefix}${i}`)?.value||'').trim());
+ return out;
+}
+function t1MeasuresInline(t,key,label){
+ const vals=getT1MeasureValues(t,key),n=t1FetusCount();
+ return vals.map((v,i)=>`${label}${n>1?' J'+(i+1):''} : ${esc(v||'—')} mm`).join(' — ');
+}
+function t1MeasureGridHtml(t){
+ const n=t1FetusCount(),cn=getT1MeasureValues(t,'cn'),lcc=getT1MeasureValues(t,'lcc');
+ let h='';
+ for(let i=0;i<n;i++){
+   const j=i+1;
+   h+=`<div><b>CN${n>1?' J'+j:''}</b><br><strong>${esc(cn[i]||'—')} mm</strong></div>
+       <div><b>LCC${n>1?' J'+j:''}</b><br><strong>${esc(lcc[i]||'—')} mm</strong></div>`;
+ }
+ return h;
+}
+
 function loadEchoForm(){
  const p=ensureEchos(),t=p.echos.t1||{},t2=p.echos.t2||{},t3=p.echos.t3||{},ddg=p.pregnancy?.ddg||'';
- $('t1Date').value=t.date||'';$('t1Ddg').value=t.ddg||ddg;$('t1EchoName').value=t.echoName||'';$('t1EchoApproval').value=t.echoApproval||'';$('t1Cn').value=t.cn||'';$('t1Lcc').value=t.lcc||'';$('t1Weight').value=t.weight||'';
- $('t2Date').value=t2.date||'';$('t2Normal').value=t2.normal||'';$('t2Comments').value=t2.comments||'';$('t3Date').value=t3.date||'';$('t3Normal').value=t3.normal||'';$('t3Comments').value=t3.comments||'';
- renderEchoRegistry();updateT1Window();$('extraEchoDate').value=$('extraEchoDate').value||today();updateExtraEchoTerm();renderExtraEchoList()
+ $('t1Date').value=t.date||'';
+ $('t1Ddg').value=t.ddg||ddg;
+ $('t1EchoName').value=t.echoName||'';
+ $('t1EchoApproval').value=t.echoApproval||'';
+ renderT1MeasureFields(t);
+ $('t1Weight').value=t.weight||'';
+ $('t2Date').value=t2.date||'';
+ $('t2Normal').value=t2.normal||'';
+ $('t2Comments').value=t2.comments||'';
+ $('t3Date').value=t3.date||'';
+ $('t3Normal').value=t3.normal||'';
+ $('t3Comments').value=t3.comments||'';
+ renderEchoRegistry();
+ updateT1Window();
+ $('extraEchoDate').value=$('extraEchoDate').value||today();
+ updateExtraEchoTerm();
+ renderExtraEchoList()
 }
-function currentT1(){return {date:parseDateAny($('t1Date').value),ddg:parseDateAny($('t1Ddg').value)||active()?.pregnancy?.ddg||'',echoName:$('t1EchoName').value.trim(),echoApproval:$('t1EchoApproval').value.trim(),cn:$('t1Cn').value.trim(),lcc:$('t1Lcc').value.trim(),weight:$('t1Weight').value.trim()}}
+function currentT1(){
+ const cnValues=collectT1MeasureValues('t1Cn'),lccValues=collectT1MeasureValues('t1Lcc');
+ return {
+   date:parseDateAny($('t1Date').value),
+   ddg:parseDateAny($('t1Ddg').value)||active()?.pregnancy?.ddg||'',
+   echoName:$('t1EchoName').value.trim(),
+   echoApproval:$('t1EchoApproval').value.trim(),
+   cnValues,lccValues,
+   // Compatibilité avec les versions précédentes :
+   cn:cnValues.filter(Boolean).join(' / '),
+   lcc:lccValues.filter(Boolean).join(' / '),
+   weight:$('t1Weight').value.trim()
+ }
+}
 function updateT1Window(){const t=currentT1(),w=markerWindow(t.ddg);$('t1Window').innerHTML=w?`<b>Marqueurs sériques du 1er trimestre</b><br>du ${fmtDate(w.start)} au ${fmtDate(w.end)}${t.date?'<br>Terme à la T1 : '+termFrom(t.ddg,t.date):''}`:'Renseigne la DDG pour calculer les dates des marqueurs sériques.'}
-function saveT1(){const p=ensureEchos(),t=currentT1();if(!t.ddg||!t.date){showToast('Renseigne la date T1 et la DDG');return}p.echos.t1=t;registerEcho(t.echoName,t.echoApproval);p.history.unshift({id:uid('hist'),recordType:'echo_t1',type:'Échographie T1',date:t.date,summary:`CN ${t.cn||'—'} mm · LCC ${t.lcc||'—'} mm`});persist();renderDossier();showToast('Échographie T1 enregistrée')}
+function saveT1(){
+ const p=ensureEchos(),t=currentT1();
+ if(!t.ddg||!t.date){showToast('Renseigne la date T1 et la DDG');return}
+ p.echos.t1=t;
+ registerEcho(t.echoName,t.echoApproval);
+ p.history.unshift({
+   id:uid('hist'),
+   recordType:'echo_t1',
+   type:'Échographie T1',
+   date:t.date,
+   summary:`${t1MeasuresInline(t,'cn','CN')} · ${t1MeasuresInline(t,'lcc','LCC')}`
+ });
+ persist();
+ renderDossier();
+ showToast('Échographie T1 enregistrée')
+}
 function saveEchoSimple(which){const p=ensureEchos(),isT2=which==='t2';const rec={date:$(isT2?'t2Date':'t3Date').value,normal:$(isT2?'t2Normal':'t3Normal').value,comments:$(isT2?'t2Comments':'t3Comments').value.trim()};p.echos[which]=rec;p.history.unshift({id:uid('hist'),recordType:'echo',type:'Échographie '+which.toUpperCase(),date:rec.date,summary:rec.comments||'Échographie enregistrée'});persist();renderDossier();showToast(`Échographie ${which.toUpperCase()} enregistrée`)}
 function updateExtraEchoTerm(){const ddg=active()?.pregnancy?.ddg;$('extraEchoTerm').value=ddg&&$('extraEchoDate').value?termFrom(ddg,$('extraEchoDate').value):''}
 function addExtraEcho(){const p=ensureEchos(),r={id:uid('echo'),date:$('extraEchoDate').value,term:$('extraEchoTerm').value,reason:$('extraEchoReason').value.trim(),conclusion:$('extraEchoConclusion').value.trim()};p.extraEchos.unshift(r);p.history.unshift({id:r.id,recordType:'echo_extra',type:'Échographie supplémentaire',date:r.date,summary:`${r.reason}${r.term?' · '+r.term:''}`});persist();renderExtraEchoList();renderDossier();showToast('Échographie supplémentaire enregistrée')}
@@ -1124,7 +1235,7 @@ function renderExtraEchoList(){$('extraEchoList').innerHTML='';(active()?.extraE
 function printT1Markers(){const t=currentT1();if(!t.ddg){showToast('Renseigne la DDG');return}const w=markerWindow(t.ddg),line=`Marqueurs sériques maternels du 1er trimestre (PAPP-A et sous-unité β libre de l’hCG), prélèvement entre le ${fmtDate(w.start)} et le ${fmtDate(w.end)}.`;const rec=savePrescription('Ordonnance marqueurs sériques T1',[line],{kind:'t1_markers'});printHtmlDocument('Ordonnance',prescriptionHtml(rec,active()))}
 function consentCopy(label,t,compact=false){
  const p=active(),w=markerWindow(t.ddg),term=t.date?termFrom(t.ddg,t.date):'—';
- return `<div class="${compact?'consent-compact':''} avoid-break"><h2 style="text-align:center">ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b><br>${esc(label)}</p><h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d'agrément :</b> ${esc(t.echoApproval||'—')}</p><h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp; <b>Adresse :</b> ${esc(patientAddressText(p)||'—')}</p><h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3><p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br><b>Date de l'échographie T1 :</b> ${t.date?fmtDate(t.date):'—'} &nbsp; <b>Terme à l'échographie T1 :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p><h3>INFORMATION ET CONSENTEMENT</h3><p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p><p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d'estimer un risque mais ne permet pas à lui seul d'établir un diagnostic.</p><p>J'ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p><p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p><div style="display:flex;justify-content:space-between;margin-top:22px"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>${CABINET.profession}<br><br>Signature / tampon</div></div></div>`
+ return `<div class="${compact?'consent-compact':''} avoid-break"><h2 style="text-align:center">ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b><br>${esc(label)}</p><h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d'agrément :</b> ${esc(t.echoApproval||'—')}</p><h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp; <b>Adresse :</b> ${esc(patientAddressText(p)||'—')}</p><h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3><p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br><b>Date de l'échographie T1 :</b> ${t.date?fmtDate(t.date):'—'} &nbsp; <b>Terme à l'échographie T1 :</b> ${esc(term)}<br>${t1MeasuresInline(t,'cn','CN')}<br>${t1MeasuresInline(t,'lcc','LCC')}<br><b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p><h3>INFORMATION ET CONSENTEMENT</h3><p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p><p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d'estimer un risque mais ne permet pas à lui seul d'établir un diagnostic.</p><p>J'ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p><p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p><div style="display:flex;justify-content:space-between;margin-top:22px"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>${CABINET.profession}<br><br>Signature / tampon</div></div></div>`
 }
 
 function printConsentDocument(body){
@@ -1242,8 +1353,7 @@ function printT1Consent(){
      <div><b>DPA</b><br><strong>${fmtDate(calcDpa(t.ddg))}</strong></div>
      <div><b>Date de l’échographie T1</b><br><strong>${fmtDate(t.date)}</strong></div>
      <div><b>Terme à la T1</b><br><strong>${esc(term)}</strong></div>
-     <div><b>LCC</b><br><strong>${esc(t.lcc||'—')} mm</strong></div>
-     <div><b>Clarté nucale (CN)</b><br><strong>${esc(t.cn||'—')} mm</strong></div>
+     ${t1MeasureGridHtml(t)}
      <div><b>Poids maternel</b><br><strong>${esc(t.weight||'—')} kg</strong></div>
      <div><b>Période de prélèvement</b><br><strong>${fmtDate(w.start)} au ${fmtDate(w.end)}</strong></div>
      ${fetalDetails}
@@ -1269,7 +1379,7 @@ function printT1Consent(){
  <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
  <b>DDG :</b> ${fmtDate(t.ddg)} — <b>Date T1 :</b> ${fmtDate(t.date)} — <b>Terme à la T1 :</b> ${esc(term)}<br>
  <b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>Agrément :</b> ${esc(t.echoApproval||'—')}<br>
- <b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg<br>
+ ${t1MeasuresInline(t,'cn','CN')}<br>${t1MeasuresInline(t,'lcc','LCC')}<br><b>Poids :</b> ${esc(t.weight||'—')} kg<br>
  <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}<br><b>Nombre de fœtus :</b> ${esc(fetusCount)}${fetusCount>1?` — <b>Chorionicité :</b> ${esc(preg.chorionicity||'—')}`:''}${isFiv?`<br><b>FIV :</b> oui — <b>Nombre d’embryons transférés :</b> ${esc(preg.embryoCount||'—')} — <b>Âge de la donneuse :</b> ${preg.donorAge?esc(preg.donorAge)+' ans':'—'}`:''}</p>
  </div>`;
 
@@ -1286,7 +1396,7 @@ function printT1Consent(){
  const compactPreg=`<h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3>
  <p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br>
  <b>Date T1 :</b> ${fmtDate(t.date)} &nbsp; <b>Terme :</b> ${esc(term)}<br>
- <b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br>
+ ${t1MeasuresInline(t,'cn','CN')}<br>${t1MeasuresInline(t,'lcc','LCC')}<br><b>Poids :</b> ${esc(t.weight||'—')} kg<br>
  <b>Prélèvement :</b> ${fmtDate(w.start)} au ${fmtDate(w.end)}<br><b>Fœtus :</b> ${esc(fetusCount)}${fetusCount>1?` — <b>Chorionicité :</b> ${esc(preg.chorionicity||'—')}`:''}${isFiv?`<br><b>FIV :</b> oui — <b>Embryons transférés :</b> ${esc(preg.embryoCount||'—')} — <b>Âge donneuse :</b> ${preg.donorAge?esc(preg.donorAge)+' ans':'—'}`:''}</p>`;
  const compactInfo=`<h3>INFORMATION ET CONSENTEMENT</h3>
  <p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
@@ -1309,7 +1419,7 @@ async function renderBilans(){const el=$('bilanList');el.innerHTML='';const all=
 async function deleteBilan(id){const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);await new Promise(r=>tx.oncomplete=r);renderBilans();renderDossier();showToast('PDF supprimé')}
 
 function renderHistory(){const p=active(),el=$('historyList');el.innerHTML='';if(!p?.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}(p.history||[]).forEach((h,i)=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Élément')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);el.appendChild(d)})}
-function openHistoryRecord(i){const p=active(),h=p.history[i];if(!h)return;if(h.recordType==='consultation'){const c=p.consultations.find(x=>String(x.id)===String(h.id))||h.snapshot;openRecordModal(h.type,consultationHtml(c,p)+signatureBlock()+`<div class="actions no-print"><button class="btn secondary" type="button" onclick="closeRecordModal();editConsultation('${esc(c.id)}')">Modifier cette consultation</button></div>`);return}if(h.recordType==='prescription'){const r=h.snapshot||p.prescriptions.find(x=>x.id===h.id);openRecordModal(r.title,prescriptionHtml(r,p));return}if(h.recordType==='echo_t1'){const t=p.echos.t1||{};openRecordModal('Échographie T1',`<h2>Échographie du premier trimestre</h2><p><b>Date :</b> ${fmtDate(t.date)} — <b>Terme :</b> ${termFrom(t.ddg,t.date)}</p><p><b>Échographiste :</b> ${esc(t.echoName||'—')} — Agrément ${esc(t.echoApproval||'—')}</p><p><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg</p>`);return}openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`)}
+function openHistoryRecord(i){const p=active(),h=p.history[i];if(!h)return;if(h.recordType==='consultation'){const c=p.consultations.find(x=>String(x.id)===String(h.id))||h.snapshot;openRecordModal(h.type,consultationHtml(c,p)+signatureBlock()+`<div class="actions no-print"><button class="btn secondary" type="button" onclick="closeRecordModal();editConsultation('${esc(c.id)}')">Modifier cette consultation</button></div>`);return}if(h.recordType==='prescription'){const r=h.snapshot||p.prescriptions.find(x=>x.id===h.id);openRecordModal(r.title,prescriptionHtml(r,p));return}if(h.recordType==='echo_t1'){const t=p.echos.t1||{};openRecordModal('Échographie T1',`<h2>Échographie du premier trimestre</h2><p><b>Date :</b> ${fmtDate(t.date)} — <b>Terme :</b> ${termFrom(t.ddg,t.date)}</p><p><b>Échographiste :</b> ${esc(t.echoName||'—')} — Agrément ${esc(t.echoApproval||'—')}</p><p>${t1MeasuresInline(t,'cn','CN')}<br>${t1MeasuresInline(t,'lcc','LCC')}<br><b>Poids :</b> ${esc(t.weight||'—')} kg</p>`);return}openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`)}
 function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=body;$('recordTitle').textContent=title;$('recordBody').innerHTML=body;renderBarcodes($('recordBody'));$('recordModal').classList.add('show')}
 function closeRecordModal(){$('recordModal').classList.remove('show')}
 function printOpenedRecord(){closeRecordModal();setTimeout(()=>printHtmlDocument(openedRecordTitle,openedRecordHtml),80)}
@@ -1319,7 +1429,7 @@ function printFullHistory(){
  if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${fmtDate(calcDpa(p.pregnancy.ddg))} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p><p><b>Nombre de fœtus :</b> ${esc(p.pregnancy.fetusCount||1)}${Number(p.pregnancy.fetusCount||1)>1?' — <b>Chorionicité :</b> '+esc(p.pregnancy.chorionicity||'—'):''}</p>`;
  body+=`<h2>Données anthropométriques</h2><p><b>Taille :</b> ${p.taille?esc(p.taille)+' cm':'—'}<br><b>Poids de référence :</b> ${p.poidsReference?esc(p.poidsReference)+' kg':'—'}<br><b>IMC :</b> ${calcBmi(p.poidsReference,p.taille)||'—'}</p>`; body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
  if(p.pregnancyHistory?.length){body+='<h3>Grossesses antérieures</h3>';p.pregnancyHistory.forEach(x=>body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term)+(String(x.term).toUpperCase().includes('SA')?'':' SA'):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.healthy?' — Enfant en bonne santé : '+esc(x.healthy):''}${x.childComment?'<br>'+esc(x.childComment):''}${x.complication?'<br>'+esc(x.complication):''}</p>`)}
- const e=p.echos||{};body+=`<h2>Résumé des échographies</h2><p><b>Nombre de fœtus :</b> ${esc(p.pregnancy?.fetusCount||1)}${Number(p.pregnancy?.fetusCount||1)>1?' — <b>Chorionicité :</b> '+esc(p.pregnancy?.chorionicity||'—'):''}</p>`;if(e.t1)body+=`<p><b>T1 :</b> ${fmtDate(e.t1.date)} — ${termFrom(e.t1.ddg,e.t1.date)}<br>Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>CN : ${esc(e.t1.cn||'—')} mm — LCC : ${esc(e.t1.lcc||'—')} mm — Poids : ${esc(e.t1.weight||'—')} kg</p>`;if(e.t2)body+=`<p><b>T2 :</b> ${fmtDate(e.t2.date)} — habituelle : ${esc(e.t2.normal||'—')}${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;if(e.t3)body+=`<p><b>T3 :</b> ${fmtDate(e.t3.date)} — habituelle : ${esc(e.t3.normal||'—')}${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;(p.extraEchos||[]).forEach(x=>body+=`<p><b>Échographie supplémentaire :</b> ${fmtDate(x.date)}${x.term?' — '+esc(x.term)+(String(x.term).toUpperCase().includes('SA')?'':' SA'):''}${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`);
+ const e=p.echos||{};body+=`<h2>Résumé des échographies</h2><p><b>Nombre de fœtus :</b> ${esc(p.pregnancy?.fetusCount||1)}${Number(p.pregnancy?.fetusCount||1)>1?' — <b>Chorionicité :</b> '+esc(p.pregnancy?.chorionicity||'—'):''}</p>`;if(e.t1)body+=`<p><b>T1 :</b> ${fmtDate(e.t1.date)} — ${termFrom(e.t1.ddg,e.t1.date)}<br>Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>${t1MeasuresInline(e.t1,'cn','CN')}<br>${t1MeasuresInline(e.t1,'lcc','LCC')}<br>Poids : ${esc(e.t1.weight||'—')} kg</p>`;if(e.t2)body+=`<p><b>T2 :</b> ${fmtDate(e.t2.date)} — habituelle : ${esc(e.t2.normal||'—')}${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;if(e.t3)body+=`<p><b>T3 :</b> ${fmtDate(e.t3.date)} — habituelle : ${esc(e.t3.normal||'—')}${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;(p.extraEchos||[]).forEach(x=>body+=`<p><b>Échographie supplémentaire :</b> ${fmtDate(x.date)}${x.term?' — '+esc(x.term)+(String(x.term).toUpperCase().includes('SA')?'':' SA'):''}${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`);
  body+='<h2>Consultations</h2>';(p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(c=>body+=`<div class="avoid-break" style="border-top:1px solid #ccc;padding-top:8px;margin-top:10px">${consultationHtml(c,p)}</div>`);
  printHtmlDocument('Dossier de suivi à transmettre à la maternité',body)
 }
@@ -1333,7 +1443,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.11',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.12',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
