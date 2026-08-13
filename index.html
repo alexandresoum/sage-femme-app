@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.5 locale</title>
+<title>Cabinet Sage-Femme — V2.7 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -88,6 +88,11 @@ textarea{resize:vertical}
   .consent-compact{font-size:9px;line-height:1.16;overflow:hidden}
   .consent-compact h2{font-size:14px;margin:2px 0}.consent-compact h3{font-size:10px;margin:4px 0 2px}.consent-compact p{margin:2px 0}
 }
+
+.blood-group-emphasis{margin-top:22px;padding:18px 20px;border:2px solid #d7dce8;border-radius:16px;background:#f7f8fb}
+.blood-group-emphasis label{font-size:1.15rem;font-weight:800;margin-bottom:8px}
+.blood-group-emphasis input{font-size:1.35rem;font-weight:800;min-height:52px}
+
 </style>
 </head>
 <body>
@@ -155,6 +160,14 @@ textarea{resize:vertical}
             <div class="field"><label>Téléphone</label><input id="tel"></div>
             <div class="field"><label>Email</label><input id="email"></div>
           </div>
+          <h3>Coparent</h3>
+          <div class="row3">
+            <div class="field"><label>Nom</label><input id="coparentNom"></div>
+            <div class="field"><label>Prénom</label><input id="coparentPrenom"></div>
+            <div class="field"><label>Téléphone</label><input id="coparentTel"></div>
+          </div>
+          <div class="field"><label>Commentaire coparent</label><textarea id="coparentCommentaire" rows="2" placeholder="Information utile concernant le coparent…"></textarea></div>
+
           <h3>Adresse</h3>
           <div class="row">
             <div class="field"><label>N° et voie</label><input id="adresseVoie" placeholder="Ex. 12 rue des Lilas"></div>
@@ -166,15 +179,10 @@ textarea{resize:vertical}
           </div>
           <div class="hint">L'adresse reste stockée localement dans le navigateur. Un autocompléteur d'adresses pourra être ajouté plus tard si tu souhaites utiliser un service externe.</div>
 
-          <h3>Coparent</h3>
-          <div class="row3">
-            <div class="field"><label>Nom</label><input id="coparentNom"></div>
-            <div class="field"><label>Prénom</label><input id="coparentPrenom"></div>
-            <div class="field"><label>Téléphone</label><input id="coparentTel"></div>
+          <div class="field blood-group-emphasis">
+            <label>Groupe sanguin</label>
+            <input id="groupe" placeholder="Ex. A+">
           </div>
-          <div class="field"><label>Commentaire coparent</label><textarea id="coparentCommentaire" rows="2" placeholder="Information utile concernant le coparent…"></textarea></div>
-
-          <div class="field"><label>Groupe sanguin</label><input id="groupe"></div>
 
           <h3>Données anthropométriques</h3>
           <div class="row3">
@@ -1056,12 +1064,95 @@ function printConsentDocument(body){
  setTimeout(()=>window.print(),180);
 }
 
+
+function printConsentExactTwoPages(page1,page2){
+ const w=window.open('','_blank','width=900,height=1100');
+ if(!w){showToast('Autorise les fenêtres contextuelles pour imprimer le consentement');return}
+
+ const doc=`<!doctype html>
+ <html lang="fr">
+ <head>
+ <meta charset="utf-8">
+ <title>Consentement — dépistage de la trisomie 21</title>
+ <style>
+   @page{size:A4;margin:10mm}
+   *{box-sizing:border-box}
+   html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}
+   body{font-size:10.8px;line-height:1.2}
+   .page{width:190mm;min-height:277mm;max-height:277mm;overflow:hidden;margin:0 auto}
+   .page + .page{break-before:page;page-break-before:always}
+   h2{font-size:17px;margin:2px 0 4px;text-align:center}
+   h3{font-size:11.5px;margin:5px 0 2px}
+   p{margin:3px 0}
+   .lab{border-top:1px solid #777;margin-top:5mm;padding-top:3mm;font-size:10px}
+   .two{height:277mm;display:grid;grid-template-rows:1fr 1fr;gap:3mm}
+   .copy{overflow:hidden}
+   .copy:first-child{border-bottom:1px dashed #999;padding-bottom:3mm}
+   .compact{font-size:8.5px;line-height:1.08}
+   .compact h2{font-size:13px}
+   .compact h3{font-size:9.5px}
+   .compact p{margin:1.5px 0}
+   .signatures{display:flex;justify-content:space-between;gap:30px;margin-top:14px}
+ </style>
+ </head>
+ <body>
+   <section class="page">${page1}</section>
+   <section class="page"><div class="two">${page2}</div></section>
+ <script>
+   window.onload=function(){setTimeout(function(){window.print();},250);}
+ <\/script>
+ </body></html>`;
+
+ w.document.open();
+ w.document.write(doc);
+ w.document.close();
+}
+
 function printT1Consent(){
- const t=currentT1();if(!t.ddg||!t.date){showToast('Renseigne la DDG et la date T1');return}
+ const t=currentT1();
+ if(!t.ddg||!t.date){showToast('Renseigne la DDG et la date T1');return}
+
  const w=markerWindow(t.ddg),p=active();
- const lab=`<div style="border-top:1px solid #888;margin-top:6mm;padding-top:4mm"><h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br><b>DDG :</b> ${fmtDate(t.ddg)} — <b>Date T1 :</b> ${fmtDate(t.date)} — <b>Terme à la T1 :</b> ${termFrom(t.ddg,t.date)}<br><b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>Agrément :</b> ${esc(t.echoApproval||'—')}<br><b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg<br><b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></div>`;
- const body=`<div style="font-size:11.5px;line-height:1.28">${consentCopy('Exemplaire patiente',t,false)}${lab}</div><div class="page-break two-consents">${consentCopy('Exemplaire prescripteur',t,true)}${consentCopy('Exemplaire laboratoire',t,true)}</div>`;
- printConsentDocument(body)
+ const term=termFrom(t.ddg,t.date);
+
+ const patientBlock=`<h3>IDENTIFICATION DE LA PATIENTE</h3>
+ <p><b>Nom :</b> ${esc(p.nom)} &nbsp;&nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br>
+ <b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'} &nbsp;&nbsp;
+ <b>Adresse :</b> ${esc(patientAddressText(p)||'—')}</p>`;
+
+ const professionalBlock=`<h3>IDENTIFICATION DES PROFESSIONNELS</h3>
+ <p><b>Prescripteur :</b> ${CABINET.name} — Sage-femme — RPPS ${CABINET.rpps}<br>
+ <b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>N° d’agrément :</b> ${esc(t.echoApproval||'—')}</p>`;
+
+ const pregnancyBlock=`<h3>GROSSESSE ET ÉCHOGRAPHIE T1</h3>
+ <p><b>DDG :</b> ${fmtDate(t.ddg)} &nbsp;&nbsp; <b>DPA :</b> ${fmtDate(calcDpa(t.ddg))}<br>
+ <b>Date de l’échographie T1 :</b> ${fmtDate(t.date)} &nbsp;&nbsp; <b>Terme à la T1 :</b> ${esc(term)}<br>
+ <b>LCC :</b> ${esc(t.lcc||'—')} mm &nbsp;&nbsp; <b>CN :</b> ${esc(t.cn||'—')} mm &nbsp;&nbsp; <b>Poids :</b> ${esc(t.weight||'—')} kg<br>
+ <b>Période de prélèvement :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}</p>`;
+
+ const info=`<h3>INFORMATION ET CONSENTEMENT</h3>
+ <p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>${CABINET.name}</b>, sage-femme, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
+ <p>Cette information a porté notamment sur les caractéristiques de la trisomie 21, la différence entre dépistage et diagnostic, la mesure de la clarté nucale et le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d’estimer un risque mais ne permet pas à lui seul d’établir un diagnostic.</p>
+ <p>J’ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, et que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p>
+ <p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p>`;
+
+ const signatures=`<div class="signatures"><div>Date : ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>${CABINET.name}</b><br>Sage-femme<br><br>Signature / tampon</div></div>`;
+
+ const title=`<h2>ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p style="text-align:center"><b>Information, demande et consentement</b></p>`;
+
+ const lab=`<div class="lab"><h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3>
+ <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br>
+ <b>DDG :</b> ${fmtDate(t.ddg)} — <b>Date T1 :</b> ${fmtDate(t.date)} — <b>Terme à la T1 :</b> ${esc(term)}<br>
+ <b>Échographiste :</b> ${esc(t.echoName||'—')} — <b>Agrément :</b> ${esc(t.echoApproval||'—')}<br>
+ <b>CN :</b> ${esc(t.cn||'—')} mm — <b>LCC :</b> ${esc(t.lcc||'—')} mm — <b>Poids :</b> ${esc(t.weight||'—')} kg<br>
+ <b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p></div>`;
+
+ const page1=`${title}<p style="text-align:center"><b>Exemplaire patiente</b></p>${professionalBlock}${patientBlock}${pregnancyBlock}${info}${signatures}${lab}`;
+
+ const compactCopy=label=>`<div class="copy compact">${title}<p style="text-align:center"><b>${label}</b></p>${professionalBlock}${patientBlock}${pregnancyBlock}${info}${signatures}</div>`;
+ const page2=`${compactCopy('Exemplaire prescripteur')}${compactCopy('Exemplaire laboratoire')}`;
+
+ printConsentExactTwoPages(page1,page2);
 }
 
 function openBilanDb(){return new Promise((res,rej)=>{const q=indexedDB.open(BILAN_DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(BILAN_STORE))q.result.createObjectStore(BILAN_STORE,{keyPath:'id'})};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
@@ -1096,7 +1187,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.5',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.7',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
