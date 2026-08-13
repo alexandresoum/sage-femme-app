@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cabinet Sage-Femme — V2.12 locale</title>
+<title>Cabinet Sage-Femme — V2.13 locale</title>
 <style>
 :root{
   --navy:#0f2a56;--navy2:#173b73;--bg:#f3f5f8;--card:#fff;--line:#dfe4ec;
@@ -451,12 +451,18 @@ textarea{resize:vertical}
         </div>
         <div class="card span-5">
           <h2>T2</h2>
-          <div class="field"><label>Date</label><input id="t2Date" type="date"></div>
+          <div class="row">
+            <div class="field"><label>Date</label><input id="t2Date" type="date" oninput="updateEchoTerm('t2')"></div>
+            <div class="field"><label>Terme</label><input id="t2Term" placeholder="Ex. 22 SA + 3 j"></div>
+          </div>
           <div class="field"><label>Habituelle</label><select id="t2Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
           <div class="field"><label>Commentaires</label><textarea id="t2Comments" rows="3"></textarea></div>
           <button class="btn primary" type="button" onclick="saveEchoSimple('t2')">Enregistrer T2</button>
           <h2 style="margin-top:25px">T3</h2>
-          <div class="field"><label>Date</label><input id="t3Date" type="date"></div>
+          <div class="row">
+            <div class="field"><label>Date</label><input id="t3Date" type="date" oninput="updateEchoTerm('t3')"></div>
+            <div class="field"><label>Terme</label><input id="t3Term" placeholder="Ex. 32 SA + 0 j"></div>
+          </div>
           <div class="field"><label>Habituelle</label><select id="t3Normal"><option value="">—</option><option>Oui</option><option>Non</option></select></div>
           <div class="field"><label>Commentaires</label><textarea id="t3Comments" rows="3"></textarea></div>
           <button class="btn primary" type="button" onclick="saveEchoSimple('t3')">Enregistrer T3</button>
@@ -1186,9 +1192,11 @@ function loadEchoForm(){
  renderT1MeasureFields(t);
  $('t1Weight').value=t.weight||'';
  $('t2Date').value=t2.date||'';
+ $('t2Term').value=t2.term||(t2.date&&ddg?termFrom(ddg,t2.date):'');
  $('t2Normal').value=t2.normal||'';
  $('t2Comments').value=t2.comments||'';
  $('t3Date').value=t3.date||'';
+ $('t3Term').value=t3.term||(t3.date&&ddg?termFrom(ddg,t3.date):'');
  $('t3Normal').value=t3.normal||'';
  $('t3Comments').value=t3.comments||'';
  renderEchoRegistry();
@@ -1228,7 +1236,40 @@ function saveT1(){
  renderDossier();
  showToast('Échographie T1 enregistrée')
 }
-function saveEchoSimple(which){const p=ensureEchos(),isT2=which==='t2';const rec={date:$(isT2?'t2Date':'t3Date').value,normal:$(isT2?'t2Normal':'t3Normal').value,comments:$(isT2?'t2Comments':'t3Comments').value.trim()};p.echos[which]=rec;p.history.unshift({id:uid('hist'),recordType:'echo',type:'Échographie '+which.toUpperCase(),date:rec.date,summary:rec.comments||'Échographie enregistrée'});persist();renderDossier();showToast(`Échographie ${which.toUpperCase()} enregistrée`)}
+
+function updateEchoTerm(which){
+ const ddg=active()?.pregnancy?.ddg||activePregnancy(active())?.ddg||'';
+ const date=$(which==='t2'?'t2Date':'t3Date')?.value||'';
+ const field=$(which==='t2'?'t2Term':'t3Term');
+ if(!field)return;
+ if(ddg&&date)field.value=termFrom(ddg,date);
+}
+
+function saveEchoSimple(which){
+ const p=ensureEchos(),isT2=which==='t2';
+ const rec={
+   date:$(isT2?'t2Date':'t3Date').value,
+   term:$(isT2?'t2Term':'t3Term').value.trim(),
+   normal:$(isT2?'t2Normal':'t3Normal').value,
+   comments:$(isT2?'t2Comments':'t3Comments').value.trim()
+ };
+ if(!rec.date){showToast('Renseigne la date de l’échographie');return}
+ if(!rec.term){
+   const ddg=active()?.pregnancy?.ddg||'';
+   if(ddg)rec.term=termFrom(ddg,rec.date);
+ }
+ p.echos[which]=rec;
+ p.history.unshift({
+   id:uid('hist'),
+   recordType:'echo',
+   type:'Échographie '+which.toUpperCase(),
+   date:rec.date,
+   summary:`${rec.term||''}${rec.normal?' · habituelle : '+rec.normal:''}${rec.comments?' · '+rec.comments:''}`
+ });
+ persist();
+ renderDossier();
+ showToast(`Échographie ${which.toUpperCase()} enregistrée`)
+}
 function updateExtraEchoTerm(){const ddg=active()?.pregnancy?.ddg;$('extraEchoTerm').value=ddg&&$('extraEchoDate').value?termFrom(ddg,$('extraEchoDate').value):''}
 function addExtraEcho(){const p=ensureEchos(),r={id:uid('echo'),date:$('extraEchoDate').value,term:$('extraEchoTerm').value,reason:$('extraEchoReason').value.trim(),conclusion:$('extraEchoConclusion').value.trim()};p.extraEchos.unshift(r);p.history.unshift({id:r.id,recordType:'echo_extra',type:'Échographie supplémentaire',date:r.date,summary:`${r.reason}${r.term?' · '+r.term:''}`});persist();renderExtraEchoList();renderDossier();showToast('Échographie supplémentaire enregistrée')}
 function renderExtraEchoList(){$('extraEchoList').innerHTML='';(active()?.extraEchos||[]).forEach(x=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${fmtDate(x.date)}${x.term?' · '+esc(x.term):''}</strong><small>${esc(x.reason||'')}${x.conclusion?' — '+esc(x.conclusion):''}</small>`;$('extraEchoList').appendChild(d)})}
@@ -1429,7 +1470,7 @@ function printFullHistory(){
  if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p><b>DDG :</b> ${fmtDate(p.pregnancy.ddg)} — <b>DPA :</b> ${fmtDate(calcDpa(p.pregnancy.ddg))} — <b>Terme actuel :</b> ${termFrom(p.pregnancy.ddg)}</p><p><b>Nombre de fœtus :</b> ${esc(p.pregnancy.fetusCount||1)}${Number(p.pregnancy.fetusCount||1)>1?' — <b>Chorionicité :</b> '+esc(p.pregnancy.chorionicity||'—'):''}</p>`;
  body+=`<h2>Données anthropométriques</h2><p><b>Taille :</b> ${p.taille?esc(p.taille)+' cm':'—'}<br><b>Poids de référence :</b> ${p.poidsReference?esc(p.poidsReference)+' kg':'—'}<br><b>IMC :</b> ${calcBmi(p.poidsReference,p.taille)||'—'}</p>`; body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p>`;
  if(p.pregnancyHistory?.length){body+='<h3>Grossesses antérieures</h3>';p.pregnancyHistory.forEach(x=>body+=`<p><b>${esc(x.outcome||'Grossesse')}</b>${x.date?' — '+fmtDate(x.date):''}${x.term?' — '+esc(x.term)+(String(x.term).toUpperCase().includes('SA')?'':' SA'):''}${x.weight?' — '+esc(x.weight)+' g':''}${x.sex?' — '+esc(x.sex):''}${x.delivery?' — '+esc(x.delivery):''}${x.healthy?' — Enfant en bonne santé : '+esc(x.healthy):''}${x.childComment?'<br>'+esc(x.childComment):''}${x.complication?'<br>'+esc(x.complication):''}</p>`)}
- const e=p.echos||{};body+=`<h2>Résumé des échographies</h2><p><b>Nombre de fœtus :</b> ${esc(p.pregnancy?.fetusCount||1)}${Number(p.pregnancy?.fetusCount||1)>1?' — <b>Chorionicité :</b> '+esc(p.pregnancy?.chorionicity||'—'):''}</p>`;if(e.t1)body+=`<p><b>T1 :</b> ${fmtDate(e.t1.date)} — ${termFrom(e.t1.ddg,e.t1.date)}<br>Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>${t1MeasuresInline(e.t1,'cn','CN')}<br>${t1MeasuresInline(e.t1,'lcc','LCC')}<br>Poids : ${esc(e.t1.weight||'—')} kg</p>`;if(e.t2)body+=`<p><b>T2 :</b> ${fmtDate(e.t2.date)} — habituelle : ${esc(e.t2.normal||'—')}${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;if(e.t3)body+=`<p><b>T3 :</b> ${fmtDate(e.t3.date)} — habituelle : ${esc(e.t3.normal||'—')}${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;(p.extraEchos||[]).forEach(x=>body+=`<p><b>Échographie supplémentaire :</b> ${fmtDate(x.date)}${x.term?' — '+esc(x.term)+(String(x.term).toUpperCase().includes('SA')?'':' SA'):''}${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`);
+ const e=p.echos||{};body+=`<h2>Résumé des échographies</h2><p><b>Nombre de fœtus :</b> ${esc(p.pregnancy?.fetusCount||1)}${Number(p.pregnancy?.fetusCount||1)>1?' — <b>Chorionicité :</b> '+esc(p.pregnancy?.chorionicity||'—'):''}</p>`;if(e.t1)body+=`<p><b>T1 :</b> ${fmtDate(e.t1.date)} — ${termFrom(e.t1.ddg,e.t1.date)}<br>Échographiste : ${esc(e.t1.echoName||'—')} — Agrément : ${esc(e.t1.echoApproval||'—')}<br>${t1MeasuresInline(e.t1,'cn','CN')}<br>${t1MeasuresInline(e.t1,'lcc','LCC')}<br>Poids : ${esc(e.t1.weight||'—')} kg</p>`;if(e.t2)body+=`<p><b>T2 :</b> ${fmtDate(e.t2.date)}${e.t2.term?' — <b>Terme :</b> '+esc(e.t2.term):''} — habituelle : ${esc(e.t2.normal||'—')}${e.t2.comments?'<br>'+esc(e.t2.comments):''}</p>`;if(e.t3)body+=`<p><b>T3 :</b> ${fmtDate(e.t3.date)}${e.t3.term?' — <b>Terme :</b> '+esc(e.t3.term):''} — habituelle : ${esc(e.t3.normal||'—')}${e.t3.comments?'<br>'+esc(e.t3.comments):''}</p>`;(p.extraEchos||[]).forEach(x=>body+=`<p><b>Échographie supplémentaire :</b> ${fmtDate(x.date)}${x.term?' — '+esc(x.term)+(String(x.term).toUpperCase().includes('SA')?'':' SA'):''}${x.reason?'<br><b>Motif :</b> '+esc(x.reason):''}${x.conclusion?'<br><b>Conclusion :</b> '+esc(x.conclusion):''}</p>`);
  body+='<h2>Consultations</h2>';(p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(c=>body+=`<div class="avoid-break" style="border-top:1px solid #ccc;padding-top:8px;margin-top:10px">${consultationHtml(c,p)}</div>`);
  printHtmlDocument('Dossier de suivi à transmettre à la maternité',body)
 }
@@ -1443,7 +1484,7 @@ function maybeShowPostit(){const p=active();if(!p?.alertNote?.enabled||!p.alertN
 function closePostit(){$('postitModal').classList.remove('show')}
 function disablePostit(){const p=active();if(!p)return;p.alertNote.enabled=false;persist();closePostit();showToast('Pense-bête désactivé pour les prochaines ouvertures')}
 
-function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.12',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
+function exportDatabase(){const blob=new Blob([JSON.stringify({app:'sage-femme-app',version:'2.13',exportedAt:new Date().toISOString(),db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-patientes-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast(`${db.patients.length} dossier(s) exporté(s)`)}
 async function importDatabase(ev){const f=ev.target.files?.[0];if(!f)return;try{const parsed=JSON.parse(await f.text()),incoming=parsed.db||parsed;if(!Array.isArray(incoming.patients))throw 0;const map=new Map(db.patients.map(p=>[String(p.id),p]));incoming.patients.map(migratePatient).forEach(p=>{if(map.has(String(p.id)))Object.assign(map.get(String(p.id)),p);else db.patients.push(p)});persist();updateLocalCount();renderHomePatients();showToast(`${incoming.patients.length} dossier(s) importé(s)`)}catch(e){showToast('Fichier de sauvegarde non reconnu')}ev.target.value=''}
 
 function init(){
