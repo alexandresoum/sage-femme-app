@@ -118,6 +118,17 @@ body:not(.has-patient) #patientTop{display:none}
 .lab-window{font-size:18px;font-weight:850;color:var(--primary);margin:6px 0}
 @media(max-width:900px){.search-3{grid-template-columns:1fr}.dossier-actions{grid-template-columns:1fr 1fr}}
 
+
+.toast{position:fixed;right:24px;bottom:24px;z-index:9999;background:#1e2f57;color:#fff;padding:13px 16px;border-radius:13px;box-shadow:0 12px 30px rgba(0,0,0,.2);font-weight:750;font-size:13px;opacity:0;transform:translateY(12px);pointer-events:none;transition:.2s}
+.toast.show{opacity:1;transform:translateY(0)}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(16,25,45,.45);z-index:9990;padding:28px;overflow:auto}
+.modal-backdrop.show{display:block}
+.modal-box{max-width:900px;margin:30px auto;background:#fff;border-radius:18px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:15px}
+.modal-close{border:0;background:#eef1f8;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer}
+.history-click{cursor:pointer}.history-click:hover{background:#f1eef7}
+.consult-type-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:900px){.consult-type-row{grid-template-columns:1fr}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
@@ -340,14 +351,15 @@ body:not(.has-patient) #patientTop{display:none}
     <section id="consult" class="section">
       <div class="grid">
         <div class="card span-8">
-          <h2>Consultation de grossesse</h2>
-          <div class="row3">
-            <div class="field"><label>Date</label><input id="csDate" type="date"></div>
-            <div class="field"><label>Terme</label><input id="csTerm" placeholder="28 SA + 4 j"></div>
-            <div class="field"><label>Motif</label><input id="motif" value="Suivi mensuel de grossesse"></div>
-          </div>
+          <h2>Consultation</h2>
+<div class="consult-type-row">
+  <div class="field"><label>Type de consultation</label><select id="consultType" onchange="updateConsultMode()"><option value="obstetrique">Obstétrique</option><option value="gynecologie">Gynécologie</option><option value="autre">Autre consultation</option></select></div>
+  <div class="field"><label>Date</label><input id="csDate" type="date"></div>
+  <div class="field obst-only"><label>Terme</label><input id="csTerm" readonly></div>
+</div>
+          <div class="field"><label>Motif</label><input id="motif" value="Suivi mensuel de grossesse"></div>
 
-          <h3>Interrogatoire</h3>
+          <div class="obst-only"><h3>Interrogatoire</h3>
           <div class="checks" id="interChecks">
             <label class="check"><input type="checkbox" value="Mouvements actifs fœtaux perçus"> Mouvements actifs perçus</label>
             <label class="check"><input type="checkbox" value="Contractions utérines"> Contractions</label>
@@ -357,7 +369,7 @@ body:not(.has-patient) #patientTop{display:none}
             <label class="check"><input type="checkbox" value="Céphalées / phosphènes"> Céphalées / phosphènes</label>
           </div>
 
-          <h3>Examen</h3>
+          </div><div class="obst-only"><h3>Examen</h3>
           <div class="row3">
             <div class="field"><label>TA</label><input id="ta" placeholder="120/70 mmHg"></div>
             <div class="field"><label>Poids</label><input id="poids" placeholder="68 kg"></div>
@@ -367,7 +379,7 @@ body:not(.has-patient) #patientTop{display:none}
             <div class="field"><label>BU</label><input id="bu" placeholder="RAS"></div>
           </div>
 
-          <h3>Conduite à tenir</h3>
+          </div><div class="obst-only"><h3>Conduite à tenir</h3>
           <div class="checks" id="catChecks">
             <label class="check"><input type="checkbox" value="Évolution clinique satisfaisante"> RAS / suivi habituel</label>
             <label class="check"><input type="checkbox" value="Bilan biologique prescrit"> Bilan biologique</label>
@@ -376,7 +388,7 @@ body:not(.has-patient) #patientTop{display:none}
             <label class="check"><input type="checkbox" value="Ordonnance remise"> Ordonnance</label>
             <label class="check"><input type="checkbox" value="Conseils et signes d'alerte expliqués"> Conseils / signes d’alerte</label>
           </div>
-          <div class="field" style="margin-top:12px"><label>Notes libres</label><textarea id="notes" rows="4"></textarea></div>
+          </div><div class="field" style="margin-top:12px"><label>Notes libres</label><textarea id="notes" rows="4"></textarea></div>
           <div class="actions">
             <button class="btn primary" onclick="saveConsult()">Enregistrer la consultation</button>
             <button class="btn soft" onclick="printConsult()">Compte rendu / PDF</button>
@@ -496,7 +508,7 @@ body:not(.has-patient) #patientTop{display:none}
       <div class="card">
         <h2>Historique de la patiente active</h2>
         <div id="historyList" class="timeline"></div>
-        <div class="actions no-print"><button class="btn danger" onclick="clearDemo()">Effacer les données de démonstration</button></div>
+        <div class="actions no-print"><button class="btn soft" onclick="printFullHistory()">Dossier complet / PDF maternité</button><button class="btn danger" onclick="clearDemo()">Effacer les données de démonstration</button></div>
       </div>
     </section>
 
@@ -515,6 +527,16 @@ const $=id=>document.getElementById(id);
 const today=()=>new Date().toISOString().slice(0,10);
 $('csDate').value=today();
 
+
+let toastTimer=null,openedRecordHtml='',openedRecordTitle='';
+function showToast(message){const t=$('toast');if(!t)return;t.textContent='✓ '+message;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200)}
+function closeRecordModal(){$('recordModal')?.classList.remove('show')}
+function openRecordModal(title,body){openedRecordTitle=title;openedRecordHtml=body;$('recordModalTitle').textContent=title;$('recordModalBody').innerHTML=body;$('recordModal').classList.add('show')}
+function documentHeader(title){return `<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>Tél. 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div><h1>${esc(title)}</h1>`}
+function prescriberBarcodeBlock(){return `<div style="margin:18px 0"><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong><br>N° RPPS : <strong>10004054820</strong><br><svg class="rppsBarcode"></svg></div>`}
+function renderBarcodes(root=document){try{if(window.JsBarcode){root.querySelectorAll('.rppsBarcode').forEach(svg=>JsBarcode(svg,"10004054820",{format:"CODE128",displayValue:true,fontSize:13,height:40,margin:0,width:1.5}))}}catch(e){console.error(e)}}
+function printHtmlDocument(title,body){$('printDoc').innerHTML=documentHeader(title)+body;renderBarcodes($('printDoc'));setTimeout(()=>window.print(),180)}
+function printOpenedRecord(){if(openedRecordHtml)printHtmlDocument(openedRecordTitle,openedRecordHtml)}
 function persist(){ localStorage.setItem(KEY, JSON.stringify(db)); renderAll(); }
 function active(){ return db.patients.find(p=>p.id===db.activeId) || null; }
 function go(id){
@@ -532,7 +554,7 @@ function go(id){
  if(id==='consult') hydrateConsultTerm();
  if(id==='history') renderHistory();
  if(id==='echos') loadEchoForm();
- if(id==='bilans') renderBilans();
+ if(id==='bilans') renderBilans();showToast('PDF ajouté au dossier');
  if(id==='dossier') renderDossier();
  if(id==='home') renderHomePatients();
 }
@@ -670,8 +692,9 @@ function loadPatient(){
 
 function exitPatient(){
  db.activeId=null;
- persist();
- go('home');
+ localStorage.setItem(KEY,JSON.stringify(db));
+ ['searchNom','searchPrenom','searchDob'].forEach(id=>{const el=$(id);if(el)el.value='';});
+ renderActive();renderHomePatients();go('home');
 }
 function norm(s){return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 function patientMatchScore(p,qn,qp,qd){
@@ -700,6 +723,7 @@ function patientMatchScore(p,qn,qp,qd){
 function renderHomePatients(){
  const el=$('homePatientResults'); if(!el)return;
  const qn=norm($('searchNom')?.value), qp=norm($('searchPrenom')?.value), qd=$('searchDob')?.value||'';
+ if(!qn&&!qp&&!qd){el.innerHTML='<div class="hint">Saisis au moins un critère pour rechercher une patiente.</div>';return;}
  const ranked=db.patients.map(p=>({p,score:patientMatchScore(p,qn,qp,qd)})).filter(x=>x.score>=0).sort((a,b)=>b.score-a.score);
  el.innerHTML='';
  if(!ranked.length){
@@ -863,25 +887,22 @@ $('csDate').addEventListener('change',syncConsultTerm);
 $('csDate').addEventListener('input',syncConsultTerm);
 function saveConsult(){
  const p=active(); if(!p){alert('Sélectionne ou crée d’abord une patiente.');return}
- const c=consultationObject(); p.history=p.history||[]; p.history.unshift({...c,summary:`${c.motif} — ${c.term}`}); persist(); renderHistory(); alert('Consultation enregistrée localement.');
+ const c=consultationObject(); p.consultations=p.consultations||[];
+ const dup=p.consultations.some(x=>x.date===c.date&&x.consultType===c.consultType&&x.motif===c.motif&&x.notes===c.notes);
+ if(dup){showToast('Cette consultation est déjà enregistrée');return}
+ c.id=crypto.randomUUID?crypto.randomUUID():'cs_'+Date.now(); c.savedAt=new Date().toISOString();
+ p.consultations.unshift(c); p.history=p.history||[];
+ p.history.unshift({id:c.id,recordType:'consultation',type:c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation',date:c.date,summary:`${c.motif}${c.term?' — '+c.term:''}`});
+ localStorage.setItem(KEY,JSON.stringify(db));renderHistory();renderDossier();showToast('Consultation enregistrée');
 }
-function printConsult(){
- const p=active(); if(!p){alert('Sélectionne une patiente.');return}
- const c=consultationObject();
- $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br>
-<strong>Mme Soum Clarisse</strong><br>
-1 rue du Moulin Rouge<br>
-85000 La Roche-sur-Yon<br>
-Tél. 02 51 36 36 77<br><small>Compte rendu de consultation</small></div><div>${fmtDate(c.date)}</div></div>
- <h1>${esc(p.nom)} ${esc(p.prenom)}</h1><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${c.term?'<b>Terme :</b> '+esc(c.term):''}</p>
- <h2>${esc(c.motif)}</h2>
- <p><b>Interrogatoire :</b> ${c.inter.length?c.inter.map(esc).join(', '):'RAS renseigné'}</p>
- <p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes)} ; BU ${esc(c.bu||'—')}.</p>
- <p><b>Conduite à tenir :</b> ${c.cat.length?c.cat.map(esc).join(', '):'—'}</p>
- ${c.notes?'<p><b>Notes :</b> '+esc(c.notes)+'</p>':''}
- <br><br><p>Signature :</p>`;
- window.print();
+function consultationHtml(c,p){
+ const label=c.consultType==='obstetrique'?'Consultation obstétrique':c.consultType==='gynecologie'?'Consultation gynécologique':'Autre consultation';
+ return `<h2>${esc(label)}</h2><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)}${p.dob?' — née le '+fmtDate(p.dob):''}</p>
+ <p><b>Date :</b> ${fmtDate(c.date)}${c.term&&c.consultType==='obstetrique'?' — <b>Terme :</b> '+esc(c.term):''}<br><b>Motif :</b> ${esc(c.motif||'—')}</p>
+ ${c.consultType==='obstetrique'?`<p><b>Interrogatoire :</b> ${c.inter?.length?c.inter.map(esc).join(', '):'—'}</p><p><b>Examen :</b> TA ${esc(c.ta||'—')} ; Poids ${esc(c.poids||'—')} ; HU ${esc(c.hu||'—')} ; BCF ${esc(c.bcf||'—')} ; Œdèmes ${esc(c.oedemes||'—')} ; BU ${esc(c.bu||'—')}.</p><p><b>Conduite à tenir :</b> ${c.cat?.length?c.cat.map(esc).join(', '):'—'}</p>`:''}${c.notes?'<p><b>Notes :</b> '+esc(c.notes)+'</p>':''}`;
 }
+function printConsult(){const p=active();if(!p){alert('Sélectionne une patiente.');return}const c=consultationObject();printHtmlDocument('Compte rendu de consultation',consultationHtml(c,p)+'<br><p>Signature :</p>')}
+
 const templates={
  debut:['Hémogramme / NFS','Groupe sanguin, Rhésus, RAI selon situation','Sérologies et examens selon recommandations et dossier clinique','Glycémie / examens complémentaires selon contexte'],
  six:['Bilan biologique de grossesse — contenu à personnaliser selon pratique et recommandations','Examens complémentaires selon le dossier clinique'],
@@ -896,44 +917,10 @@ function addRxLineText(text=''){
  $('rxList').appendChild(div);
 }
 function printRx(){
- const p=active(); if(!p){alert('Sélectionne une patiente.');return}
+ const p=active();if(!p){alert('Sélectionne une patiente.');return}
  const lines=[...$('rxList').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
- $('printDoc').innerHTML=`<div class="print-head">
-   <div>
-     <strong>Cabinet de sage-femme</strong><br>
-     <strong>Mme Soum Clarisse</strong><br>
-     1 rue du Moulin Rouge<br>
-     85000 La Roche-sur-Yon<br>
-     Tél. 02 51 36 36 77
-   </div>
-   <div>${new Date().toLocaleDateString('fr-FR')}</div>
- </div>
- <div style="margin:22px 0 26px 0">
-   <div><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong></div>
-   <div style="margin-top:4px">N° RPPS : <strong>10004054820</strong></div>
-   <svg id="rppsBarcode" style="margin-top:6px"></svg>
- </div>
- <div style="margin:18px 0">
-   <strong>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</strong>
-   ${p.dob?'<br>Née le '+fmtDate(p.dob):''}
-   ${p.adresse?'<br>'+esc(p.adresse):''}
- </div>
- <h1 style="margin-top:30px">Ordonnance</h1>
- <div style="margin-top:28px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div>
- <br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
- try{
-   if(window.JsBarcode){
-     JsBarcode("#rppsBarcode","10004054820",{
-       format:"CODE128",
-       displayValue:true,
-       fontSize:14,
-       height:42,
-       margin:0,
-       width:1.6
-     });
-   }
- }catch(e){console.error(e)}
- setTimeout(()=>window.print(),150);
+ const body=prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2>${p.dob?'<p>Née le '+fmtDate(p.dob)+'</p>':''}${p.adresse?'<p>'+esc(p.adresse)+'</p>':''}<div style="margin-top:30px">${lines.map(x=>'<p style="margin:18px 0">• '+esc(x)+'</p>').join('')}</div><br><br><p style="text-align:right"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
+ printHtmlDocument('Ordonnance',body);
 }
 
 function ensureEchoData(){
@@ -963,7 +950,7 @@ function loadEchoForm(){
  $('t1Cn').value=t1.cn||''; $('t1Lcc').value=t1.lcc||''; $('t1Weight').value=t1.weight||'';
  $('t2Date').value=t2.date||''; $('t2Normal').value=t2.normal||''; $('t2Comments').value=t2.comments||'';
  $('t3Date').value=t3.date||''; $('t3Normal').value=t3.normal||''; $('t3Comments').value=t3.comments||'';
- updateT1Window(); renderExtraEchos();
+ updateT1Window(); renderExtraEchos(); showToast('Échographie supplémentaire enregistrée');
  if(!$('extraEchoDate').value)$('extraEchoDate').value=today();
  $('extraEchoTerm').value=p.pregnancy?.ddg?termFrom(p.pregnancy.ddg,$('extraEchoDate').value):'';
 }
@@ -989,14 +976,14 @@ function saveT1(){
  if(ddg){p.pregnancy=p.pregnancy||{};p.pregnancy.ddg=ddg}
  registerEcho(p.echos.t1.echoName,p.echos.t1.echoApproval);
  p.history=p.history||[]; p.history.unshift({type:'Échographie T1',date:p.echos.t1.date||today(),summary:`CN ${p.echos.t1.cn||'—'} mm · LCC ${p.echos.t1.lcc||'—'} mm`});
- persist(); renderEchoRegistry(); renderDossier(); alert('Échographie T1 enregistrée.');
+ persist(); renderEchoRegistry(); renderDossier(); showToast('Échographie T1 enregistrée');
 }
 function saveEchoSimple(which){
  const p=ensureEchoData(); if(!p)return;
  const prefix=which==='t2'?'t2':'t3';
  p.echos[prefix]={date:$(prefix+'Date').value,normal:$(prefix+'Normal').value,comments:$(prefix+'Comments').value};
  p.history=p.history||[]; p.history.unshift({type:'Échographie '+prefix.toUpperCase(),date:p.echos[prefix].date||today(),summary:'Habituelle : '+(p.echos[prefix].normal||'—')});
- persist(); renderDossier(); alert('Échographie '+prefix.toUpperCase()+' enregistrée.');
+ persist(); renderDossier(); showToast('Échographie '+prefix.toUpperCase()+' enregistrée');
 }
 function addExtraEcho(){
  const p=ensureEchoData(); if(!p)return;
@@ -1011,42 +998,42 @@ function renderExtraEchos(){
  if(!(p.extraEchos||[]).length)el.innerHTML='<div class="hint">Aucune échographie supplémentaire.</div>';
 }
 function printT1Markers(){
- const p=active(); if(!p)return;
- const t1=p.echos?.t1||{}; const ddg=t1.ddg||p.pregnancy?.ddg; if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
+ const p=active();if(!p)return;const t1=p.echos?.t1||{},ddg=t1.ddg||p.pregnancy?.ddg;if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
  const w=markerWindow(ddg);
- $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme</strong><br><strong>Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge<br>85000 La Roche-sur-Yon<br>Tél. 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
- <div><strong>PRESCRIPTEUR : Mme Clarisse SOUM</strong><br>N° RPPS : <strong>10004054820</strong></div>
- <h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse):''}</p>
+ const body=prescriberBarcodeBlock()+`<h2>PATIENTE : ${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse):''}</p>
  <p>Date de début de grossesse : <strong>${fmtDate(ddg)}</strong><br>DPA : <strong>${calcDpaText(ddg)}</strong></p>
- <h2>Prescription — marqueurs sériques maternels de la trisomie 21</h2>
- <p>Faire pratiquer un prélèvement sanguin pour le dosage des marqueurs sériques du premier trimestre (PAPP-A et sous-unité β libre de l’hCG), entre le <strong>${fmtDate(w.start)}</strong> et le <strong>${fmtDate(w.end)}</strong>.</p>
+ <h2>Prescription — marqueurs sériques maternels de la trisomie 21</h2><p>Faire pratiquer un prélèvement sanguin pour le dosage des marqueurs sériques du premier trimestre (PAPP-A et sous-unité β libre de l’hCG), entre le <strong>${fmtDate(w.start)}</strong> et le <strong>${fmtDate(w.end)}</strong>.</p>
  <p style="text-align:right;margin-top:60px"><strong>Mme Clarisse SOUM</strong><br>Sage-femme<br><br>Signature :</p>`;
- window.print();
+ printHtmlDocument('Ordonnance',body);
 }
 function printT1ConsentLab(){
- const p=active(); if(!p)return;
- const t1=p.echos?.t1||{}; const ddg=t1.ddg||p.pregnancy?.ddg; if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
- const w=markerWindow(ddg);
- $('printDoc').innerHTML=`<div class="print-head"><div><strong>Cabinet de sage-femme — Mme Soum Clarisse</strong><br>1 rue du Moulin Rouge — 85000 La Roche-sur-Yon — 02 51 36 36 77</div><div>${new Date().toLocaleDateString('fr-FR')}</div></div>
- <h1>Évaluation du risque de trisomie 21 fœtale — fiche laboratoire</h1>
- <p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} · ${p.dob?'née le '+fmtDate(p.dob):''}<br><b>Adresse :</b> ${esc(p.adresse||'—')}</p>
- <p><b>Échographiste :</b> ${esc(t1.echoName||'—')} &nbsp; <b>N° agrément :</b> ${esc(t1.echoApproval||'—')}<br>
- <b>Date T1 :</b> ${t1.date?fmtDate(t1.date):'—'} &nbsp; <b>DDG :</b> ${fmtDate(ddg)}<br>
- <b>CN :</b> ${esc(t1.cn||'—')} mm &nbsp; <b>LCC :</b> ${esc(t1.lcc||'—')} mm &nbsp; <b>Poids :</b> ${esc(t1.weight||'—')} kg</p>
- <p><b>Fenêtre de prélèvement 1er trimestre :</b> du ${fmtDate(w.start)} au ${fmtDate(w.end)}.</p>
- <hr><h2>Information, demande et consentement</h2>
- <p>Je soussignée ${esc(p.prenom)} ${esc(p.nom)} atteste avoir reçu une information sur le dépistage prénatal de la trisomie 21, sur le caractère probabiliste du résultat, sur les examens pouvant être proposés selon le niveau de risque et sur la possibilité de ne pas réaliser ce dépistage.</p>
- <p>Je demande la réalisation du dosage des marqueurs sériques maternels et consens au prélèvement sanguin nécessaire à cette analyse.</p>
- <div style="display:flex;justify-content:space-between;margin-top:55px"><div>Signature de la patiente</div><div>Signature et tampon du prescripteur</div></div>
- <p style="font-size:10px;margin-top:55px">Prototype : formulaire à confronter au formulaire réglementaire en vigueur avant utilisation clinique.</p>`;
- window.print();
+ const p=active();if(!p)return;const t1=p.echos?.t1||{},ddg=t1.ddg||p.pregnancy?.ddg;if(!ddg){alert('Renseigne et enregistre la DDG/T1.');return}
+ const w=markerWindow(ddg),consultDate=t1.date||today(),term=t1.date?termFrom(ddg,t1.date):termFrom(ddg);
+ const body=`<div style="text-align:center"><h2>ÉVALUATION DU RISQUE DE TRISOMIE 21 FŒTALE</h2><p>Information, demande et consentement en vue d’un dépistage prénatal utilisant les marqueurs sériques maternels</p></div><hr>
+ <h3>IDENTIFICATION DES PROFESSIONNELS</h3><p><b>Prescripteur :</b> Mme Clarisse SOUM — Sage-femme — RPPS 10004054820<br><b>Échographiste :</b> ${esc(t1.echoName||'—')} &nbsp; <b>N° d’agrément :</b> ${esc(t1.echoApproval||'—')}</p>
+ <h3>IDENTIFICATION DE LA PATIENTE</h3><p><b>Nom :</b> ${esc(p.nom)} &nbsp; <b>Prénom :</b> ${esc(p.prenom)}<br><b>Date de naissance :</b> ${p.dob?fmtDate(p.dob):'—'}<br><b>Adresse :</b> ${esc(p.adresse||'—')}</p>
+ <h3>INFORMATIONS SUR LA GROSSESSE EN COURS</h3><p><b>DDG :</b> ${fmtDate(ddg)} &nbsp; <b>DPA :</b> ${calcDpaText(ddg)}<br><b>Date de l’échographie T1 :</b> ${t1.date?fmtDate(t1.date):'—'} &nbsp; <b>Terme :</b> ${esc(term)}<br><b>LCC :</b> ${esc(t1.lcc||'—')} mm &nbsp; <b>CN :</b> ${esc(t1.cn||'—')} mm &nbsp; <b>Poids :</b> ${esc(t1.weight||'—')} kg</p>
+ <p><b>Période de prélèvement du 1er trimestre :</b> du <strong>${fmtDate(w.start)}</strong> au <strong>${fmtDate(w.end)}</strong>.</p><hr>
+ <h3>INFORMATION, DEMANDE ET CONSENTEMENT DE LA FEMME ENCEINTE</h3>
+ <p>Je soussignée <b>${esc(p.prenom)} ${esc(p.nom)}</b> atteste avoir reçu de <b>Mme Clarisse SOUM, sage-femme</b>, au cours d’une consultation en date du <b>${fmtDate(consultDate)}</b>, une information claire et adaptée concernant le dépistage prénatal de la trisomie 21.</p>
+ <p>Cette information a porté notamment sur les caractéristiques de la trisomie 21 et les modalités de prise en charge des personnes porteuses de trisomie 21, sur la différence entre dépistage et diagnostic, sur la mesure de la clarté nucale, et sur le fait que le dosage des marqueurs sériques maternels associé aux données échographiques permet d’estimer un risque mais ne permet pas à lui seul d’établir un diagnostic.</p>
+ <p>J’ai été informée que, selon le niveau de risque calculé et les données échographiques, des examens complémentaires peuvent être proposés, notamment un examen portant sur l’ADN fœtal libre circulant dans le sang maternel ou un examen diagnostique chromosomique après prélèvement invasif. J’ai également été informée que je peux choisir de ne pas réaliser ce dépistage et retirer mon consentement.</p>
+ <p><b>Je demande et consens à la réalisation du prélèvement sanguin et du dosage des marqueurs sériques maternels nécessaires à cette évaluation du risque.</b></p>
+ <div style="display:flex;justify-content:space-between;gap:40px;margin-top:60px"><div><b>Date :</b> ____ / ____ / ______<br><br><b>Signature de la patiente</b></div><div><b>Mme Clarisse SOUM</b><br>Sage-femme<br><br><b>Signature / tampon</b></div></div><hr style="margin-top:65px">
+ <h3>RENSEIGNEMENTS POUR LE LABORATOIRE</h3><p><b>Patiente :</b> ${esc(p.nom)} ${esc(p.prenom)} — ${p.dob?fmtDate(p.dob):'—'}<br><b>DDG :</b> ${fmtDate(ddg)} — <b>Terme à la T1 :</b> ${esc(term)}<br><b>Échographiste :</b> ${esc(t1.echoName||'—')} — <b>Agrément :</b> ${esc(t1.echoApproval||'—')}<br><b>CN :</b> ${esc(t1.cn||'—')} mm — <b>LCC :</b> ${esc(t1.lcc||'—')} mm — <b>Poids :</b> ${esc(t1.weight||'—')} kg<br><b>Prélèvement à effectuer entre :</b> ${fmtDate(w.start)} et ${fmtDate(w.end)}</p>`;
+ printHtmlDocument('Consentement — dépistage de la trisomie 21',body);
 }
 
+function openHistoryRecord(index){
+ const p=active();if(!p)return;const h=(p.history||[])[index];if(!h)return;
+ if(h.recordType==='consultation'){const c=(p.consultations||[]).find(x=>x.id===h.id);if(c){openRecordModal(h.type,consultationHtml(c,p));return}}
+ openRecordModal(h.type||'Élément',`<p><b>Date :</b> ${h.date?fmtDate(h.date):'—'}</p><p>${esc(h.summary||'')}</p>`);
+}
 function renderHistory(){
- const p=active(), el=$('historyList'); el.innerHTML='';
+ const p=active(),el=$('historyList');el.innerHTML='';
  if(!p){el.innerHTML='<div class="hint">Aucune patiente sélectionnée.</div>';return}
  if(!p.history?.length){el.innerHTML='<div class="hint">Aucun élément enregistré.</div>';return}
- p.history.forEach(h=>{const d=document.createElement('div');d.className='entry';d.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;el.appendChild(d)})
+ p.history.forEach((h,i)=>{const d=document.createElement('div');d.className='entry history-click';d.innerHTML=`<strong>${esc(h.type||'Document')} — ${h.date?fmtDate(h.date):''}</strong><small>${esc(h.summary||'')}</small>`;d.onclick=()=>openHistoryRecord(i);el.appendChild(d)})
 }
 
 const BILAN_DB='sf_bilans_v1', BILAN_STORE='pdfs';
@@ -1087,6 +1074,15 @@ async function openBilan(id){const x=await getBilan(id);if(!x)return;window.open
 async function downloadBilan(id){const x=await getBilan(id);if(!x)return;const a=document.createElement('a');a.href=URL.createObjectURL(x.blob);a.download=x.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 async function deleteBilan(id){if(!confirm('Supprimer ce PDF du dossier local ?'))return;const dbi=await openBilanDb(),tx=dbi.transaction(BILAN_STORE,'readwrite');tx.objectStore(BILAN_STORE).delete(id);tx.oncomplete=renderBilans}
 
+
+function printFullHistory(){
+ const p=active();if(!p)return;
+ let body=`<h2>${esc(p.nom)} ${esc(p.prenom)}</h2><p>${p.dob?'Née le '+fmtDate(p.dob)+'<br>':''}${p.adresse?esc(p.adresse)+'<br>':''}${p.tel?'Tél. '+esc(p.tel):''}</p>`;
+ if(p.pregnancy?.ddg)body+=`<h2>Grossesse en cours</h2><p>DDG : ${fmtDate(p.pregnancy.ddg)} — DPA : ${calcDpaText(p.pregnancy.ddg)} — Terme actuel : ${termFrom(p.pregnancy.ddg)}</p>`;
+ body+=`<h2>Antécédents</h2><p><b>Allergies :</b> ${esc(p.allergies||'—')}<br><b>Médicaux :</b> ${esc(p.atcdMedicaux||'—')}<br><b>Chirurgicaux :</b> ${(p.atcdChirurgicaux||[]).map(esc).join(', ')||'—'}<br><b>G/P :</b> ${esc(p.gestite||'—')}/${esc(p.parite||'—')}<br><b>Gynécologiques :</b> ${esc(p.atcdGyneco||'—')}<br><b>Familiaux :</b> ${esc(p.atcdFamiliaux||'—')}</p><h2>Consultations</h2>`;
+ (p.consultations||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(c=>body+='<div style="border-top:1px solid #ccc;padding-top:10px;margin-top:12px">'+consultationHtml(c,p)+'</div>');
+ printHtmlDocument('Dossier de suivi à transmettre à la maternité',body);
+}
 function exportBackup(){
  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-sage-femme-v1.json';a.click();URL.revokeObjectURL(a.href);
@@ -1096,7 +1092,19 @@ function renderAll(){renderPatients();renderActive();renderHistory();renderHomeP
 function fmtDate(s){ if(!s)return''; const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('fr-FR') }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function attr(s){return esc(s).replace(/`/g,'&#096;')}
-renderAll(); addRxLine(); if(!active())go('home');
+renderAll(); addRxLine(); updateConsultMode(); if(!active())go('home');
 </script>
+
+<div id="toast" class="toast"></div>
+<div id="recordModal" class="modal-backdrop" onclick="if(event.target===this)closeRecordModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="recordModalTitle" style="margin:0">Élément</h2>
+      <button class="modal-close" onclick="closeRecordModal()">Fermer</button>
+    </div>
+    <div id="recordModalBody"></div>
+    <div class="actions"><button class="btn soft" onclick="printOpenedRecord()">Imprimer / PDF</button></div>
+  </div>
+</div>
 </body>
 </html>
